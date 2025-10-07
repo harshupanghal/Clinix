@@ -1,0 +1,120 @@
+﻿@page "/login"
+@using System.Security.Claims
+@using Microsoft.AspNetCore.Authentication
+@inject NavigationManager Navigation
+@inject ILogger<Login> Logger
+@inject IHttpContextAccessor HttpContextAccessor 
+@inject IJSRuntime JS
+@inject Clinix.Application.Interfaces.IAuthenticationService _authService 
+
+<h3>Login</h3>
+
+@if (!string.IsNullOrEmpty(_error))
+{
+    <div class="alert alert-danger">@_error</div>
+}
+
+@if (!string.IsNullOrEmpty(_success))
+{
+    <div class="alert alert-success">@_success</div>
+}
+
+<EditForm Model="_model" OnValidSubmit="HandleLogin" FormName="Login-form">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <InputText @bind-Value="_model.UsernameOrEmail" placeholder="Username or Email" class="form-control mb-2" />
+    <InputText @bind-Value="_model.Password" type="password" placeholder="Password" class="form-control mb-2" />
+    <InputCheckbox @bind-Value="_model.RememberMe" /> Remember Me
+
+    <button class="btn btn-primary w-100" disabled="@_isLoading">@_buttonText</button>
+</EditForm>
+
+@code {
+    [SupplyParameterFromForm]
+    private LoginModel _model { get; set; } = new();
+    private string? _error;
+    private string? _success;
+    private bool _isLoading;
+    private string _buttonText = "Login";
+
+    private sealed class LoginModel
+    {
+        [System.ComponentModel.DataAnnotations.Required]
+        public string UsernameOrEmail { get; set; } = string.Empty;
+
+        [System.ComponentModel.DataAnnotations.Required]
+        public string Password { get; set; } = string.Empty;
+
+        public bool RememberMe { get; set; } = false;
+    }
+
+    private async Task HandleLogin()
+    {
+        _error = _success = null;
+        _isLoading = true;
+        _buttonText = "Logging in...";
+
+        try
+        {
+            // 1. Ditch the HttpClient call and validate credentials directly
+            var result = await _authService.ValidateCredentialsAsync(_model.UsernameOrEmail, _model.Password);
+
+            if (!result.IsSuccess)
+            {
+                _error = result.Error ?? "Invalid credentials";
+                return;
+            }
+            
+            // --- 2. Perform HttpContext.SignInAsync directly (Logic moved from AuthController) ---
+            var user = new BlazorAuthNoIdentity.LoggedInUserModel( // Adjust namespace if necessary
+                result.UserId ?? 0,
+                result.Username ?? string.Empty,
+                result.Email ?? string.Empty,
+                result.Role ?? string.Empty
+            );
+
+            var claims = user.ToClaims();
+            const string AuthScheme = "clx-auth"; // Should match the scheme in Program.cs
+            
+            var identity = new ClaimsIdentity(claims, AuthScheme);
+            var principal = new ClaimsPrincipal(identity);
+
+            var props = new AuthenticationProperties
+            {
+                IsPersistent = _model.RememberMe,
+                ExpiresUtc = DateTimeOffset.UtcNow.AddHours(_model.RememberMe ? 72 : 8)
+            };
+
+            // CRITICAL: Access HttpContext via the accessor
+            if (HttpContextAccessor.HttpContext is not null)
+            {
+                await HttpContextAccessor.HttpContext.SignInAsync(AuthScheme, principal, props);
+            }
+            else
+            {
+                // This should not happen in Blazor Server interactive mode on a postback
+                throw new InvalidOperationException("HttpContext not available for sign-in.");
+            }
+
+            // 3. Force a complete page reload to establish the new authenticated circuit
+            _success = "Login successful! Redirecting...";
+            Logger.LogInformation("Login successful for {User} (Direct Sign-In)", _model.UsernameOrEmail);
+
+           
+            // Navigation.NavigateTo("/", true);
+
+            // await JS.InvokeVoidAsync("eval", "window.location.href='/'"); 
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error during login for {User}", _model.UsernameOrEmail);
+            _error = "Unexpected error occurred. Try again.";
+        }
+        finally
+        {
+            _isLoading = false;
+            _buttonText = "Login";
+        }
+    }
+}

@@ -1,0 +1,45 @@
+﻿using Clinix.Application.Interfaces;
+using Clinix.Domain.Entities;
+using Clinix.Infrastructure.Data;
+using Microsoft.EntityFrameworkCore;
+
+namespace Clinix.Infrastructure.Repositories;
+
+public class UserRepository : IUserRepository
+    {
+    private readonly ClinixDbContext _db;
+    public UserRepository(ClinixDbContext db) => _db = db;
+
+    public async Task<User?> GetByEmailAsync(string email, CancellationToken ct = default)
+        => await _db.Users.AsNoTracking().Where(u => !u.IsDeleted && u.Email == email).FirstOrDefaultAsync(ct);
+
+    public async Task<User?> GetByUsernameAsync(string username, CancellationToken ct = default)
+        => await _db.Users.AsNoTracking().Where(u => !u.IsDeleted && u.Username == username).FirstOrDefaultAsync(ct);
+
+    public Task AddAsync(User user, CancellationToken ct = default)
+        {
+        _db.Users.Add(user);
+        return Task.CompletedTask;
+        }
+
+    Task<User?> IUserRepository.GetByIdAsync(int id, CancellationToken ct)
+        {
+        throw new NotImplementedException();
+        }
+
+    Task IUserRepository.UpdateAsync(User user, CancellationToken ct)
+        {
+        throw new NotImplementedException();
+        }
+
+    Task IUserRepository.DeleteAsync(int id, CancellationToken ct)
+        {
+        throw new NotImplementedException();
+        }
+
+    Task<List<User>> IUserRepository.GetAllAsync()
+        {
+        throw new NotImplementedException();
+        }
+    }
+

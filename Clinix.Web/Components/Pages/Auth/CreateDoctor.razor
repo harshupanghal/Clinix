@@ -1,0 +1,93 @@
+﻿@* @page "/create-doctor"
+@attribute [Authorize(Roles = "Admin")]
+@using Clinix.Application.DTOs
+@inject Clinix.Web.Services.IRegistrationUiService RegistrationUiService
+
+<h3>Create Doctor</h3>
+
+@if (_message is not null)
+{
+    <div class="alert @(_isSuccess ? "alert-success" : "alert-danger")">@_message</div>
+}
+
+<EditForm Model="_model" OnValidSubmit="OnValidSubmit">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <div class="mb-3">
+        <label>Username</label>
+        <InputText @bind-Value="_model.Username" class="form-control" />
+    </div>
+
+    <div class="mb-3">
+        <label>Email</label>
+        <InputText @bind-Value="_model.Email" class="form-control" />
+    </div>
+
+    <div class="mb-3">
+        <label>Password</label>
+        <InputText @bind-Value="_model.Password" type="password" class="form-control" />
+    </div>
+
+    <div class="mb-3">
+        <label>Degree</label>
+        <InputText @bind-Value="_model.Degree" class="form-control" />
+    </div>
+
+    <div class="mb-3">
+        <label>Specialty</label>
+        <InputText @bind-Value="_model.Specialty" class="form-control" />
+    </div>
+
+    <div class="mb-3">
+        <label>License Number</label>
+        <InputText @bind-Value="_model.LicenseNumber" class="form-control" />
+    </div>
+
+    <div class="mb-3">
+        <label>Experience (years)</label>
+        <InputNumber @bind-Value="_model.ExperienceYears" class="form-control" />
+    </div>
+
+    <div class="mb-3">
+        <label>Clinic Address</label>
+        <InputTextArea @bind-Value="_model.ClinicAddress" class="form-control" />
+    </div>
+
+    <button class="btn btn-primary">Create Doctor</button>
+</EditForm>
+
+@code {
+    private DoctorModel _model = new();
+    private string? _message;
+    private bool _isSuccess;
+
+    private async Task OnValidSubmit()
+    {
+        var dto = new CreateDoctorRequest(
+            _model.Username,
+            _model.Email,
+            _model.Password,
+            _model.Degree,
+            _model.Specialty,
+            _model.LicenseNumber,
+            _model.ExperienceYears,
+            _model.ClinicAddress);
+
+        var result = await RegistrationUiService.CreateDoctorAsync(dto, createdBy: "admin"); // replace with current admin user
+        _isSuccess = result.IsSuccess;
+        _message = result.IsSuccess ? "Doctor created." : $"Error: {result.Error}";
+    }
+
+    class DoctorModel
+    {
+        [System.ComponentModel.DataAnnotations.Required] public string Username { get; set; } = "";
+        [System.ComponentModel.DataAnnotations.Required][System.ComponentModel.DataAnnotations.EmailAddress] public string Email { get; set; } = "";
+        [System.ComponentModel.DataAnnotations.Required] public string Password { get; set; } = "";
+        public string? Degree { get; set; }
+        public string? Specialty { get; set; }
+        public string? LicenseNumber { get; set; }
+        public int? ExperienceYears { get; set; }
+        public string? ClinicAddress { get; set; }
+    }
+} *@

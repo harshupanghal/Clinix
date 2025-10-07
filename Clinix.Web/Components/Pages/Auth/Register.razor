@@ -1,0 +1,87 @@
+﻿@page "/register"
+@rendermode InteractiveServer
+@using Clinix.Web.Services
+@inject Clinix.Web.Services.IRegistrationUiService RegistrationUiService
+
+<h3>Patient Registration</h3>
+
+@if (_message is not null)
+{
+    <div class="alert @(_isSuccess ? "alert-success" : "alert-danger")">@_message</div>
+}
+
+<EditForm Model="_model" OnValidSubmit="OnValidSubmit" FormName="Regi-Form"> 
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <div class="mb-3">
+        <label>Username</label>
+        <InputText @bind-Value="_model.Username" class="form-control" />
+    </div>
+
+    <div class="mb-3">
+        <label>Email</label>
+        <InputText @bind-Value="_model.Email" class="form-control" />
+    </div>
+
+    <div class="mb-3">
+        <label>Password</label>
+        <InputText @bind-Value="_model.Password" type="password" class="form-control" />
+    </div>
+
+    <div class="mb-3">
+        <label>Date of Birth</label>
+        <InputDate @bind-Value="_model.DateOfBirth" class="form-control" />
+    </div>
+
+    <div class="mb-3">
+        <label>Gender</label>
+        <InputText @bind-Value="_model.Gender" class="form-control" />
+    </div>
+
+    <div class="mb-3">
+        <label>Blood Group</label>
+        <InputText @bind-Value="_model.BloodGroup" class="form-control" />
+    </div>
+
+    <div class="mb-3">
+        <label>Emergency Contact</label>
+        <InputText @bind-Value="_model.EmergencyContact" class="form-control" />
+    </div>
+
+    <button class="btn btn-primary">Register</button>
+</EditForm>
+
+@code {
+    [SupplyParameterFromForm]
+    private RegisterModel _model { get; set; } = new();
+    private string? _message;
+    private bool _isSuccess;
+
+    private async Task OnValidSubmit()
+    {
+        var dto = new RegisterPatientRequest(
+            _model.Username,
+            _model.Email,
+            _model.Password,
+            _model.DateOfBirth,
+            _model.Gender,
+            _model.BloodGroup,
+            _model.EmergencyContact);
+
+        var result = await RegistrationUiService.RegisterPatientAsync(dto);
+        _isSuccess = result.IsSuccess;
+        _message = result.IsSuccess ? "Registration successful. You may login." : $"Error: {result.Error}";
+    }
+
+    class RegisterModel
+    {
+        [System.ComponentModel.DataAnnotations.Required] public string Username { get; set; } = "";
+        [System.ComponentModel.DataAnnotations.Required][System.ComponentModel.DataAnnotations.EmailAddress] public string Email { get; set; } = "";
+        [System.ComponentModel.DataAnnotations.Required] public string Password { get; set; } = "";
+        public DateTime? DateOfBirth { get; set; }
+        public string? Gender { get; set; }
+        public string? BloodGroup { get; set; }
+        public string? EmergencyContact { get; set; }
+    }
+}

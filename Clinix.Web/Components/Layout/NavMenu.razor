@@ -1,0 +1,118 @@
+﻿@using Microsoft.AspNetCore.Components.Authorization
+@rendermode InteractiveServer
+@using System.Security.Claims
+@inject AuthenticationStateProvider AuthStateProvider
+@inject NavigationManager Navigation
+
+<div class="top-row ps-3 navbar navbar-dark bg-primary shadow-sm">
+    <div class="container-fluid d-flex justify-content-between align-items-center">
+        <a class="navbar-brand fw-semibold" href="">Clinix.Web</a>
+
+        @if (_isAuthenticated)
+        {
+            <div class="d-flex align-items-center gap-3 text-white">
+                <span><i class="bi bi-person-circle"></i> @_userName </span>
+                <button class="btn btn-outline-light btn-sm" @onclick="Logout">
+                    <i class="bi bi-box-arrow-right"></i> Logout
+                </button>
+            </div>
+        }
+        else
+        {
+            <div class="d-flex gap-2">
+                <NavLink class="btn btn-outline-light btn-sm" href="login">
+                    <i class="bi bi-box-arrow-in-right"></i> Login
+                </NavLink>
+                <NavLink class="btn btn-light btn-sm text-primary fw-semibold" href="register">
+                    <i class="bi bi-person-plus"></i> Register
+                </NavLink>
+            </div>
+        }
+    </div>
+</div>
+
+<div class="nav-scrollable bg-dark text-white p-2">
+    <nav class="nav flex-column">
+        <div class="nav-item px-3">
+            <NavLink class="nav-link text-white" href="" Match="NavLinkMatch.All">
+                <i class="bi bi-house-door"></i> Home
+            </NavLink>
+        </div>
+
+        @if (_isAuthenticated)
+        {
+            @* Common link for all logged-in users *@
+            <div class="nav-item px-3">
+                <NavLink class="nav-link text-white" href="profile">
+                    <i class="bi bi-person"></i> Profile
+                </NavLink>
+            </div>
+
+            @* Role-specific links *@
+            @if (_userRole == "Admin")
+            {
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link text-white" href="create-staff">
+                        <i class="bi bi-person-plus-fill"></i> Create Staff
+                    </NavLink>
+                </div>
+
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link text-white" href="admin-dashboard">
+                        <i class="bi bi-speedometer2"></i> Admin Dashboard
+                    </NavLink>
+                </div>
+            }
+            else if (_userRole == "Doctor")
+            {
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link text-white" href="patients">
+                        <i class="bi bi-people"></i> My Patients
+                    </NavLink>
+                </div>
+            }
+            else if (_userRole == "Receptionist")
+            {
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link text-white" href="appointments">
+                        <i class="bi bi-calendar-check"></i> Manage Appointments
+                    </NavLink>
+                </div>
+            }
+            else if (_userRole == "Chemist")
+            {
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link text-white" href="inventory">
+                        <i class="bi bi-capsule"></i> Inventory
+                    </NavLink>
+                </div>
+            }
+        }
+    </nav>
+</div>
+
+@code {
+    private bool _isAuthenticated;
+    private string? _userName;
+    private string? _userRole;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        _isAuthenticated = user.Identity?.IsAuthenticated ?? false;
+
+        if (_isAuthenticated)
+        {
+            _userName = user.Identity?.Name ?? "User";
+            _userRole = user.FindFirst("Role")?.Value;
+        }
+    }
+
+    private async Task Logout()
+    {
+        await Task.Yield(); // optional delay for UI
+        Navigation.NavigateTo("logout", forceLoad: true);
+    }
+}

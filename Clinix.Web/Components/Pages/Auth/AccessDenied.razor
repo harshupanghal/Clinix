@@ -1,0 +1,50 @@
+﻿@page "/access-denied"
+@using System.Security.Claims
+@inject AuthenticationStateProvider AuthStateProvider
+
+<h3 class="text-danger mb-3">Access Denied</h3>
+<p>You do not have permission to view this page.</p>
+
+<hr />
+
+@if (_user == null)
+{
+    <p class="text-warning">No user information found. You might not be logged in.</p>
+}
+else
+{
+    <div class="debug-info mt-3 border rounded p-3 bg-light text-dark shadow-sm">
+        <h5>🔍 Debug Info</h5>
+        <ul class="list-unstyled">
+            <li><strong>Is Authenticated:</strong> @_user.Identity?.IsAuthenticated</li>
+            <li><strong>User Name:</strong> @_user.Identity?.Name</li>
+            <li><strong>Role Claim (ClaimTypes.Role):</strong> @_roleClaim</li>
+            <li><strong>All Claims:</strong></li>
+            <ul>
+                @foreach (var claim in _user.Claims)
+                {
+                    <li>@claim.Type → @claim.Value</li>
+                }
+            </ul>
+        </ul>
+    </div>
+}
+
+@code {
+    private ClaimsPrincipal? _user;
+    private string? _roleClaim;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var state = await AuthStateProvider.GetAuthenticationStateAsync();
+        _user = state.User;
+
+        if (_user.Identity?.IsAuthenticated == true)
+        {
+            // Try to get the role claim
+            _roleClaim = _user.FindFirst(ClaimTypes.Role)?.Value ?? 
+                         _user.FindFirst("Role")?.Value ?? 
+                         "(no role claim found)";
+        }
+    }
+}

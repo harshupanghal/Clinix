@@ -1,0 +1,206 @@
+﻿@page "/create-staff"
+@rendermode InteractiveServer
+@using Clinix.Application.DTOs
+@using System.ComponentModel.DataAnnotations
+@attribute [Authorize(Roles = "Admin")]
+@inject Clinix.Web.Services.IRegistrationUiService RegistrationUiService
+@inject NavigationManager Navigation
+
+<div class="container py-4">
+    <div class="card shadow-lg border-0 rounded-4">
+        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center rounded-top-4">
+            <h4 class="mb-0"><i class="bi bi-person-plus"></i> Create Staff / Doctor</h4>
+            <button class="btn btn-light btn-sm" @onclick="NavigateBack">
+                <i class="bi bi-arrow-left"></i> Back
+            </button>
+        </div>
+
+        <div class="card-body p-4">
+            @if (_message is not null)
+            {
+                <div class="alert @(_isSuccess ? "alert-success" : "alert-danger") fade show">
+                    @_message
+                </div>
+            }
+
+            <EditForm Model="_model" OnValidSubmit="OnValidSubmit" FormName="Staff-Form">
+                <DataAnnotationsValidator />
+                <ValidationSummary />
+
+                <div class="row g-4">
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Username</label>
+                        <InputText @bind-Value="_model.Username" class="form-control form-control-lg" placeholder="Enter username" />
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Email</label>
+                        <InputText @bind-Value="_model.Email" type="email" class="form-control form-control-lg" placeholder="Enter email" />
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Password</label>
+                        <InputText @bind-Value="_model.Password" type="password" class="form-control form-control-lg" placeholder="Enter password" />
+                        <div class="form-text text-muted">Use a strong password. Admin will use login to sign in.</div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Role / Position</label>
+                        <InputSelect @bind-Value="_model.Position" class="form-select form-select-lg" @onchange="OnPositionChanged">
+                            <option value="">-- Select role --</option>
+                            <option value="Doctor">Doctor</option>
+                            <option value="Receptionist">Receptionist</option>
+                            <option value="Chemist">Chemist</option>
+                        </InputSelect>
+                    </div>
+                </div>
+
+                <hr class="my-4" />
+
+                @if (_model.Position == "Doctor")
+                {
+                    <div class="p-3 border rounded-3 bg-light-subtle">
+                        <h5 class="fw-bold mb-3"><i class="bi bi-heart-pulse"></i> Doctor Details</h5>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Degree</label>
+                                <InputText @bind-Value="_model.Degree" class="form-control" placeholder="e.g. MBBS" />
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Specialty</label>
+                                <InputText @bind-Value="_model.Specialty" class="form-control" placeholder="e.g. Cardiologist" />
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">License Number</label>
+                                <InputText @bind-Value="_model.LicenseNumber" class="form-control" placeholder="Enter license number" />
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Experience (years)</label>
+                                <InputNumber @bind-Value="_model.ExperienceYears" class="form-control" />
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">Clinic Address</label>
+                                <InputTextArea @bind-Value="_model.ClinicAddress" class="form-control" rows="2" placeholder="Enter clinic address" />
+                            </div>
+                        </div>
+                    </div>
+                }
+
+                @if (_model.Position == "Receptionist" || _model.Position == "Chemist")
+                {
+                    <div class="p-3 border rounded-3 bg-light-subtle">
+                        <h5 class="fw-bold mb-3"><i class="bi bi-person-gear"></i> Staff Details</h5>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Department</label>
+                                <InputText @bind-Value="_model.Department" class="form-control" placeholder="e.g. Front Desk" />
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Shift Info</label>
+                                <InputText @bind-Value="_model.ShiftInfo" class="form-control" placeholder="e.g. 9:00 AM - 5:00 PM" />
+                            </div>
+                        </div>
+                    </div>
+                }
+
+                <div class="mt-4 d-flex justify-content-end gap-2">
+                    <button class="btn btn-success px-4" type="submit">
+                        <i class="bi bi-check-circle"></i> Create
+                    </button>
+                    <button class="btn btn-outline-secondary px-4" type="button" @onclick="NavigateBack">
+                        <i class="bi bi-x-circle"></i> Cancel
+                    </button>
+                </div>
+            </EditForm>
+        </div>
+    </div>
+</div>
+
+@code {
+    [SupplyParameterFromForm]
+    private CreateStaffUiModel _model { get; set; } = new();
+    private string? _message;
+    private bool _isSuccess;
+
+    private void OnPositionChanged(ChangeEventArgs _) 
+    {
+        if (_model.Position != "Doctor")
+        {
+            _model.Degree = _model.Specialty = _model.LicenseNumber = _model.ClinicAddress = null;
+            _model.ExperienceYears = null;
+        }
+    }
+
+    private async Task OnValidSubmit()
+    {
+        _message = null; _isSuccess = false;
+
+        if (string.IsNullOrWhiteSpace(_model.Position))
+        {
+            _message = "Please select a role/position.";
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(_model.Username) || string.IsNullOrWhiteSpace(_model.Email) || string.IsNullOrWhiteSpace(_model.Password))
+        {
+            _message = "Username, Email, and Password are required.";
+            return;
+        }
+
+        if (_model.Position == "Doctor")
+        {
+            if (string.IsNullOrWhiteSpace(_model.Specialty) && string.IsNullOrWhiteSpace(_model.Degree))
+            {
+                _message = "Please provide at least a Degree or Specialty for the doctor.";
+                return;
+            }
+
+            var dto = new CreateDoctorRequest(
+                _model.Username, _model.Email, _model.Password,
+                _model.Degree, _model.Specialty, _model.LicenseNumber,
+                _model.ExperienceYears, _model.ClinicAddress
+            );
+
+            var result = await RegistrationUiService.CreateDoctorAsync(dto, createdBy: "admin");
+            _isSuccess = result.IsSuccess;
+            _message = result.IsSuccess ? "Doctor created successfully." : $"Error: {result.Error}";
+            if (_isSuccess) ClearFormAndNavigate();
+            return;
+        }
+
+        var staffDto = new CreateStaffRequest(
+            _model.Username, _model.Email, _model.Password,
+            _model.Position, _model.Department, _model.ShiftInfo
+        );
+
+        var staffResult = await RegistrationUiService.CreateStaffAsync(staffDto, createdBy: GetCurrentAdminNameOrPlaceholder());
+        _isSuccess = staffResult.IsSuccess;
+        _message = staffResult.IsSuccess ? $"{_model.Position} created successfully." : $"Error: {staffResult.Error}";
+        if (_isSuccess) ClearFormAndNavigate();
+    }
+
+    private void ClearFormAndNavigate()
+    {
+        _model = new CreateStaffUiModel();
+        // Navigation.NavigateTo("/admin/dashboard");
+    }
+
+    private void NavigateBack() => Navigation.NavigateTo("/");
+    private string GetCurrentAdminNameOrPlaceholder() => "admin";
+
+    private class CreateStaffUiModel
+    {
+        [Required] public string Username { get; set; } = "";
+        [Required, EmailAddress] public string Email { get; set; } = "";
+        [Required] public string Password { get; set; } = "";
+        [Required] public string Position { get; set; } = "";
+
+        public string? Department { get; set; }
+        public string? ShiftInfo { get; set; }
+        public string? Degree { get; set; }
+        public string? Specialty { get; set; }
+        public string? LicenseNumber { get; set; }
+        public int? ExperienceYears { get; set; }
+        public string? ClinicAddress { get; set; }
+    }
+}
