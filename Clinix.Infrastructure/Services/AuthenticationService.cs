@@ -1,9 +1,8 @@
-﻿using System.Threading;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Identity;
+﻿using Microsoft.AspNetCore.Identity;
 using Clinix.Application.DTOs;
-using Clinix.Application.Interfaces;
-using Clinix.Domain.Entities;
+using Clinix.Domain.Entities.ApplicationUsers;
+using Clinix.Application.Interfaces.RepoInterfaces;
+using Clinix.Application.Interfaces.ServiceInterfaces;
 
 namespace Clinix.Infrastructure.Services;
 

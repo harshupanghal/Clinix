@@ -3,12 +3,12 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Clinix.Application.Interfaces;
-using Clinix.Domain.Entities;
-using Clinix.Infrastructure.Data;
+using Clinix.Application.Interfaces.ServiceInterfaces;
+using Clinix.Domain.Entities.Inventory;
+using Clinix.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
-namespace Clinix.Application.Services;
+namespace Clinix.Infrastructure.Services;
 
 public class InventoryService : IInventoryService
     {

@@ -1,8 +1,7 @@
 ﻿using System.Text.RegularExpressions;
-using Clinix.Application.Interfaces;
+using Clinix.Application.Interfaces.ServiceInterfaces;
 using Clinix.Application.Utilities;
-using Clinix.Domain.Entities;
-using Clinix.Infrastructure.Data;
+using Clinix.Domain.Entities.ApplicationUsers;
 using Clinix.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;

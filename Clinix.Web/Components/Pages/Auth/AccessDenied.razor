@@ -41,7 +41,6 @@ else
 
         if (_user.Identity?.IsAuthenticated == true)
         {
-            // Try to get the role claim
             _roleClaim = _user.FindFirst(ClaimTypes.Role)?.Value ?? 
                          _user.FindFirst("Role")?.Value ?? 
                          "(no role claim found)";

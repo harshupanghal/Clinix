@@ -1,7 +1,9 @@
-﻿using Clinix.Domain.Entities;
+﻿using Clinix.Domain.Entities.ApplicationUsers;
+using Clinix.Domain.Entities.Appointments;
+using Clinix.Domain.Entities.Inventory;
 using Microsoft.EntityFrameworkCore;
 
-namespace Clinix.Infrastructure.Data;
+namespace Clinix.Infrastructure.Persistence;
 
 public class ClinixDbContext : DbContext
     {
@@ -11,7 +13,7 @@ public class ClinixDbContext : DbContext
     public DbSet<Patient> Patients => Set<Patient>();
     public DbSet<Doctor> Doctors => Set<Doctor>();
     public DbSet<Staff> Staffs => Set<Staff>();
-    public DbSet<InventoryItem> InventoryItems=> Set<InventoryItem>();
+    public DbSet<InventoryItem> InventoryItems => Set<InventoryItem>();
     public DbSet<InventoryTransaction> InventoryTransactions => Set<InventoryTransaction>();
     public DbSet<Appointment> Appointments => Set<Appointment>();
     public DbSet<AppointmentSlot> AppointmentSlots => Set<AppointmentSlot>();
@@ -97,10 +99,10 @@ public class ClinixDbContext : DbContext
             b.Property(s => s.Position).IsRequired().HasMaxLength(100);
         });
 
-       modelBuilder.Entity<InventoryItem>()
-    .HasMany(i => i.Transactions)
-    .WithOne(t => t.InventoryItem)
-    .HasForeignKey(t => t.InventoryItemId);
+        modelBuilder.Entity<InventoryItem>()
+     .HasMany(i => i.Transactions)
+     .WithOne(t => t.InventoryItem)
+     .HasForeignKey(t => t.InventoryItemId);
 
         }
     }

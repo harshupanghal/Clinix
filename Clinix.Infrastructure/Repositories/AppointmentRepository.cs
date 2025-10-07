@@ -1,8 +1,10 @@
-﻿using Clinix.Application.Interfaces;
-using Clinix.Domain.Entities;
-using Clinix.Infrastructure.Data;
+﻿using Clinix.Application.Interfaces.RepoInterfaces;
+using Clinix.Domain.Entities.ApplicationUsers;
+using Clinix.Domain.Entities.Appointments;
+using Clinix.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
+namespace Clinix.Infrastructure.Repositories;
 
 public class AppointmentRepository : IAppointmentRepository
     {

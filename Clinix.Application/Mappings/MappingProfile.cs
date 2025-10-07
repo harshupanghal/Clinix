@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
-using Clinix.Domain.Entities;
 using Clinix.Application.Dto;
+using Clinix.Domain.Entities.Appointments;
+using Clinix.Domain.Entities.ApplicationUsers;
 
 namespace Clinix.Application.Mapping;
 

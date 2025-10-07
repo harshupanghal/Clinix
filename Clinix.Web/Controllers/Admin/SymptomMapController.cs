@@ -1,9 +1,8 @@
 ﻿using Clinix.Infrastructure.Persistence;
-using Clinix.Domain.Entities;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Clinix.Infrastructure.Data;
+using Clinix.Domain.Entities.Appointments;
 
 namespace Clinix.Web.Api.Controllers.Admin;
 

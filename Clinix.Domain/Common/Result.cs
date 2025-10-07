@@ -11,7 +11,6 @@ public class Result
         IsSuccess = isSuccess;
         Error = error;
         }
-
     public static Result Success() => new(true, null);
     public static Result Failure(string error) => new(false, error);
     }

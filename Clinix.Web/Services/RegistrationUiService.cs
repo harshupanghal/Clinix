@@ -1,7 +1,7 @@
 ﻿using System.Threading.Tasks;
 using Clinix.Application.Dtos;
 using Clinix.Application.DTOs;
-using Clinix.Application.Interfaces;
+using Clinix.Application.Interfaces.ServiceInterfaces;
 using Clinix.Domain.Common;
 
 namespace Clinix.Web.Services;

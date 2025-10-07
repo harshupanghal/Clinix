@@ -1,5 +1,5 @@
-﻿using Clinix.Application.Interfaces;
-using Clinix.Infrastructure.Data;
+﻿using Clinix.Application.Interfaces.RepoInterfaces;
+using Clinix.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore.Storage;
 
 namespace Clinix.Infrastructure.Data;

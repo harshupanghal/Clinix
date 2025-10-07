@@ -1,8 +1,7 @@
 ﻿using Clinix.Application.DTOs;
-using Clinix.Domain.Entities;
+using Clinix.Domain.Entities.ApplicationUsers;
 
 namespace Clinix.Application.Mappers;
-
 public static class StaffMappers
     {
     public static Staff CreateFrom(User user, CreateStaffRequest req)

@@ -1,6 +1,5 @@
 ﻿using Clinix.Application.Dtos;
-using Clinix.Domain.Entities;
-
+using Clinix.Domain.Entities.ApplicationUsers;
 
 namespace Clinix.Application.Mappings;
 

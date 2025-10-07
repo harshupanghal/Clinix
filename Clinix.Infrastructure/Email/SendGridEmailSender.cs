@@ -1,4 +1,4 @@
-﻿using Clinix.Application.Interfaces;
+﻿using Clinix.Application.Interfaces.ServiceInterfaces;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
@@ -15,8 +15,6 @@ public class SendGridEmailSender : IEmailSender
 
     public Task SendEmailAsync(string toEmail, string subject, string htmlBody, CancellationToken ct)
         {
-        // TODO: implement actual SendGrid or SMTP client
-        // Example: use SendGrid nuget, pick API key from config.
         _log.LogInformation("Stub SendEmailAsync called for {To} subject {Subject}", toEmail, subject);
         return Task.CompletedTask;
         }

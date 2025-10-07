@@ -1,12 +1,13 @@
-﻿using Clinix.Domain.Entities;
+﻿using Clinix.Domain.Entities.ApplicationUsers;
+using Clinix.Domain.Entities.Appointments;
 using Clinix.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
-namespace Clinix.Infrastructure.Seeding;
+namespace Clinix.Infrastructure.Data;
 
 public static class DbSeeder
     {
-    public static async Task SeedAsync(ApplicationDbContext db, CancellationToken ct)
+    public static async Task SeedAsync(ClinixDbContext db, CancellationToken ct)
         {
         if (!await db.Doctors.AnyAsync(ct))
             {

@@ -1,8 +1,10 @@
-﻿using Clinix.Infrastructure.Persistence;
+﻿
+
+using System.Security.Claims;
+using Clinix.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using System.Security.Claims;
 
 namespace Clinix.Web.Api.Controllers;
 
@@ -11,8 +13,8 @@ namespace Clinix.Web.Api.Controllers;
 [Authorize]
 public class MyAppointmentsController : ControllerBase
     {
-    private readonly ApplicationDbContext _db;
-    public MyAppointmentsController(ApplicationDbContext db) => _db = db;
+    private readonly ClinixDbContext _db;
+    public MyAppointmentsController(ClinixDbContext db) => _db = db;
 
     [HttpGet]
     public async Task<IActionResult> GetMyAppointments(CancellationToken ct)
@@ -34,7 +36,7 @@ public class MyAppointmentsController : ControllerBase
             a.CreatedAt,
             SlotStart = a.AppointmentSlot.StartUtc,
             SlotEnd = a.AppointmentSlot.EndUtc,
-            Doctor = new { a.Doctor.Id, a.Doctor.Name, a.Doctor.Specialty }
+            Doctor = new { a.Doctor.UserId, a.Doctor.Username, a.Doctor.Specialty }
             });
 
         return Ok(dto);

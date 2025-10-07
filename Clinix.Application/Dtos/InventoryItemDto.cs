@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace Clinix.Application.Dtos;
+﻿namespace Clinix.Application.Dtos;
 
 public class InventoryItemDto
     {
