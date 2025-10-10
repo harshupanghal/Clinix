@@ -1,6 +1,6 @@
 ﻿using Clinix.Domain.Entities.ApplicationUsers;
 
-namespace Clinix.Application.Interfaces.RepoInterfaces;
+namespace Clinix.Application.Interfaces.UserRepo;
 
 public interface IStaffRepository
     {

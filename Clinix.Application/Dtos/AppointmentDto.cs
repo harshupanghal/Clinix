@@ -9,8 +9,9 @@ public class AppointmentCreateDto
     public DateTime StartTime { get; set; }
     public DateTime EndTime { get; set; }
     public string? Reason { get; set; }
-    public string? Type { get; set; } // e.g., Consultation, Follow-up
+    public string? Type { get; set; } // Consultation, Follow-up
     }
+
 
 // For updating / rescheduling an appointment
 public class AppointmentUpdateDto
@@ -21,6 +22,7 @@ public class AppointmentUpdateDto
     public string? Reason { get; set; }
     public string? Status { get; set; } // Scheduled, Rescheduled, Cancelled
     }
+
 
 // For showing a single appointment
 public class AppointmentDetailsDto
@@ -37,7 +39,8 @@ public class AppointmentDetailsDto
     public string? Type { get; set; }
     }
 
-// For listing appointments for doctor or patient (compact)
+
+// For listing appointments for doctor or patient 
 public class AppointmentListDto
     {
     public long AppointmentId { get; set; }
@@ -48,6 +51,7 @@ public class AppointmentListDto
     public string? DoctorName { get; set; } // optional if patient view
     }
 
+
 // For showing available slots for a doctor
 public class AppointmentSlotDto
     {
@@ -57,6 +61,7 @@ public class AppointmentSlotDto
     public bool IsBooked { get; set; }
     }
 
+
 // Doctor schedule for a date range
 public class DoctorScheduleDto
     {
@@ -65,6 +70,7 @@ public class DoctorScheduleDto
     public List<AppointmentSlotDto> Slots { get; set; } = new();
     }
 
+
 // For doctor delaying multiple appointments
 public class DelayAppointmentsDto
     {
@@ -72,6 +78,7 @@ public class DelayAppointmentsDto
     public TimeSpan DelayDuration { get; set; }
     public List<long>? AffectedAppointmentIds { get; set; } // optional, filled after processing
     }
+
 
 // Generic service response wrapper
 public class ServiceResult<T>

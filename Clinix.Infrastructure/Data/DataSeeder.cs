@@ -1,4 +1,5 @@
-﻿using Clinix.Application.Interfaces.RepoInterfaces;
+﻿using Clinix.Application.Interfaces.Functionalities;
+using Clinix.Application.Interfaces.UserRepo;
 using Clinix.Domain.Entities.ApplicationUsers;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;

@@ -1,6 +1,6 @@
 ﻿namespace Clinix.Application.DTOs;
 
-public record AuthenticationResult(
+public record LoginResult(
     bool IsSuccess,
     string? Error,
     long? UserId,

@@ -1,0 +1,206 @@
+﻿@page "/patient/edit-profile"
+@rendermode InteractiveServer
+@attribute [Authorize(Roles = "Patient")]
+@using Clinix.Application.Dtos
+@using Clinix.Web.Services
+@inject IPatientDashboardUiService DashboardUiService
+@inject AuthenticationStateProvider AuthProvider
+@inject NavigationManager NavigationManager
+@inject Blazored.Toast.Services.IToastService ToastService
+@using Blazored.FluentValidation
+
+<h3 class="mb-4 text-primary">Edit Profile</h3>
+
+@if (isLoading)
+{
+    <div class="text-center py-4">
+        <div class="spinner-border text-primary" role="status" aria-hidden="true"></div>
+        <p class="mt-2">Loading...</p>
+    </div>
+}
+else
+{
+    <EditForm Model="model" OnValidSubmit="OnValidSubmit" class="needs-validation">
+        <FluentValidationValidator />
+
+        <div class="row g-3">
+            <div class="col-md-6 form-floating">
+                <InputText id="fullname" class="form-control" @bind-Value="model.FullName" />
+                <label for="fullname">Full Name</label>
+                <ValidationMessage For="@(() => model.FullName)" />
+            </div>
+
+            <div class="col-md-6 form-floating">
+                <InputText id="email" class="form-control" @bind-Value="model.Email" />
+                <label for="email">Email</label>
+                <ValidationMessage For="@(() => model.Email)" />
+            </div>
+
+            <div class="col-md-6 form-floating">
+                <InputDate id="dob" class="form-control" @bind-Value="model.DateOfBirth" />
+                <label for="dob">Date of Birth</label>
+                <ValidationMessage For="@(() => model.DateOfBirth)" />
+            </div>
+
+            <div class="col-md-6 form-floating">
+                <InputSelect id="gender" class="form-select" @bind-Value="model.Gender">
+                    <option value="">Select Gender</option>
+                    <option>Male</option><option>Female</option><option>Other</option>
+                </InputSelect>
+                <label for="gender">Gender</label>
+                <ValidationMessage For="@(() => model.Gender)" />
+            </div>
+
+            <div class="col-md-6 form-floating">
+                <InputSelect id="bloodGroup" class="form-select" @bind-Value="model.BloodGroup">
+                    <option value="">Select Blood Group</option>
+                    <option>A+</option><option>A-</option><option>B+</option><option>B-</option>
+                    <option>O+</option><option>O-</option><option>AB+</option><option>AB-</option>
+                </InputSelect>
+                <label for="bloodGroup">Blood Group</label>
+                <ValidationMessage For="@(() => model.BloodGroup)" />
+            </div>
+
+            <div class="col-md-6 form-floating">
+                <InputText id="emergencyContactName" class="form-control" @bind-Value="model.EmergencyContactName" />
+                <label for="emergencyContactName">Emergency Contact Name</label>
+                <ValidationMessage For="@(() => model.EmergencyContactName)" />
+            </div>
+
+            <div class="col-md-6 form-floating">
+                <InputText id="emergencyContactNumber" class="form-control" @bind-Value="model.EmergencyContactNumber" />
+                <label for="emergencyContactNumber">Emergency Contact Number</label>
+                <ValidationMessage For="@(() => model.EmergencyContactNumber)" />
+            </div>
+
+            <div class="col-12 form-floating">
+                <InputTextArea id="knownAllergies" class="form-control" @bind-Value="model.KnownAllergies" />
+                <label for="knownAllergies">Known Allergies</label>
+                <ValidationMessage For="@(() => model.KnownAllergies)" />
+            </div>
+
+            <div class="col-12 form-floating">
+                <InputTextArea id="existingConditions" class="form-control" @bind-Value="model.ExistingConditions" />
+                <label for="existingConditions">Existing Conditions</label>
+                <ValidationMessage For="@(() => model.ExistingConditions)" />
+            </div>
+        </div>
+
+        <div class="d-grid gap-2 mt-4">
+            <button class="btn btn-primary" type="submit" disabled="@isSubmitting">
+                @if (isSubmitting)
+                {
+                    <span>Saving... <span class="spinner-border spinner-border-sm ms-2" role="status" aria-hidden="true"></span></span>
+                }
+                else
+                {
+                    <span>Save Changes</span>
+                }
+            </button>
+
+            <button class="btn btn-outline-secondary" type="button" @onclick="Cancel">Cancel</button>
+        </div>
+    </EditForm>
+}
+
+@code {
+    private PatientUpdateProfileRequest model = new();
+    private bool isLoading = true;
+    private bool isSubmitting;
+    private CancellationTokenSource? cts;
+
+    protected override async Task OnInitializedAsync()
+        {
+        cts = new CancellationTokenSource();
+        isLoading = true;
+
+        var auth = await AuthProvider.GetAuthenticationStateAsync();
+        var user = auth.User;
+        if (!(user.Identity?.IsAuthenticated ?? false))
+            {
+            NavigationManager.NavigateTo("/login");
+            return;
+            }
+
+        var idClaim = user.FindFirst("UserId") ?? user.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier);
+        if (idClaim == null || !long.TryParse(idClaim.Value, out var userId))
+            {
+            ToastService.ShowError("Unable to identify your account. Please login again.");
+            NavigationManager.NavigateTo("/login", forceLoad: true);
+            return;
+            }
+
+        model.UserId = userId;
+
+        try
+            {
+            var dto = await DashboardUiService.GetDashboardAsync(userId, cts.Token);
+            if (dto != null)
+                {
+                // populate fields (avoid phone)
+                model.FullName = dto.FullName;
+                model.Email = dto.Email;
+                model.DateOfBirth = dto.DateOfBirth;
+                model.Gender = dto.Gender;
+                model.BloodGroup = dto.BloodGroup;
+                model.EmergencyContactName = dto.EmergencyContactName;
+                model.EmergencyContactNumber = dto.EmergencyContactNumber;
+                model.KnownAllergies = dto.KnownAllergies;
+                model.ExistingConditions = dto.ExistingConditions;
+                }
+            }
+        catch (OperationCanceledException) { }
+        catch (Exception )
+            {
+            ToastService.ShowError("Failed to load profile for editing.");
+            }
+        finally
+            {
+            isLoading = false;
+            }
+        }
+
+    private async Task OnValidSubmit()
+        {
+        if (isSubmitting) return;
+        isSubmitting = true;
+
+        try
+            {
+            var result = await DashboardUiService.UpdateProfileAsync(model, cts?.Token ?? CancellationToken.None);
+            if (result.IsSuccess)
+                {
+                ToastService.ShowSuccess("Profile updated successfully.");
+                NavigationManager.NavigateTo("/patient/dashboard", forceLoad: true);
+                }
+            else
+                {
+                ToastService.ShowError($"Could not update profile: {result.Error}");
+                }
+            }
+        catch (OperationCanceledException) { }
+        catch (Exception)
+            {
+            ToastService.ShowError("An unexpected error occurred while saving profile.");
+        }
+        finally
+        {
+            isSubmitting = false;
+        }
+    }
+
+    private void Cancel()
+    {
+        NavigationManager.NavigateTo("/patient/dashboard");
+    }
+
+    public void Dispose()
+    {
+        if (cts != null)
+        {
+            cts.Cancel();
+            cts.Dispose();
+            cts = null;
+        }
+    }
+}

@@ -1,22 +1,27 @@
-﻿using System.Threading.Tasks;
-using Azure.Core;
-using Clinix.Application.Dtos;
+﻿using Clinix.Application.Dtos;
 using Clinix.Application.DTOs;
-using Clinix.Application.Interfaces.RepoInterfaces;
-using Clinix.Application.Interfaces.ServiceInterfaces;
+using Clinix.Application.Interfaces.UserRepo;
 using Clinix.Domain.Common;
+using Clinix.Domain.Entities.ApplicationUsers;
+using Microsoft.Extensions.Logging;
 
 namespace Clinix.Web.Services;
 
+/// <summary>
+/// UI-facing service used by Blazor components. In server-side hosting this can call application services directly.
+/// Keep this thin and map to application services (don't return raw exceptions).
+/// </summary>
 public class RegistrationUiService : IRegistrationUiService
     {
     private readonly IRegistrationService _registrationService;
     private readonly IUserRepository _userRepository;
+    private readonly ILogger<RegistrationUiService> _logger;
 
-    public RegistrationUiService(IRegistrationService registrationService, IUserRepository userRepo)
+    public RegistrationUiService(IRegistrationService registrationService, IUserRepository userRepo, ILogger<RegistrationUiService> logger)
         {
         _registrationService = registrationService;
         _userRepository = userRepo;
+        _logger = logger;
         }
 
     public Task<Result> RegisterPatientAsync(RegisterPatientRequest request)
@@ -28,25 +33,22 @@ public class RegistrationUiService : IRegistrationUiService
     public Task<Result> CreateStaffAsync(CreateStaffRequest request, string createdBy)
         => _registrationService.CreateStaffAsync(request, createdBy);
 
-    //public Task<bool> IsEmailTakenAsync(string Email)
-    //    {
-    //    CancellationToken ct = default;
-    //    return _userRepository.GetByEmailAsync(Email, ct)
-    //        .ContinueWith(task => task.Result != null, TaskContinuationOptions.ExecuteSynchronously);
-    //    }
-
-    //public Task<bool> IsUsernameTakenAsync(string userName)
-    //    {
-    //    CancellationToken ct = default;
-    //    return _userRepository.GetByUsernameAsync(userName, ct)
-    //        .ContinueWith(task => task.Result != null, TaskContinuationOptions.ExecuteSynchronously);
-    //    }
-
-    public Task<bool> IsPhoneTakenAsync(string Phone)
+    public async Task<bool> IsPhoneTakenAsync(string phone)
         {
-        CancellationToken ct = default;
-        return _userRepository.GetByPhoneAsync(Phone, ct)
-            .ContinueWith(task => task.Result != null, TaskContinuationOptions.ExecuteSynchronously);
+        try
+            {
+            var user = await _userRepository.GetByPhoneAsync(phone, default);
+            return user != null;
+            }
+        catch (Exception ex)
+            {
+            _logger.LogError(ex, "Error checking phone uniqueness for {Phone}", phone);
+            // Fail-safe: return true to avoid accepting a possibly-duplicate phone in a failure scenario
+            return true;
+            }
         }
+
+    public Task<Result> CompletePatientProfileAsync(CompletePatientProfileRequest request)
+        => _registrationService.CompletePatientProfileAsync(request, "self");
     }
 

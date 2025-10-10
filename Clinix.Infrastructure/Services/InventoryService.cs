@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Clinix.Application.Interfaces.ServiceInterfaces;
+using Clinix.Application.Interfaces.Functionalities;
 using Clinix.Domain.Entities.Inventory;
 using Clinix.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;

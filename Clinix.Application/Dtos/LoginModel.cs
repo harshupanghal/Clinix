@@ -1,4 +1,6 @@
 ﻿namespace Clinix.Application.Dtos;
+
+// login dto
 public class LoginModel
     {
     public string Phone { get; set; } = string.Empty;

@@ -1,5 +1,7 @@
 ﻿namespace Clinix.Application.Dtos;
 
+
+// for inventory
 public class InventoryItemDto
     {
     public int Id { get; set; }

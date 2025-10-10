@@ -1,5 +1,6 @@
 ﻿namespace Clinix.Application.DTOs;
 
+// for creating chemist or receptionist
 public record CreateStaffRequest(
     string FullName,
     string? Email,

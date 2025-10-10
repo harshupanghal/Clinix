@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 using Clinix.Application.Dtos;
 using Clinix.Domain.Entities.Appointments;
 
-namespace Clinix.Application.Interfaces.ServiceInterfaces;
+namespace Clinix.Application.Interfaces.Functionalities;
 public interface IAppointmentService
     {
     // Booking
@@ -27,4 +27,14 @@ public interface IAppointmentService
 
     // Get full appointment details
     Task<ServiceResult<AppointmentDetailsDto>> GetAppointmentDetailsAsync(long appointmentId);
+
+    /// <summary>
+    /// Returns upcoming appointments for a patient (ordered ascending).
+    /// </summary>
+    //Task<List<Appointment>> GetUpcomingForPatientAsync(long patientId, int limit = 10, CancellationToken ct = default);
+
+    /// <summary>
+    /// Returns past appointments for a patient (ordered descending).
+    /// </summary>
+    //Task<List<Appointment>> GetPastForPatientAsync(long patientId, int limit = 10, CancellationToken ct = default);
     }

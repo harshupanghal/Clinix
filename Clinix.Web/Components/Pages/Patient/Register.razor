@@ -1,0 +1,197 @@
+﻿@page "/register"
+@rendermode InteractiveServer
+@using Blazored.FluentValidation
+@using Clinix.Web.Services
+@using Clinix.Application.Dtos
+@inject IRegistrationUiService RegistrationUiService
+@inject NavigationManager NavigationManager
+@inject Blazored.Toast.Services.IToastService ToastService
+
+<h3 class="mb-4 text-primary">Patient Registration</h3>
+
+@if (!string.IsNullOrEmpty(message))
+{
+    <div class="alert @(isSuccess ? "alert-success" : "alert-danger") alert-dismissible fade show" role="alert" aria-live="polite">
+        @message
+        <button type="button" class="btn-close" aria-label="Close" @onclick="() => message = null"></button>
+    </div>
+}
+
+<EditForm Model="registerModel" OnValidSubmit="OnValidSubmit" class="needs-validation" >
+    <FluentValidationValidator />
+
+    <div class="row g-3">
+        <div class="col-md-6 form-floating">
+            <InputText id="fullname" class="form-control" placeholder="Fullname" @bind-Value="registerModel.FullName" aria-describedby="fullnameHelp" />
+            <label for="fullname">Fullname</label>
+            <ValidationMessage For="@(() => registerModel.FullName)" />
+        </div>
+
+        <div class="col-md-6 form-floating">
+            <InputText id="phone" class="form-control" placeholder="Phone Number" @bind-Value="registerModel.Phone" @onblur="CheckPhoneAsync" aria-describedby="phoneHelp" />
+            <label for="phone">Phone Number</label>
+            <ValidationMessage For="@(() => registerModel.Phone)" />
+            @if (!string.IsNullOrEmpty(phoneError))
+            {
+                <div class="text-danger small" role="alert">@phoneError</div>
+            }
+        </div>
+
+        <div class="col-md-6 form-floating">
+            <InputText id="email" class="form-control" placeholder="Email" @bind-Value="registerModel.Email" />
+            <label for="email">Email</label>
+            <ValidationMessage For="@(() => registerModel.Email)" />
+            @if (!string.IsNullOrEmpty(emailError))
+            {
+                <div class="text-danger small" role="alert">@emailError</div>
+            }
+        </div>
+
+        <div class="col-md-6 form-floating">
+            <div class="input-group">
+                <InputText id="password" type="@(showPassword ? "text" : "password")" class="form-control"
+                           placeholder="Password" @bind-Value="registerModel.Password" @oninput="OnPasswordInput" aria-describedby="passwordHelp" />
+                <button type="button" class="btn btn-outline-secondary" @onclick="TogglePasswordVisibility" aria-pressed="@(showPassword)">
+                    @(showPassword ? "Hide" : "Show")
+                </button>
+                <label for="password">Password</label>
+            </div>
+            <ValidationMessage For="@(() => registerModel.Password)" />
+            <div class="progress my-2" aria-hidden="false">
+                <div class="progress-bar @passwordStrengthColor" role="progressbar" style="@($"width: {passwordStrength};")" aria-valuenow="@passwordStrengthPercent" aria-valuemin="0" aria-valuemax="100"></div>
+            </div>
+            <small class="text-muted">@passwordStrengthText</small>
+        </div>
+    </div>
+
+    <button type="submit" class="btn btn-primary mt-4 w-100" disabled="@isSubmitting" aria-disabled="@isSubmitting">
+        @if (isSubmitting)
+        {
+            <span>Registering... <span class="spinner-border spinner-border-sm ms-2" role="status" aria-hidden="true"></span></span>
+        }
+        else
+        {
+            <span>Register</span>
+        }
+    </button>
+</EditForm>
+
+@code {
+    private RegisterPatientRequest registerModel = new();
+    private bool isSubmitting;
+    private bool showPassword;
+    private string passwordStrength = "0%";
+    private int passwordStrengthPercent = 0;
+    private string passwordStrengthText = "Very weak";
+    private string passwordStrengthColor = "bg-danger";
+
+    private string? message;
+    private bool isSuccess;
+    private string? emailError;
+    private string? phoneError;
+
+    // Cancellation token source for delayed redirect / long running tasks
+    private CancellationTokenSource? cts;
+
+    protected override void OnInitialized()
+    {
+        cts = new CancellationTokenSource();
+    }
+
+    private async Task OnValidSubmit()
+    {
+        if (isSubmitting) return;
+        isSubmitting = true;
+
+        try
+        {
+            if (!string.IsNullOrEmpty(phoneError))
+            {
+                ToastService.ShowError("Please fix validation errors before submitting.");
+                return;
+            }
+
+            var result = await RegistrationUiService.RegisterPatientAsync(registerModel);
+
+            if (result.IsSuccess)
+            {
+                isSuccess = true;
+                message = "Registration successful. Redirecting to login...";
+                ToastService.ShowSuccess(message);
+
+                // Delay before redirect to allow user to read the toast (cancellable)
+                try
+                {
+                    await Task.Delay(1300, cts!.Token);
+                }
+                catch (TaskCanceledException) { /* ignore */ }
+
+                if (!(cts?.IsCancellationRequested ?? true))
+                {
+                    NavigationManager.NavigateTo("/login", forceLoad: true);
+                }
+            }
+            else
+            {
+                isSuccess = false;
+                message = $"Registration failed: {result.Error}";
+                ToastService.ShowError(message);
+            }
+        }
+        finally
+        {
+            isSubmitting = false;
+        }
+    }
+
+    private void TogglePasswordVisibility()
+    {
+        showPassword = !showPassword;
+    }
+
+    private void OnPasswordInput(ChangeEventArgs e)
+    {
+        var pwd = e.Value?.ToString() ?? string.Empty;
+        int score = 0;
+        if (pwd.Length >= 8) score++;
+        if (System.Text.RegularExpressions.Regex.IsMatch(pwd, "[A-Z]")) score++;
+        if (System.Text.RegularExpressions.Regex.IsMatch(pwd, "[a-z]")) score++;
+        if (System.Text.RegularExpressions.Regex.IsMatch(pwd, "[0-9]")) score++;
+        if (System.Text.RegularExpressions.Regex.IsMatch(pwd, "[!@#$%^&*(),.?\":{}|<>]")) score++;
+
+        passwordStrengthPercent = (int)Math.Round((score / 5.0) * 100);
+        passwordStrength = $"{passwordStrengthPercent}%";
+
+        if (score <= 2) { passwordStrengthColor = "bg-danger"; passwordStrengthText = "Weak"; }
+        else if (score < 5) { passwordStrengthColor = "bg-warning"; passwordStrengthText = "Medium"; }
+        else { passwordStrengthColor = "bg-success"; passwordStrengthText = "Strong"; }
+    }
+
+    private async Task CheckPhoneAsync(FocusEventArgs _)
+    {
+        phoneError = null;
+
+        if (string.IsNullOrWhiteSpace(registerModel.Phone)) return;
+
+        try
+        {
+            var isTaken = await RegistrationUiService.IsPhoneTakenAsync(registerModel.Phone);
+            phoneError = isTaken ? "Phone number is already taken." : null;
+            StateHasChanged();
+        }
+        catch
+        {
+            phoneError = "Unable to verify phone right now.";
+        }
+    }
+
+    public void Dispose()
+    {
+        if (cts != null)
+        {
+            cts.Cancel();
+            cts.Dispose();
+            cts = null;
+        }
+    }
+}

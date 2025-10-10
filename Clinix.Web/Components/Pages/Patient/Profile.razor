@@ -1,0 +1,173 @@
+﻿@page "/profile"
+@rendermode InteractiveServer
+@attribute [Authorize(Roles = "Patient")]
+@using Blazored.FluentValidation
+@using Clinix.Web.Services
+@using Clinix.Application.Dtos
+@inject IRegistrationUiService RegistrationUiService
+@inject NavigationManager NavigationManager
+@inject AuthenticationStateProvider AuthProvider
+@inject Blazored.Toast.Services.IToastService ToastService
+
+<h3 class="mb-4 text-primary">Complete Your Profile</h3>
+
+@if (!string.IsNullOrEmpty(message))
+{
+    <div class="alert @(isSuccess ? "alert-success" : "alert-danger") alert-dismissible fade show" role="alert" aria-live="polite">
+        @message
+        <button type="button" class="btn-close" aria-label="Close" @onclick="() => message = null"></button>
+    </div>
+}
+
+@if (isLoading)
+{
+    <div class="text-center py-4">
+        <div class="spinner-border text-primary" role="status" aria-hidden="true"></div>
+        <p class="mt-2">Loading your details...</p>
+    </div>
+}
+else
+{
+    <EditForm Model="profileModel" OnValidSubmit="OnValidSubmit" class="needs-validation">
+        <FluentValidationValidator />
+
+        <div class="row g-3">
+            <div class="col-md-6 form-floating">
+                <InputDate id="dob" class="form-control" @bind-Value="profileModel.DateOfBirth" />
+                <label for="dob">Date of Birth</label>
+                <ValidationMessage For="@(() => profileModel.DateOfBirth)" />
+            </div>
+
+            <div class="col-md-6 form-floating">
+                <InputSelect id="gender" class="form-select" @bind-Value="profileModel.Gender">
+                    <option value="">Select Gender</option>
+                    <option>Male</option>
+                    <option>Female</option>
+                    <option>Other</option>
+                </InputSelect>
+                <label for="gender">Gender</label>
+                <ValidationMessage For="@(() => profileModel.Gender)" />
+            </div>
+
+            <div class="col-md-6 form-floating">
+                <InputSelect id="bloodGroup" class="form-select" @bind-Value="profileModel.BloodGroup">
+                    <option value="">Select Blood Group</option>
+                    <option>A+</option><option>A-</option>
+                    <option>B+</option><option>B-</option>
+                    <option>O+</option><option>O-</option>
+                    <option>AB+</option><option>AB-</option>
+                </InputSelect>
+                <label for="bloodGroup">Blood Group</label>
+                <ValidationMessage For="@(() => profileModel.BloodGroup)" />
+            </div>
+
+            <div class="col-md-6 form-floating">
+                <InputText id="emergencyContactName" class="form-control" placeholder="Emergency Contact Name" @bind-Value="profileModel.EmergencyContactName" />
+                <label for="emergencyContactName">Emergency Contact Name</label>
+                <ValidationMessage For="@(() => profileModel.EmergencyContactName)" />
+            </div>
+
+            <div class="col-md-6 form-floating">
+                <InputText id="emergencyContactNumber" class="form-control" placeholder="Emergency Contact Number" @bind-Value="profileModel.EmergencyContactNumber" />
+                <label for="emergencyContactNumber">Emergency Contact Number</label>
+                <ValidationMessage For="@(() => profileModel.EmergencyContactNumber)" />
+            </div>
+
+            <div class="col-12 form-floating">
+                <InputTextArea id="knownAllergies" class="form-control" placeholder="Known Allergies" @bind-Value="profileModel.KnownAllergies" />
+                <label for="knownAllergies">Known Allergies</label>
+                <ValidationMessage For="@(() => profileModel.KnownAllergies)" />
+            </div>
+
+            <div class="col-12 form-floating">
+                <InputTextArea id="existingConditions" class="form-control" placeholder="Existing Conditions" @bind-Value="profileModel.ExistingConditions" />
+                <label for="existingConditions">Existing Conditions</label>
+                <ValidationMessage For="@(() => profileModel.ExistingConditions)" />
+            </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary mt-4 w-100" disabled="@isSubmitting">
+            @if (isSubmitting)
+            {
+                <span>Saving... <span class="spinner-border spinner-border-sm ms-2" role="status" aria-hidden="true"></span></span>
+            }
+            else
+            {
+                <span>Save Profile</span>
+            }
+        </button>
+    </EditForm>
+}
+
+@code {
+    private CompletePatientProfileRequest profileModel = new();
+    private bool isSubmitting;
+    private bool isLoading = true;
+    private string? message;
+    private bool isSuccess;
+    private CancellationTokenSource? cts;
+
+    protected override async Task OnInitializedAsync()
+    {
+        cts = new CancellationTokenSource();
+        isLoading = true;
+
+        var authState = await AuthProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        if (user.Identity?.IsAuthenticated ?? false)
+        {
+            var idClaim = user.FindFirst("UserId") ?? user.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier);
+            if (idClaim != null && long.TryParse(idClaim.Value, out var id))
+                profileModel.UserId = id;
+        }
+
+        isLoading = false;
+    }
+
+    private async Task OnValidSubmit()
+    {
+        if (isSubmitting) return;
+        isSubmitting = true;
+
+        try
+        {
+            var result = await RegistrationUiService.CompletePatientProfileAsync(profileModel);
+            if (result.IsSuccess)
+            {
+                isSuccess = true;
+                message = "Profile updated successfully. Redirecting to dashboard...";
+                ToastService.ShowSuccess(message);
+
+                try
+                {
+                    await Task.Delay(1200, cts!.Token);
+                }
+                catch (TaskCanceledException) { }
+
+                if (!(cts?.IsCancellationRequested ?? true))
+                    NavigationManager.NavigateTo("/dashboard", forceLoad: true);
+            }
+            else
+            {
+                isSuccess = false;
+                message = $"Error: {result.Error}";
+                ToastService.ShowError(message);
+            }
+        }
+        finally
+        {
+            isSubmitting = false;
+        }
+    }
+
+    public void Dispose()
+    {
+        if (cts != null)
+        {
+            cts.Cancel();
+            cts.Dispose();
+            cts = null;
+        }
+    }
+}

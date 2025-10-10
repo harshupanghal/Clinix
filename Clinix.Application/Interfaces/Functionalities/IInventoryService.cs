@@ -1,6 +1,6 @@
 ﻿using Clinix.Domain.Entities.Inventory;
 
-namespace Clinix.Application.Interfaces.ServiceInterfaces;
+namespace Clinix.Application.Interfaces.Functionalities;
 
 public interface IInventoryService
     {

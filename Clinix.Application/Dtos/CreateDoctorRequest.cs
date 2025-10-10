@@ -1,7 +1,7 @@
-﻿using Clinix.Domain.Entities.ApplicationUsers;
-
+﻿
 namespace Clinix.Application.DTOs;
 
+// for creating doctor
 public record CreateDoctorRequest(
     string FullName,
     string Email,

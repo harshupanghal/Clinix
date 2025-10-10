@@ -5,13 +5,16 @@ public class Result
     {
     public bool IsSuccess { get; }
     public string? Error { get; }
+    public string? Message { get; }
 
-    private Result(bool isSuccess, string? error)
+    private Result(bool isSuccess, string? error, string? message)
         {
         IsSuccess = isSuccess;
         Error = error;
+        Message = message;
         }
-    public static Result Success() => new(true, null);
-    public static Result Failure(string error) => new(false, error);
+
+    public static Result Success(string message) => new(true, null, message);
+    public static Result Failure(string error) => new(false, error, null);
     }
 

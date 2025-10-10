@@ -1,4 +1,4 @@
-﻿namespace Clinix.Application.Interfaces.RepoInterfaces;
+﻿namespace Clinix.Application.Interfaces.Functionalities;
 
 public interface IUnitOfWork
     {

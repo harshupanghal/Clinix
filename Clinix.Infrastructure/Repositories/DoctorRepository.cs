@@ -1,4 +1,4 @@
-﻿using Clinix.Application.Interfaces.RepoInterfaces;
+﻿using Clinix.Application.Interfaces.UserRepo;
 using Clinix.Domain.Entities.ApplicationUsers;
 using Clinix.Infrastructure.Persistence;
 

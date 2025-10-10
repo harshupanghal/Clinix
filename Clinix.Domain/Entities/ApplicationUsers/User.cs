@@ -11,7 +11,7 @@ public class User
     public string PasswordHash { get; set; } = null!;
     public string Role { get; set; } = null!; // "Admin","Patient","Doctor","Staff"
     public bool IsDeleted { get; set; } = false;
-    //public string Status { get; set; } = null!;  
+    public bool IsProfileCompleted { get; set; } = false;
 
     // Audit
     public string? CreatedBy { get; set; }

@@ -1,8 +1,8 @@
 ﻿using Clinix.Application.Dtos;
-using Clinix.Application.Interfaces.ServiceInterfaces;
 using Clinix.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Clinix.Application.Mappings;
+using Clinix.Application.Interfaces.Functionalities;
 
 public class AppointmentService : IAppointmentService
     {

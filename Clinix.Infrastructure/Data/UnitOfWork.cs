@@ -1,4 +1,4 @@
-﻿using Clinix.Application.Interfaces.RepoInterfaces;
+﻿using Clinix.Application.Interfaces.Functionalities;
 using Clinix.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore.Storage;
 
