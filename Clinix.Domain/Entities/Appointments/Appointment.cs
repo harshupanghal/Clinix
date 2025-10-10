@@ -1,19 +1,26 @@
 ﻿using Clinix.Domain.Entities.ApplicationUsers;
 
-namespace Clinix.Domain.Entities.Appointments;
-
-public enum AppointmentStatus { Pending, Confirmed, Completed, Cancelled }
-
 public class Appointment
     {
-    public int Id { get; set; }
-    public int PatientId { get; set; }
-    public int DoctorId { get; set; }
-    public int AppointmentSlotId { get; set; }
-    public string Reason { get; set; } = string.Empty;
-    public AppointmentStatus Status { get; set; } = AppointmentStatus.Pending;
-    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public long Id { get; set; }
+
+    public long DoctorId { get; set; }
     public Doctor Doctor { get; set; } = null!;
-    // Patient reference omitted to avoid coupling; use your existing User entity mapping if needed
-    public AppointmentSlot AppointmentSlot { get; set; } = null!;
+
+    public long PatientId { get; set; }
+    public Patient Patient { get; set; } = null!;
+
+    public long? AppointmentSlotId { get; set; } // optional
+    public AppointmentSlot? AppointmentSlot { get; set; }
+
+    public DateTime StartTime { get; set; }
+    public DateTime EndTime { get; set; }
+
+    public string Status { get; set; } = "Scheduled"; // Scheduled, Rescheduled, Cancelled, Completed
+    public string? Reason { get; set; }
+    public string? Type { get; set; } // Consultation, Follow-up, Emergency
+
+    // Audit
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
     }

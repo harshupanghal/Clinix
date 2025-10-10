@@ -1,11 +1,17 @@
 ﻿namespace Clinix.Application.DTOs;
 
 public record CreateStaffRequest(
-    string Username,
-    string Email,
+    string FullName,
+    string? Email,
+    string Phone,
     string Password,
     string Position,
     string? Department,
-    string? ShiftInfo
+    string? ShiftJson,
+    string? AssignedLocation,
+    string? SupervisorName,
+    string? Notes
+
+    
 );
 

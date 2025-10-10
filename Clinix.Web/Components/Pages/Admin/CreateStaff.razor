@@ -1,10 +1,12 @@
 ﻿@page "/create-staff"
 @rendermode InteractiveServer
 @using Clinix.Application.DTOs
+@using Blazored.FluentValidation
 @using System.ComponentModel.DataAnnotations
 @attribute [Authorize(Roles = "Admin")]
 @inject Clinix.Web.Services.IRegistrationUiService RegistrationUiService
 @inject NavigationManager Navigation
+@inject Blazored.Toast.Services.IToastService ToastService
 
 <div class="container py-4">
     <div class="card shadow-lg border-0 rounded-4">
@@ -16,71 +18,80 @@
         </div>
 
         <div class="card-body p-4">
-            @if (_message is not null)
-            {
-                <div class="alert @(_isSuccess ? "alert-success" : "alert-danger") fade show">
-                    @_message
-                </div>
-            }
-
-            <EditForm Model="_model" OnValidSubmit="OnValidSubmit" FormName="Staff-Form">
-                <DataAnnotationsValidator />
-                <ValidationSummary />
+            <EditForm Model="_model" OnValidSubmit="OnValidSubmit">
+                <FluentValidationValidator />
 
                 <div class="row g-4">
-                    <div class="col-md-6">
-                        <label class="form-label fw-semibold">Username</label>
-                        <InputText @bind-Value="_model.Username" class="form-control form-control-lg" placeholder="Enter username" />
+                    <div class="col-md-6 form-floating">
+                        <InputText id="fullName" class="form-control form-control-lg" placeholder="Full Name" @bind-Value="_model.FullName" />
+                        <label for="fullName">Full Name</label>
                     </div>
 
-                    <div class="col-md-6">
-                        <label class="form-label fw-semibold">Email</label>
-                        <InputText @bind-Value="_model.Email" type="email" class="form-control form-control-lg" placeholder="Enter email" />
+                    <div class="col-md-6 form-floating">
+                        <InputText id="email" class="form-control form-control-lg" type="email" placeholder="Email" @bind-Value="_model.Email" />
+                        <label for="email">Email</label>
                     </div>
 
-                    <div class="col-md-6">
-                        <label class="form-label fw-semibold">Password</label>
-                        <InputText @bind-Value="_model.Password" type="password" class="form-control form-control-lg" placeholder="Enter password" />
-                        <div class="form-text text-muted">Use a strong password. Admin will use login to sign in.</div>
+                    <div class="col-md-6 form-floating">
+                        <InputText id="phone" class="form-control form-control-lg" placeholder="Phone" @bind-Value="_model.Phone" />
+                        <label for="phone">Phone</label>
                     </div>
 
-                    <div class="col-md-6">
-                        <label class="form-label fw-semibold">Role / Position</label>
-                        <InputSelect @bind-Value="_model.Position" class="form-select form-select-lg" @onchange="OnPositionChanged">
-                            <option value="">-- Select role --</option>
+                    <div class="col-md-6 form-floating position-relative">
+                        <InputText id="password" class="form-control form-control-lg pe-5" type="@(_showPassword ? "text" : "password")" placeholder="Password" @bind-Value="_model.Password" />
+                        <label for="password">Password</label>
+                        <button type="button" class="btn btn-sm btn-outline-secondary position-absolute top-50 end-0 translate-middle-y me-3" @onclick="TogglePassword">
+                            <i class="bi" @( _showPassword ? "bi-eye-slash" : "bi-eye")></i>
+                        </button>
+                    </div>
+
+                    <div class="col-md-6 form-floating">
+                        <InputSelect id="position" class="form-select form-select-lg" @bind-Value="_model.Position" @onchange="OnPositionChanged">
+                            <option value="">-- Select Role --</option>
                             <option value="Doctor">Doctor</option>
                             <option value="Receptionist">Receptionist</option>
                             <option value="Chemist">Chemist</option>
                         </InputSelect>
+                        <label for="position">Role / Position</label>
                     </div>
                 </div>
 
-                <hr class="my-4" />
-
                 @if (_model.Position == "Doctor")
                 {
-                    <div class="p-3 border rounded-3 bg-light-subtle">
+                    <div class="p-3 border rounded-3 bg-light-subtle mt-4">
                         <h5 class="fw-bold mb-3"><i class="bi bi-heart-pulse"></i> Doctor Details</h5>
                         <div class="row g-3">
-                            <div class="col-md-6">
-                                <label class="form-label">Degree</label>
-                                <InputText @bind-Value="_model.Degree" class="form-control" placeholder="e.g. MBBS" />
+                            <div class="col-md-6 form-floating">
+                                <InputText id="degree" class="form-control" placeholder="Degree" @bind-Value="_model.Degree" />
+                                <label for="degree">Degree</label>
                             </div>
-                            <div class="col-md-6">
-                                <label class="form-label">Specialty</label>
-                                <InputText @bind-Value="_model.Specialty" class="form-control" placeholder="e.g. Cardiologist" />
+                            <div class="col-md-6 form-floating">
+                                <InputText id="specialty" class="form-control" placeholder="Specialty" @bind-Value="_model.Specialty" />
+                                <label for="specialty">Specialty</label>
                             </div>
-                            <div class="col-md-6">
-                                <label class="form-label">License Number</label>
-                                <InputText @bind-Value="_model.LicenseNumber" class="form-control" placeholder="Enter license number" />
+                            <div class="col-md-6 form-floating">
+                                <InputText id="license" class="form-control" placeholder="License Number" @bind-Value="_model.LicenseNumber" />
+                                <label for="license">License Number</label>
                             </div>
-                            <div class="col-md-6">
-                                <label class="form-label">Experience (years)</label>
-                                <InputNumber @bind-Value="_model.ExperienceYears" class="form-control" />
+                            <div class="col-md-6 form-floating">
+                                <InputNumber id="experience" class="form-control" placeholder="Experience (years)" @bind-Value="_model.ExperienceYears" />
+                                <label for="experience">Experience (years)</label>
                             </div>
-                            <div class="col-12">
-                                <label class="form-label">Clinic Address</label>
-                                <InputTextArea @bind-Value="_model.ClinicAddress" class="form-control" rows="2" placeholder="Enter clinic address" />
+                            <div class="col-md-6 form-floating">
+                                <InputText id="room" class="form-control" placeholder="Room Number" @bind-Value="_model.RoomNumber" />
+                                <label for="room">Room Number</label>
+                            </div>
+                            <div class="col-md-6 form-floating">
+                                <InputText id="extension" class="form-control" placeholder="Extension Number" @bind-Value="_model.ExtensionNumber" />
+                                <label for="extension">Extension Number</label>
+                            </div>
+                            <div class="col-md-6 form-floating">
+                                <InputNumber id="fee" class="form-control" placeholder="Consultation Fee" @bind-Value="_model.ConsultationFee" />
+                                <label for="fee">Consultation Fee</label>
+                            </div>
+                            <div class="col-12 form-floating">
+                                <InputTextArea id="notes" class="form-control" rows="2" placeholder="Notes" @bind-Value="_model.Notes" />
+                                <label for="notes">Notes</label>
                             </div>
                         </div>
                     </div>
@@ -88,24 +99,40 @@
 
                 @if (_model.Position == "Receptionist" || _model.Position == "Chemist")
                 {
-                    <div class="p-3 border rounded-3 bg-light-subtle">
+                    <div class="p-3 border rounded-3 bg-light-subtle mt-4">
                         <h5 class="fw-bold mb-3"><i class="bi bi-person-gear"></i> Staff Details</h5>
                         <div class="row g-3">
-                            <div class="col-md-6">
-                                <label class="form-label">Department</label>
-                                <InputText @bind-Value="_model.Department" class="form-control" placeholder="e.g. Front Desk" />
+                            <div class="col-md-6 form-floating">
+                                <InputText id="department" class="form-control" placeholder="Department" @bind-Value="_model.Department" />
+                                <label for="department">Department</label>
                             </div>
-                            <div class="col-md-6">
-                                <label class="form-label">Shift Info</label>
-                                <InputText @bind-Value="_model.ShiftInfo" class="form-control" placeholder="e.g. 9:00 AM - 5:00 PM" />
+                            <div class="col-md-6 form-floating">
+                                <InputText id="shift" class="form-control" placeholder="Shift JSON" @bind-Value="_model.ShiftJson" />
+                                <label for="shift">Shift JSON</label>
+                            </div>
+                            <div class="col-md-6 form-floating">
+                                <InputText id="location" class="form-control" placeholder="Assigned Location" @bind-Value="_model.AssignedLocation" />
+                                <label for="location">Assigned Location</label>
+                            </div>
+                            <div class="col-md-6 form-floating">
+                                <InputText id="supervisor" class="form-control" placeholder="Supervisor Name" @bind-Value="_model.SupervisorName" />
+                                <label for="supervisor">Supervisor Name</label>
+                            </div>
+                            <div class="col-12 form-floating">
+                                <InputTextArea id="notes2" class="form-control" rows="2" placeholder="Notes" @bind-Value="_model.Notes" />
+                                <label for="notes2">Notes</label>
                             </div>
                         </div>
                     </div>
                 }
 
                 <div class="mt-4 d-flex justify-content-end gap-2">
-                    <button class="btn btn-success px-4" type="submit">
-                        <i class="bi bi-check-circle"></i> Create
+                    <button class="btn btn-success px-4" type="submit" disabled="@_isSubmitting">
+                        @_isSubmitting ? "Creating..." : "Create"
+                        @if (_isSubmitting)
+                        {
+                            <span class="spinner-border spinner-border-sm ms-2" role="status"></span>
+                        }
                     </button>
                     <button class="btn btn-outline-secondary px-4" type="button" @onclick="NavigateBack">
                         <i class="bi bi-x-circle"></i> Cancel
@@ -117,90 +144,93 @@
 </div>
 
 @code {
-    [SupplyParameterFromForm]
-    private CreateStaffUiModel _model { get; set; } = new();
-    private string? _message;
-    private bool _isSuccess;
+    private CreateStaffUiModel _model = new();
+    private bool _isSubmitting;
+    private bool _showPassword;
 
-    private void OnPositionChanged(ChangeEventArgs _) 
-    {
-        if (_model.Position != "Doctor")
-        {
-            _model.Degree = _model.Specialty = _model.LicenseNumber = _model.ClinicAddress = null;
-            _model.ExperienceYears = null;
-        }
-    }
+    private void TogglePassword() => _showPassword = !_showPassword;
+
+    private void OnPositionChanged(ChangeEventArgs _) => StateHasChanged();
 
     private async Task OnValidSubmit()
     {
-        _message = null; _isSuccess = false;
-
-        if (string.IsNullOrWhiteSpace(_model.Position))
+        _isSubmitting = true;
+        try
         {
-            _message = "Please select a role/position.";
-            return;
-        }
-
-        if (string.IsNullOrWhiteSpace(_model.Username) || string.IsNullOrWhiteSpace(_model.Email) || string.IsNullOrWhiteSpace(_model.Password))
-        {
-            _message = "Username, Email, and Password are required.";
-            return;
-        }
-
-        if (_model.Position == "Doctor")
-        {
-            if (string.IsNullOrWhiteSpace(_model.Specialty) && string.IsNullOrWhiteSpace(_model.Degree))
+            if (string.IsNullOrWhiteSpace(_model.Position))
             {
-                _message = "Please provide at least a Degree or Specialty for the doctor.";
+                ToastService.ShowError("Please select a role/position.");
                 return;
             }
 
-            var dto = new CreateDoctorRequest(
-                _model.Username, _model.Email, _model.Password,
-                _model.Degree, _model.Specialty, _model.LicenseNumber,
-                _model.ExperienceYears, _model.ClinicAddress
+            if (_model.Position == "Doctor")
+            {
+                var dto = new CreateDoctorRequest(
+                    _model.FullName, _model.Email, _model.Phone, _model.Password,
+                    _model.Degree, _model.Specialty, _model.LicenseNumber,
+                    _model.ExperienceYears, _model.RoomNumber,
+                    _model.WorkHoursJson, _model.ExtensionNumber,
+                    _model.ConsultationFee, _model.Notes
+                );
+
+                var result = await RegistrationUiService.CreateDoctorAsync(dto, createdBy: "admin");
+                if (result.IsSuccess)
+                {
+                    ToastService.ShowSuccess("Doctor created successfully.");
+                    ClearFormAndNavigate();
+                }
+                else ToastService.ShowError($"Error: {result.Error}");
+                return;
+            }
+
+            var staffDto = new CreateStaffRequest(
+                _model.FullName, _model.Email, _model.Phone, _model.Password,
+                _model.Position, _model.Department, _model.ShiftJson,
+                _model.AssignedLocation, _model.SupervisorName, _model.Notes
             );
 
-            var result = await RegistrationUiService.CreateDoctorAsync(dto, createdBy: "admin");
-            _isSuccess = result.IsSuccess;
-            _message = result.IsSuccess ? "Doctor created successfully." : $"Error: {result.Error}";
-            if (_isSuccess) ClearFormAndNavigate();
-            return;
+            var staffResult = await RegistrationUiService.CreateStaffAsync(staffDto, createdBy: "admin");
+            if (staffResult.IsSuccess)
+            {
+                ToastService.ShowSuccess($"{_model.Position} created successfully.");
+                ClearFormAndNavigate();
+            }
+            else ToastService.ShowError($"Error: {staffResult.Error}");
         }
-
-        var staffDto = new CreateStaffRequest(
-            _model.Username, _model.Email, _model.Password,
-            _model.Position, _model.Department, _model.ShiftInfo
-        );
-
-        var staffResult = await RegistrationUiService.CreateStaffAsync(staffDto, createdBy: GetCurrentAdminNameOrPlaceholder());
-        _isSuccess = staffResult.IsSuccess;
-        _message = staffResult.IsSuccess ? $"{_model.Position} created successfully." : $"Error: {staffResult.Error}";
-        if (_isSuccess) ClearFormAndNavigate();
+        finally { _isSubmitting = false; }
     }
 
     private void ClearFormAndNavigate()
     {
         _model = new CreateStaffUiModel();
-        // Navigation.NavigateTo("/admin/dashboard");
+        Navigation.NavigateTo("/admin/dashboard", true);
     }
 
-    private void NavigateBack() => Navigation.NavigateTo("/");
-    private string GetCurrentAdminNameOrPlaceholder() => "admin";
+    private void NavigateBack() => Navigation.NavigateTo("/admin/dashboard", true);
 
     private class CreateStaffUiModel
     {
-        [Required] public string Username { get; set; } = "";
+        [Required] public string FullName { get; set; } = "";
         [Required, EmailAddress] public string Email { get; set; } = "";
+        [Required] public string Phone { get; set; } = "";
         [Required] public string Password { get; set; } = "";
         [Required] public string Position { get; set; } = "";
 
-        public string? Department { get; set; }
-        public string? ShiftInfo { get; set; }
+        // Doctor fields
         public string? Degree { get; set; }
         public string? Specialty { get; set; }
         public string? LicenseNumber { get; set; }
         public int? ExperienceYears { get; set; }
-        public string? ClinicAddress { get; set; }
+        public string? RoomNumber { get; set; }
+        public string? ExtensionNumber { get; set; }
+        public decimal ConsultationFee { get; set; }
+        public string? WorkHoursJson { get; set; }
+
+        // Common fields
+        public string? Department { get; set; }
+        public string? ShiftJson { get; set; }
+        public string? AssignedLocation { get; set; }
+        public string? SupervisorName { get; set; }
+        public string? Notes { get; set; }
     }
 }

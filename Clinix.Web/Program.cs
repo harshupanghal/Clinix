@@ -1,6 +1,7 @@
 using Clinix.Application.Interfaces.RepoInterfaces;
 using Clinix.Application.Interfaces.ServiceInterfaces;
 using Clinix.Application.Services;
+using Clinix.Application.Validators;
 using Clinix.Infrastructure.Data;
 using Clinix.Infrastructure.Persistence;
 using Clinix.Infrastructure.Repositories;
@@ -8,9 +9,12 @@ using Clinix.Infrastructure.Services;
 using Clinix.Web.Components;
 using Clinix.Web.Helpers;
 using Clinix.Web.Services;
+using FluentValidation;
+using FluentValidation.AspNetCore;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Components.Server;
 using Microsoft.EntityFrameworkCore;
+using Blazored.Toast;
 
 var builder = WebApplication.CreateBuilder(args);
 //builder.Services.AddCascadingAuthenticationState();
@@ -30,12 +34,20 @@ builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<IInventoryService, InventoryService>();
 
 builder.Services.AddScoped<IRegistrationService, RegistrationService>();
+builder.Services.AddScoped<IAppointmentService, AppointmentService>();
 
 builder.Services.AddScoped<Clinix.Application.Interfaces.ServiceInterfaces.IAuthenticationService, Clinix.Infrastructure.Services.AuthenticationService>();
 
 builder.Services.AddScoped<IRegistrationUiService, RegistrationUiService>();
 builder.Services.AddScoped<ISafeNavigationService, SafeNavigationService>();
 //builder.Services.AddSingleton<IPendingAuthService, PendingAuthService>();
+
+builder.Services.AddBlazoredToast();
+
+builder.Services.AddFluentValidationAutoValidation();   
+builder.Services.AddFluentValidationClientsideAdapters(); 
+
+builder.Services.AddValidatorsFromAssemblyContaining<RegisterPatientRequestValidator>();
 
 builder.Services.AddAntiforgery(options =>
 {

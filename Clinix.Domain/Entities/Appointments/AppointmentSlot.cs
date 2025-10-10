@@ -1,19 +1,24 @@
 ﻿using Clinix.Domain.Entities.ApplicationUsers;
+using Clinix.Domain.Entities.Appointments;
 
-namespace Clinix.Domain.Entities.Appointments;
-
-public enum SlotStatus { Available, Booked, Blocked }
+public enum SlotStatus
+    {
+    Available,
+    Booked,
+    Blocked
+    }
 
 public class AppointmentSlot
     {
-    public int Id { get; set; }
-    public int DoctorId { get; set; }
-    // store UTC
+    public long Id { get; set; }
+    public long DoctorId { get; set; }
+    public Doctor Doctor { get; set; } = null!;
+
     public DateTime StartUtc { get; set; }
     public DateTime EndUtc { get; set; }
+
     public SlotStatus Status { get; set; } = SlotStatus.Available;
-    // EF Core rowversion for optimistic concurrency
-    public byte[] RowVersion { get; set; } = Array.Empty<byte>();
-    public Doctor Doctor { get; set; } = null!;
-    public Appointment? Appointment { get; set; }
+
+    public Appointment? Appointment { get; set; } // one-to-one
+    public byte[]? RowVersion { get; set; } // for concurrency control
     }

@@ -4,8 +4,9 @@ public record AuthenticationResult(
     bool IsSuccess,
     string? Error,
     long? UserId,
-    string? Username,
+    string? Fullname,
     string? Email,
+    string? Phone,
     string? Role
     );
 

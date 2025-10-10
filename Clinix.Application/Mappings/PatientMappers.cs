@@ -13,7 +13,8 @@ public static class PatientMappers
             DateOfBirth = req.DateOfBirth,
             Gender = req.Gender,
             BloodGroup = req.BloodGroup,
-            EmergencyContact = req.EmergencyContact,
+            //EmergencyContact = req.EmergencyContact,
+
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow
             };

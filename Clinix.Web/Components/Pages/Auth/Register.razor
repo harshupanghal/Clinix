@@ -1,87 +1,215 @@
 ﻿@page "/register"
 @rendermode InteractiveServer
 @using Clinix.Web.Services
-@inject Clinix.Web.Services.IRegistrationUiService RegistrationUiService
+@using Clinix.Application.Dtos
+@using Blazored.FluentValidation
+@inject IRegistrationUiService RegistrationUiService
+@inject NavigationManager NavigationManager
+@inject Blazored.Toast.Services.IToastService ToastService
 
-<h3>Patient Registration</h3>
+
+<h3 class="mb-4 text-primary">Patient Registration</h3>
 
 @if (_message is not null)
-{
-    <div class="alert @(_isSuccess ? "alert-success" : "alert-danger")">@_message</div>
-}
+    {
+    <div class="alert @(_isSuccess ? "alert-success" : "alert-danger") alert-dismissible fade show" role="alert">
+        @_message
+        <button type="button" class="btn-close" @onclick="() => _message = null"></button>
+    </div>
+    }
 
-<EditForm Model="_model" OnValidSubmit="OnValidSubmit" FormName="Regi-Form"> 
-    <DataAnnotationsValidator />
-    <ValidationSummary />
+<EditForm Model="_model" OnValidSubmit="OnValidSubmit" class="needs-validation" FormName="Registration-Form">
+    <FluentValidationValidator />
 
-    <div class="mb-3">
-        <label>Username</label>
-        <InputText @bind-Value="_model.Username" class="form-control" />
+    <div class="row g-3">
+      
+        <div class="col-md-6 form-floating">
+            <InputText id="fullname" class="form-control" placeholder="Fullname" @bind-Value="_model.FullName"  />
+            <label for="fullname">Fullname</label>
+            <ValidationMessage For="@(() => _model.FullName)" />
+           
+        </div>
+
+        <div class="col-md-6 form-floating">
+            <InputText id="phone" class="form-control" placeholder="Phone Number" @bind-Value="_model.Phone" @onblur="CheckPhoneAsync" />
+            <label for="phone">Phone Number</label>
+            <ValidationMessage For="@(() => _model.Phone)" />
+            @if (!string.IsNullOrEmpty(_phoneError))
+                {
+                <div class="text-danger small">@_phoneError</div>
+                }
+        </div>
+
+        <div class="col-md-6 form-floating">
+            <InputText id="email" class="form-control" placeholder="Email" @bind-Value="_model.Email" />
+            <label for="email">Email</label>
+            <ValidationMessage For="@(() => _model.Email)" />
+            @if (!string.IsNullOrEmpty(_emailError))
+                {
+                <div class="text-danger small">@_emailError</div>
+                }
+        </div>
+
+        <div class="col-md-6 form-floating">
+            <div class="input-group">
+                <InputText id="password" type="@(_showPassword ? "text" : "password")" class="form-control" placeholder="Password" @bind-Value="_model.Password" @oninput="CheckPasswordStrength" />
+                <button type="button" class="btn btn-outline-secondary" @onclick="() => _showPassword = !_showPassword">
+                    @(_showPassword ? "Hide" : "Show")
+                </button>
+                <label for="password">Password</label>
+            </div>
+            <ValidationMessage For="@(() => _model.Password)" />
+        <div class="progress-bar @_passwordStrengthColor"
+     style=@($"width: {_passwordStrength};")
+     role="progressbar"></div>
+
+            <small>@_passwordStrengthText</small>
+        </div>
+
+        <div class="col-md-6 form-floating">
+            <InputDate id="dob" class="form-control" placeholder="Date of Birth" @bind-Value="_model.DateOfBirth" />
+            <label for="dob">Date of Birth</label>
+            <ValidationMessage For="@(() => _model.DateOfBirth)" />
+        </div>
+
+        <div class="col-md-6 form-floating">
+            <InputSelect id="gender" class="form-select" @bind-Value="_model.Gender">
+                <option value="">Select Gender</option>
+                <option>Male</option>
+                <option>Female</option>
+                <option>Other</option>
+            </InputSelect>
+            <label for="gender">Gender</label>
+            <ValidationMessage For="@(() => _model.Gender)" />
+        </div>
+
+        <div class="col-md-6 form-floating">
+            <InputSelect id="bloodGroup" class="form-select" @bind-Value="_model.BloodGroup" title="Select your blood group (e.g., A+, O-)">
+                <option value="">Select Blood Group</option>
+                <option>A+</option>
+                <option>A-</option>
+                <option>B+</option>
+                <option>B-</option>
+                <option>O+</option>
+                <option>O-</option>
+                <option>AB+</option>
+                <option>AB-</option>
+            </InputSelect>
+            <label for="bloodGroup">Blood Group</label>
+            <ValidationMessage For="@(() => _model.BloodGroup)" />
+        </div>
+
+        <div class="col-md-6 form-floating">
+            <InputText id="emergencyContact" class="form-control" placeholder="Emergency Contact" @bind-Value="_model.EmergencyContact" title="10-15 digit phone number" />
+            <label for="emergencyContact">Emergency Contact</label>
+            <ValidationMessage For="@(() => _model.EmergencyContact)" />
+        </div>
     </div>
 
-    <div class="mb-3">
-        <label>Email</label>
-        <InputText @bind-Value="_model.Email" class="form-control" />
-    </div>
-
-    <div class="mb-3">
-        <label>Password</label>
-        <InputText @bind-Value="_model.Password" type="password" class="form-control" />
-    </div>
-
-    <div class="mb-3">
-        <label>Date of Birth</label>
-        <InputDate @bind-Value="_model.DateOfBirth" class="form-control" />
-    </div>
-
-    <div class="mb-3">
-        <label>Gender</label>
-        <InputText @bind-Value="_model.Gender" class="form-control" />
-    </div>
-
-    <div class="mb-3">
-        <label>Blood Group</label>
-        <InputText @bind-Value="_model.BloodGroup" class="form-control" />
-    </div>
-
-    <div class="mb-3">
-        <label>Emergency Contact</label>
-        <InputText @bind-Value="_model.EmergencyContact" class="form-control" />
-    </div>
-
-    <button class="btn btn-primary">Register</button>
+    <button type="submit" class="btn btn-primary mt-4 w-100" disabled="@_isSubmitting">
+        @_isSubmitting ? "Registering..." : "Register"
+        @if (_isSubmitting)
+            {
+            <span class="spinner-border spinner-border-sm ms-2" role="status"></span>
+            }
+    </button>
 </EditForm>
 
 @code {
-    [SupplyParameterFromForm]
-    private RegisterModel _model { get; set; } = new();
+    private RegisterPatientRequest _model = new();
+    private bool _isSubmitting;
+    private bool _showPassword;
+    private string _passwordStrength = "0%";
+    private string _passwordStrengthText = "";
+    private string _passwordStrengthColor = "bg-danger";
+
     private string? _message;
     private bool _isSuccess;
+    private string? _emailError;
+    private string? _usernameError;
+    private string? _phoneError;
 
-    private async Task OnValidSubmit()
+    private CancellationTokenSource _cts = new();
+
+private async Task OnValidSubmit()
+{
+    _isSubmitting = true;
+
+    try
     {
-        var dto = new RegisterPatientRequest(
-            _model.Username,
-            _model.Email,
-            _model.Password,
-            _model.DateOfBirth,
-            _model.Gender,
-            _model.BloodGroup,
-            _model.EmergencyContact);
+       
+        if (!string.IsNullOrEmpty(_phoneError))
+        {
+            ToastService.ShowError("Please fix validation errors before submitting.");
+            return; 
+        }
 
-        var result = await RegistrationUiService.RegisterPatientAsync(dto);
-        _isSuccess = result.IsSuccess;
-        _message = result.IsSuccess ? "Registration successful. You may login." : $"Error: {result.Error}";
+        var result = await RegistrationUiService.RegisterPatientAsync(_model);
+
+        if (result.IsSuccess)
+        {
+            ToastService.ShowSuccess("Registration successful. Redirecting to login...");
+            
+            await Task.Delay(1500, _cts.Token);
+
+            if (!_cts.IsCancellationRequested)
+                NavigationManager.NavigateTo("/login", forceLoad: true);
+        }
+        else
+        {
+            ToastService.ShowError($"Registration failed: {result.Error}");
+        }
+    }
+    catch (TaskCanceledException)
+    {
+        // Ignore cancellation
+    }
+    finally
+    {
+        // Ensure submit button is always re-enabled
+        _isSubmitting = false;
+    }
+}
+
+
+    private void CheckPasswordStrength(ChangeEventArgs e)
+    {
+        string pwd = e.Value?.ToString() ?? "";
+        int score = 0;
+        if (pwd.Length >= 8) score++;
+        if (System.Text.RegularExpressions.Regex.IsMatch(pwd, "[A-Z]")) score++;
+        if (System.Text.RegularExpressions.Regex.IsMatch(pwd, "[a-z]")) score++;
+        if (System.Text.RegularExpressions.Regex.IsMatch(pwd, "[0-9]")) score++;
+        if (System.Text.RegularExpressions.Regex.IsMatch(pwd, "[!@#$%^&*(),.?\":{}|<>]")) score++;
+
+        _passwordStrength = $"{(score / 5.0) * 100}%";
+
+        if (score <= 2) { _passwordStrengthColor = "bg-danger"; _passwordStrengthText = "Weak"; }
+        else if (score < 5) { _passwordStrengthColor = "bg-warning"; _passwordStrengthText = "Medium"; }
+        else { _passwordStrengthColor = "bg-success"; _passwordStrengthText = "Strong"; }
     }
 
-    class RegisterModel
+    // private async Task CheckEmailAsync(FocusEventArgs e)
+    // {
+    //     if (string.IsNullOrWhiteSpace(_model.Email)) return;
+    //     var exists = await RegistrationUiService.IsEmailTakenAsync(_model.Email);
+    //     _emailError = exists ? "Email is already registered." : null;
+    //     StateHasChanged();
+    // }
+
+    // private async Task CheckUsernameAsync(FocusEventArgs e)
+    // {
+    //     if (string.IsNullOrWhiteSpace(_model.FullName)) return;
+    //     var exists = await RegistrationUiService.IsUsernameTakenAsync(_model.Username);
+    //     _usernameError = exists ? "Username is already taken." : null;
+    //     StateHasChanged();
+    // }
+
+    private async Task CheckPhoneAsync(FocusEventArgs e)
     {
-        [System.ComponentModel.DataAnnotations.Required] public string Username { get; set; } = "";
-        [System.ComponentModel.DataAnnotations.Required][System.ComponentModel.DataAnnotations.EmailAddress] public string Email { get; set; } = "";
-        [System.ComponentModel.DataAnnotations.Required] public string Password { get; set; } = "";
-        public DateTime? DateOfBirth { get; set; }
-        public string? Gender { get; set; }
-        public string? BloodGroup { get; set; }
-        public string? EmergencyContact { get; set; }
+        if (string.IsNullOrWhiteSpace(_model.Phone)) return;
+        var exists = await RegistrationUiService.IsPhoneTakenAsync(_model.Phone);
+        _phoneError = exists ? "Phone Number is already taken." : null;
+        StateHasChanged();
     }
 }

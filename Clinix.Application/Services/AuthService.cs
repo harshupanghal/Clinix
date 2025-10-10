@@ -36,16 +36,16 @@ public class RegistrationService : IRegistrationService
     public async Task<Result> RegisterPatientAsync(RegisterPatientRequest request, string createdBy, CancellationToken ct = default)
         {
         // Basic input checks
-        if (string.IsNullOrWhiteSpace(request.Username) || string.IsNullOrWhiteSpace(request.Email) || string.IsNullOrWhiteSpace(request.Password))
-            return Result.Failure("Username, email and password are required.");
+        if (string.IsNullOrWhiteSpace(request.FullName) || string.IsNullOrWhiteSpace(request.Phone) || string.IsNullOrWhiteSpace(request.Password))
+            return Result.Failure("FullName, phone and password are required.");
 
-        if (await _userRepo.GetByEmailAsync(request.Email, ct) != null)
-            return Result.Failure("Email already in use.");
+        if (await _userRepo.GetByPhoneAsync(request.Phone, ct) != null)
+            return Result.Failure("Phone Number already in use. Try using a different one");
 
-        if (await _userRepo.GetByUsernameAsync(request.Username, ct) != null)
-            return Result.Failure("Username already in use.");
+        //if (await _userRepo.GetByUsernameAsync(request.Username, ct) != null)
+        //    return Result.Failure("FullName already in use.");
 
-        var user = UserMappers.CreateForRole(request.Username, request.Email, role: "Patient", createdBy);
+        var user = UserMappers.CreateForRole(request.FullName, request.Email, request.Phone, role: "Patient", createdBy);
         user.PasswordHash = _passwordHasher.HashPassword(user, request.Password);
 
         await _uow.BeginTransactionAsync(ct);
@@ -68,16 +68,16 @@ public class RegistrationService : IRegistrationService
 
     public async Task<Result> CreateDoctorAsync(CreateDoctorRequest request, string createdBy, CancellationToken ct = default)
         {
-        if (string.IsNullOrWhiteSpace(request.Username) || string.IsNullOrWhiteSpace(request.Email) || string.IsNullOrWhiteSpace(request.Password))
-            return Result.Failure("Username, email and password are required.");
+        if (string.IsNullOrWhiteSpace(request.FullName) || string.IsNullOrWhiteSpace(request.Phone) || string.IsNullOrWhiteSpace(request.Password))
+            return Result.Failure("FullName, phone and password are required.");
 
-        if (await _userRepo.GetByEmailAsync(request.Email, ct) != null)
-            return Result.Failure("Email already in use.");
+        //if (await _userRepo.GetByEmailAsync(request.Email, ct) != null)
+        //    return Result.Failure("Email already in use.");
 
-        if (await _userRepo.GetByUsernameAsync(request.Username, ct) != null)
-            return Result.Failure("Username already in use.");
+        if (await _userRepo.GetByPhoneAsync(request.Phone, ct) != null)
+            return Result.Failure("Phone Number already in use. Try using a different one");
 
-        var user = UserMappers.CreateForRole(request.Username, request.Email, role: "Doctor", createdBy);
+        var user = UserMappers.CreateForRole(request.FullName, request.Email, request.Phone, role: "Doctor", createdBy);
         user.PasswordHash = _passwordHasher.HashPassword(user, request.Password);
 
         await _uow.BeginTransactionAsync(ct);
@@ -100,16 +100,16 @@ public class RegistrationService : IRegistrationService
 
     public async Task<Result> CreateStaffAsync(CreateStaffRequest request, string createdBy, CancellationToken ct = default)
         {
-        if (string.IsNullOrWhiteSpace(request.Username) || string.IsNullOrWhiteSpace(request.Email) || string.IsNullOrWhiteSpace(request.Password) || string.IsNullOrWhiteSpace(request.Position))
-            return Result.Failure("Username, email, password and position are required.");
+        if (string.IsNullOrWhiteSpace(request.FullName) || string.IsNullOrWhiteSpace(request.Phone) || string.IsNullOrWhiteSpace(request.Password) || string.IsNullOrWhiteSpace(request.Position))
+            return Result.Failure("FullName, phone, password and position are required.");
 
-        if (await _userRepo.GetByEmailAsync(request.Email, ct) != null)
-            return Result.Failure("Email already in use.");
+        //if (await _userRepo.GetByEmailAsync(request.Email, ct) != null)
+        //    return Result.Failure("Email already in use.");
 
-        if (await _userRepo.GetByUsernameAsync(request.Username, ct) != null)
-            return Result.Failure("Username already in use.");
+        if (await _userRepo.GetByPhoneAsync(request.Phone, ct) != null)
+            return Result.Failure("Phone Number already in use. Try using a different one");
 
-        var user = UserMappers.CreateForRole(request.Username, request.Email, role: "Staff", createdBy);
+        var user = UserMappers.CreateForRole(request.FullName, request.Email, request.Phone, role: "Staff", createdBy);
         user.PasswordHash = _passwordHasher.HashPassword(user, request.Password);
 
         await _uow.BeginTransactionAsync(ct);

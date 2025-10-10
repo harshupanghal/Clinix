@@ -13,8 +13,8 @@ public class UserRepository : IUserRepository
     public async Task<User?> GetByEmailAsync(string email, CancellationToken ct = default)
         => await _db.Users.AsNoTracking().Where(u => !u.IsDeleted && u.Email == email).FirstOrDefaultAsync(ct);
 
-    public async Task<User?> GetByUsernameAsync(string username, CancellationToken ct = default)
-        => await _db.Users.AsNoTracking().Where(u => !u.IsDeleted && u.Username == username).FirstOrDefaultAsync(ct);
+    public async Task<User?> GetByPhoneAsync(string phone, CancellationToken ct = default)
+        => await _db.Users.AsNoTracking().Where(u => !u.IsDeleted && u.Phone == phone).FirstOrDefaultAsync(ct);
 
     public Task AddAsync(User user, CancellationToken ct = default)
         {
@@ -41,5 +41,10 @@ public class UserRepository : IUserRepository
         {
         throw new NotImplementedException();
         }
+
     }
+
+    //public async Task<User?> GetByPhoneAsync(string phone, CancellationToken ct = default)
+    //    => await _db.Users.AsNoTracking().Where(u => !u.IsDeleted && u.Phone == phone).FirstOrDefaultAsync(ct);
+    //}
 

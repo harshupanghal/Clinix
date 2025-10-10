@@ -1,0 +1,9 @@
+﻿@using Blazored.Toast.Services
+@inject IToastService ToastService
+
+
+@code {
+public void ShowSuccess(string message) => ToastService.ShowSuccess(message);
+public void ShowError(string message) => ToastService.ShowError(message);
+public void ShowInfo(string message) => ToastService.ShowInfo(message);
+}

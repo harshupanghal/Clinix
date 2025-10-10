@@ -1,13 +1,22 @@
-﻿namespace Clinix.Application.DTOs;
+﻿using Clinix.Domain.Entities.ApplicationUsers;
+
+namespace Clinix.Application.DTOs;
 
 public record CreateDoctorRequest(
-    string Username,
+    string FullName,
     string Email,
+    string Phone,
     string Password,
     string? Degree,
     string? Specialty,
     string? LicenseNumber,
     int? ExperienceYears,
-    string? ClinicAddress
+    string? RoomNumber,
+    string? WorkHoursJson,
+    string? ExtensionNumber, 
+    decimal ConsultationFee,
+    string? Notes
 );
 
+
+       

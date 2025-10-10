@@ -4,67 +4,83 @@
 @inject NavigationManager Navigation
 @inject ILogger<Login> Logger
 @inject IJSRuntime JS
-@inject Application.Interfaces.ServiceInterfaces.IAuthenticationService _authService 
+@inject Application.Interfaces.ServiceInterfaces.IAuthenticationService _authService
+@inject Blazored.Toast.Services.IToastService ToastService
 
-<h3>Login</h3>
+<h3 class="mb-4 text-primary">Login</h3>
 
-@if (!string.IsNullOrEmpty(_error))
-{
-    <div class="alert alert-danger">@_error</div>
-}
-
-@if (!string.IsNullOrEmpty(_success))
-{
-    <div class="alert alert-success">@_success</div>
-}
-
-<EditForm Model="_model" OnValidSubmit="HandleLogin" FormName="Login-form">
+<EditForm Model="_model" OnValidSubmit="HandleLogin" class="needs-validation" FormName="Login-Form">
     <DataAnnotationsValidator />
     <ValidationSummary />
 
-    <InputText @bind-Value="_model.UserNameOrEmail" placeholder="Username or Email" class="form-control mb-2" />
-    <InputText @bind-Value="_model.Password" type="password" placeholder="Password" class="form-control mb-2" />
-    <InputCheckbox @bind-Value="_model.RememberMe" /> Remember Me
+    <!-- Username/Email -->
+    <div class="form-floating mb-3">
+        <InputText id="phone" class="form-control" placeholder="Phone" @bind-Value="_model.Phone"/>
+        <label for="phone">Phone Number</label>
+    </div>
 
-    <button class="btn btn-primary w-100" disabled="@_isLoading">@_buttonText</button>
+    <!-- Password -->
+    <div class="form-floating mb-3">
+        <div class="input-group">
+            <InputText id="password" type="@(_showPassword ? "text" : "password")" class="form-control" placeholder="Password" @bind-Value="_model.Password"/>
+            <button type="button" class="btn btn-outline-secondary" @onclick="() => _showPassword = !_showPassword">
+                @(_showPassword ? "Hide" : "Show")
+            </button>
+            <label for="password">Password</label>
+        </div>
+    </div>
+
+    <!-- Remember Me -->
+    <div class="form-check mb-3">
+        <InputCheckbox id="remember" class="form-check-input" @bind-Value="_model.RememberMe"/>
+        <label class="form-check-label" for="remember">Remember Me</label>
+    </div>
+
+    <!-- Submit Button -->
+    <button type="submit" class="btn btn-primary w-100" disabled="@_isLoading">
+        @_isLoading ? "Logging in..." : "Login"
+        @if (_isLoading)
+        {
+            <span class="spinner-border spinner-border-sm ms-2" role="status"></span>
+        }
+    </button>
 </EditForm>
 
 @code {
     [SupplyParameterFromForm]
     private LoginModel _model { get; set; } = new();
-    private string? _error;
-    private string? _success;
+
     private bool _isLoading;
-    private string _buttonText = "Login";
+    private bool _showPassword;
+
     [CascadingParameter]
     public HttpContext HttpContext { get; set; } = default!;
 
     private async Task HandleLogin()
     {
-        _error = _success = null;
         _isLoading = true;
-        _buttonText = "Logging in...";
 
         try
         {
-            var result = await _authService.ValidateCredentialsAsync(_model.UserNameOrEmail, _model.Password);
+            var result = await _authService.ValidateCredentialsAsync(_model.Phone, _model.Password);
 
             if (!result.IsSuccess)
             {
-                _error = result.Error ?? "Invalid credentials";
+                ToastService.ShowError(result.Error ?? "Invalid credentials");
                 return;
             }
-            
-            var user = new BlazorAuthNoIdentity.LoggedInUserModel( 
+
+            var user = new BlazorAuthNoIdentity.LoggedInUserModel(
                 result.UserId ?? 0,
-                result.Username ?? string.Empty,
+                result.Fullname ?? string.Empty,
                 result.Email ?? string.Empty,
+                result.Phone ?? string.Empty,
                 result.Role ?? string.Empty
             );
 
             var claims = user.ToClaims();
             const string AuthScheme = "clx-auth"; 
-            
+
             var identity = new ClaimsIdentity(claims, AuthScheme);
             var principal = new ClaimsPrincipal(identity);
 
@@ -76,23 +92,21 @@
 
             await HttpContext.SignInAsync(AuthScheme, principal, props);
 
-            _success = "Login successful! Redirecting...";
-            Logger.LogInformation("Login successful for {User} (Direct Sign-In)", _model.UserNameOrEmail);
+            ToastService.ShowSuccess("Login successful! Redirecting...");
+            Logger.LogInformation("Login successful for {User}", _model.Phone,result.Fullname);
 
-           
-            // Navigation.NavigateTo("/", true);
-
-            // await JS.InvokeVoidAsync("eval", "window.location.href='/'"); 
+            // Delay briefly to let user see toast
+            await Task.Delay(1000);
+            Navigation.NavigateTo("/", true);
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error during login for {User}", _model.UserNameOrEmail);
-            _error = "Unexpected error occurred. Try again.";
+            Logger.LogError(ex, "Error during login for {User}",_model.Phone);
+            ToastService.ShowError("Unexpected error occurred. Try again.");
         }
         finally
         {
             _isLoading = false;
-            _buttonText = "Login";
         }
     }
 }

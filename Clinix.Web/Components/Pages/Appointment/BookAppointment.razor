@@ -1,0 +1,117 @@
+﻿@page "/book-appointment"
+@using Blazored.FluentValidation
+@using Clinix.Application.DTOs
+@using Clinix.Application.Interfaces.ServiceInterfaces
+@using Clinix.Web.Helpers
+@using FluentValidation
+@using Blazored.Toast.Services
+@inject IAppointmentService AppointmentService
+@inject IToastService Toast
+
+<h3>Book Appointment</h3>
+
+<EditForm Model="model" OnValidSubmit="HandleValidSubmit">
+    <DataAnnotationsValidator />
+    <FluentValidationValidator />
+
+    <div class="form-grid">
+        <div>
+            <label>Doctor</label>
+            <InputSelect @bind-Value="model.DoctorId">
+                <option value="">-- choose doctor --</option>
+                @foreach(var d in Doctors)
+                {
+                    <option value="@d.DoctorId">@d.UserName (@d.Specialty)</option>
+                }
+            </InputSelect>
+        </div>
+
+        <div>
+            <label>Choose Day</label>
+            <InputDate @bind-Value="SelectedDate" />
+        </div>
+
+        <div>
+            <label>Available Slots</label>
+            @if (SlotsLoading) { <LoadingSpinner /> }
+            else { <SlotPicker Slots="AvailableSlots" OnSlotSelected="OnSlotSelected" /> }
+        </div>
+
+        <div>
+            <label>Reason</label>
+            <InputTextArea @bind-Value="model.Reason" />
+        </div>
+
+        <div class="actions">
+            <button type="submit" class="btn">Book Appointment</button>
+        </div>
+    </div>
+</EditForm>
+
+@code {
+    // lightweight model used only for the form
+    AppointmentCreateDto model = new();
+
+    List<DoctorListItem> Doctors = new();
+    DateTime SelectedDate = DateTime.UtcNow.Date;
+    List<AppointmentSlotDto> AvailableSlots = new();
+    bool SlotsLoading = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        // TODO: load doctors (light list). Replace with actual repo call or api
+        Doctors = await LoadDoctorsAsync();
+    }
+
+    async Task<List<DoctorListItem>> LoadDoctorsAsync()
+    {
+        // placeholder for fetching doctors; implement an API endpoint later
+        await Task.Delay(10);
+        return new List<DoctorListItem>();
+    }
+
+    async Task OnDoctorChanged(ChangeEventArgs e)
+    {
+        // when doctor selected, fetch slots
+        await FetchSlots();
+    }
+
+    async Task FetchSlots()
+    {
+        if (model.DoctorId <= 0) return;
+        SlotsLoading = true;
+        StateHasChanged();
+
+        var from = SelectedDate.Date;
+        var to = from.AddDays(1).AddTicks(-1);
+        var res = await AppointmentService.GetAvailableSlotsAsync(model.DoctorId, from, to);
+        if (res.Success) AvailableSlots = res.Data ?? new List<AppointmentSlotDto>();
+        else Toast.ShowError(res.Message ?? "Failed to load slots");
+
+        SlotsLoading = false;
+        StateHasChanged();
+    }
+
+    async Task OnSlotSelected(AppointmentSlotDto slot)
+    {
+        model.StartTime = slot.StartTime;
+        model.EndTime = slot.EndTime;
+    }
+
+    async Task HandleValidSubmit()
+    {
+        var result = await AppointmentService.BookAppointmentAsync(model);
+        if (result.Success)
+        {
+            Toast.ShowSuccess("Appointment booked successfully");
+            // redirect to MyAppointments or show details
+        }
+        else
+        {
+            Toast.ShowError(result.Message ?? "Failed to book");
+        }
+    }
+
+    // small helper type
+    public class DoctorListItem { public long DoctorId { get; set; } public string UserName { get; set; } = string.Empty; public string Specialty { get; set; } = string.Empty; }
+}

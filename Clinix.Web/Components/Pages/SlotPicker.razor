@@ -1,0 +1,48 @@
+﻿@using Clinix.Application.DTOs
+@using System.Globalization
+@using Clinix.Application.Interfaces.ServiceInterfaces
+@using Clinix.Web.Helpers
+@inject IAppointmentService AppointmentService
+
+<div class="slot-grid">
+    @if (IsLoading)
+    {
+        <LoadingSpinner />
+    }
+    else if (Slots == null || !Slots.Any())
+    {
+        <div class="empty">No slots available</div>
+    }
+    else
+    {
+        <div class="slots">
+            @foreach (var slot in Slots)
+            {
+                var disabled = slot.IsBooked || DisabledPredicate?.Invoke(slot) == true;
+                <button class="slot-btn @(selectedSlotId == slot.SlotId ? "selected" : "")" disabled="@disabled" @onclick="() => SelectSlot(slot)">
+                    <div class="time">@slot.StartTime.ToString("HH:mm") - @slot.EndTime.ToString("HH:mm")</div>
+                    @if (slot.IsBooked)
+                    {
+                        <div class="muted">Booked</div>
+                    }
+                </button>
+            }
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public List<AppointmentSlotDto>? Slots { get; set; }
+    [Parameter] public EventCallback<AppointmentSlotDto> OnSlotSelected { get; set; }
+    [Parameter] public Func<AppointmentSlotDto, bool>? DisabledPredicate { get; set; }
+
+    bool IsLoading => Slots == null;
+    long? selectedSlotId;
+
+    async Task SelectSlot(AppointmentSlotDto slot)
+    {
+        selectedSlotId = slot.SlotId;
+        await OnSlotSelected.InvokeAsync(slot);
+    }
+}
+

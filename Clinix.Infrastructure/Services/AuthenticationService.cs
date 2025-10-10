@@ -16,23 +16,23 @@ public class AuthenticationService : IAuthenticationService
         _userRepo = userRepo;
         }
 
-    public async Task<AuthenticationResult> ValidateCredentialsAsync(string usernameOrEmail, string password, CancellationToken ct = default)
+    public async Task<AuthenticationResult> ValidateCredentialsAsync(string Phone, string password, CancellationToken ct = default)
         {
-        if (string.IsNullOrWhiteSpace(usernameOrEmail) || string.IsNullOrWhiteSpace(password))
-            return new AuthenticationResult(false, "Username/email and password are required.", null, null,null, null);
+        if (string.IsNullOrWhiteSpace(Phone) || string.IsNullOrWhiteSpace(password))
+            return new AuthenticationResult(false, "Phone number and password are required.", null, null,null,null, null);
 
         // Try email then username
-        var user = await _userRepo.GetByEmailAsync(usernameOrEmail.Trim(), ct);
-        if (user == null) user = await _userRepo.GetByUsernameAsync(usernameOrEmail.Trim(), ct);
-        if (user == null) return new AuthenticationResult(false, "Invalid credentials.", null, null,null, null);
+        var user = await _userRepo.GetByPhoneAsync(Phone.Trim(), ct);
+        //if (user == null) user = await _userRepo.GetByUsernameAsync(Phone.Trim(), ct);
+        if (user == null) return new AuthenticationResult(false, "Invalid credentials.", null, null,null,null, null);
 
         var verify = _passwordHasher.VerifyHashedPassword(user, user.PasswordHash, password);
         if (verify == PasswordVerificationResult.Success || verify == PasswordVerificationResult.SuccessRehashNeeded)
             {
-            return new AuthenticationResult(true, null, user.Id, user.Username, user.Email, user.Role);
+            return new AuthenticationResult(true, null, user.Id, user.FullName, user.Email, user.Phone, user.Role);
             }
 
-        return new AuthenticationResult(false, "Invalid credentials.", null, null,null, null);
+        return new AuthenticationResult(false, "Invalid credentials.", null, null,null,null, null);
         }
     }
 

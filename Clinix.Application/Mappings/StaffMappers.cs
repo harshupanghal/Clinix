@@ -11,7 +11,10 @@ public static class StaffMappers
             User = user,
             Position = req.Position,
             Department = req.Department,
-            ShiftInfo = req.ShiftInfo,
+            ShiftJson = req.ShiftJson,
+            AssignedLocation = req.AssignedLocation,
+            SupervisorName = req.SupervisorName,
+            Notes = req.Notes,
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow
             };

@@ -14,7 +14,13 @@ public static class DoctorMappers
             Specialty = req.Specialty,
             LicenseNumber = req.LicenseNumber,
             ExperienceYears = req.ExperienceYears,
-            ClinicAddress = req.ClinicAddress,
+            RoomNumber = req.RoomNumber,
+            WorkHoursJson = req.WorkHoursJson,
+            ConsultationFee = req.ConsultationFee,
+            ExtensionNumber = req.ExtensionNumber,
+
+            CreatedBy = "Admin",
+            UpdatedBy = "Admin",
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow
             };

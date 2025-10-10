@@ -21,7 +21,7 @@ public static class DataSeeder
         var passwordHasher = new PasswordHasher<User>();
 
         var adminEmail = config["SeedAdmin:Email"] ?? "admin@hms.local";
-        var adminUsername = config["SeedAdmin:Username"] ?? "admin";
+        var adminFullname = config["SeedAdmin:Username"] ?? "Admin Kumar";
         var adminPassword = config["SeedAdmin:Password"] ?? "Admin@123#";
 
         if (string.IsNullOrWhiteSpace(adminPassword))
@@ -35,9 +35,10 @@ public static class DataSeeder
 
         var admin = new User
             {
-            Username = adminUsername,
+            FullName = adminFullname,
             Email = adminEmail,
             Role = "Admin",
+            Phone = "9876054321",
             CreatedBy = "system",
             CreatedAt = System.DateTime.UtcNow,
             UpdatedAt = System.DateTime.UtcNow

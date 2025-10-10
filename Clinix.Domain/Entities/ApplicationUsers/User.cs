@@ -5,11 +5,13 @@ namespace Clinix.Domain.Entities.ApplicationUsers;
 public class User
     {
     public long Id { get; set; }
-    public string Username { get; set; } = null!;
+    public string FullName { get; set; } = null!;
     public string Email { get; set; } = null!;
+    public string Phone { get; set; } = null!;
     public string PasswordHash { get; set; } = null!;
     public string Role { get; set; } = null!; // "Admin","Patient","Doctor","Staff"
     public bool IsDeleted { get; set; } = false;
+    //public string Status { get; set; } = null!;  
 
     // Audit
     public string? CreatedBy { get; set; }

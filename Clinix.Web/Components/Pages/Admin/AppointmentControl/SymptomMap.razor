@@ -1,4 +1,4 @@
-﻿@page "/admin/symptom-maps"
+﻿@* @page "/admin/symptom-maps"
 @attribute [Authorize(Roles="Admin")]
 @inject HttpClient Http
 
@@ -63,4 +63,4 @@ else
     }
 
     class SymptomSpecialtyMapDto { public int Id { get; set; } public string Keyword { get; set; } = ""; public string Specialty { get; set; } = ""; }
-}
+} *@

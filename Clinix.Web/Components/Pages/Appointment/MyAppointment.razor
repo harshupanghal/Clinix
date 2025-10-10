@@ -1,0 +1,71 @@
+﻿@page "/my-appointments"
+@using Blazored.Toast.Services
+@using Clinix.Application.DTOs
+@using Clinix.Application.Interfaces.ServiceInterfaces
+@using Clinix.Web.Helpers
+@inject IAppointmentService AppointmentService
+@inject IToastService Toast
+
+<h3>My Appointments</h3>
+
+@if (IsLoading) { <LoadingSpinner /> }
+else
+{
+    if (!Appointments.Any())
+    {
+        <div>No upcoming appointments</div>
+    }
+    else
+    {
+        <div class="appt-list">
+            @foreach(var a in Appointments)
+            {
+                <AppointmentCard Appointment="ToDetails(a)" ShowPatient="false">
+                    <button class="btn small" @onclick="() => OnReschedule(a.AppointmentId)">Reschedule</button>
+                    <button class="btn danger small" @onclick="() => OnCancel(a.AppointmentId)">Cancel</button>
+                </AppointmentCard>
+            }
+        </div>
+    }
+}
+
+@code {
+    bool IsLoading = true;
+    List<AppointmentListDto> Appointments = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadAppointments();
+    }
+
+    async Task LoadAppointments()
+    {
+        IsLoading = true;
+        var res = await AppointmentService.GetAppointmentsForUserAsync( /* pass user id from auth */ 0, false);
+        if (res.Success) Appointments = res.Data ?? new();
+        else Toast.ShowError(res.Message ?? "Failed to load appointments");
+        IsLoading = false;
+    }
+
+    AppointmentDetailsDto ToDetails(AppointmentListDto list)
+    {
+        return new AppointmentDetailsDto
+        {
+            AppointmentId = list.AppointmentId,
+            StartTime = list.StartTime,
+            EndTime = list.EndTime,
+            Status = list.Status,
+            PatientName = list.PatientName ?? string.Empty,
+            DoctorName = list.DoctorName ?? string.Empty
+        };
+    }
+
+    async Task OnCancel(long appointmentId)
+    {
+        var res = await AppointmentService.CancelAppointmentAsync(appointmentId);
+        if (res.Success) { Toast.ShowSuccess("Cancelled"); await LoadAppointments(); }
+        else Toast.ShowError(res.Message ?? "Cancel failed");
+    }
+
+    void OnReschedule(long appointmentId) { /* navigate to reschedule page with id */ }
+}
