@@ -1,0 +1,242 @@
+﻿@page "/admin/symptom-mapping"
+@attribute [Authorize(Roles = "Admin")]
+@using Clinix.Application.Interfaces.Functionalities
+@using Clinix.Application.Interfaces.UserRepo
+@using Clinix.Domain.Entities.Appointments
+@using Clinix.Domain.Entities
+@inject ISymptomMappingRepository SymptomMappingRepository
+@inject IDoctorRepository DoctorRepository
+@inject Blazored.Toast.Services.IToastService ToastService
+
+<h3>Symptom Mapping Management</h3>
+
+<div class="card p-3 shadow-sm" style="max-width:980px;">
+    <EditForm Model="EditModel" OnValidSubmit="SaveAsync" FormName="Mapping-Form">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+
+        <div class="row g-2 align-items-center">
+            <div class="col-md-3">
+                <label class="form-label">Keyword</label>
+                <InputText class="form-control" @bind-Value="EditModel.Keyword" placeholder="e.g. chest pain" />
+            </div>
+
+            <div class="col-md-3">
+                <label class="form-label">Suggested Specialty</label>
+                <InputText class="form-control" @bind-Value="EditModel.SuggestedSpecialty" placeholder="e.g. Cardiology" />
+            </div>
+
+            <div class="col-md-3">
+                <label class="form-label">Suggested Doctors</label>
+                <div class="border rounded p-2" style="max-height:220px; overflow:auto;">
+                    @if (Doctors.Any())
+                    {
+                        @foreach (var d in Doctors)
+                        {
+                            <div class="form-check">
+                                <input class="form-check-input"
+                                       type="checkbox"
+                                       id="doc_@d.Id"
+                                       checked="@EditModel.SuggestedDoctorIds.Contains(d.Id)"
+                                       @onchange="@(e => ToggleDoctorSelection(d.Id, e))" />
+                                <label class="form-check-label" for="doc_@d.Id">@d.DisplayName</label>
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <div class="text-muted small">No doctors available.</div>
+                    }
+                </div>
+            </div>
+
+            <div class="col-md-2">
+                <label class="form-label">Weight</label>
+                <InputNumber class="form-control" @bind-Value="EditModel.Weight" />
+            </div>
+
+            <div class="col-md-1 d-flex align-items-end">
+                <button class="btn btn-primary w-100" type="submit">Save</button>
+            </div>
+        </div>
+    </EditForm>
+
+    <hr />
+
+    <table class="table table-striped mt-3">
+        <thead>
+            <tr><th>Keyword</th><th>Specialty</th><th>Doctors</th><th>Weight</th><th>Actions</th></tr>
+        </thead>
+        <tbody>
+            @if (!Mappings.Any())
+            {
+                <tr><td colspan="5" class="text-muted">No mappings found.</td></tr>
+            }
+            else
+            {
+                @foreach (var m in Mappings)
+                {
+                    <tr>
+                        <td>@m.Keyword</td>
+                        <td>@m.SuggestedSpecialty</td>
+                        <td>@string.Join(", ", m.SuggestedDoctorIds.Select(id => DoctorsById.TryGetValue(id, out var dv) ? dv.DisplayName : id.ToString()))</td>
+                        <td>@m.Weight</td>
+                        <td>
+                            <button class="btn btn-sm btn-primary me-2" @onclick="() => EditExistingAsync(m.Id)">Edit</button>
+                            <button class="btn btn-sm btn-danger" @onclick="() => DeleteAsync(m.Id)">Delete</button>
+                        </td>
+                    </tr>
+                }
+            }
+        </tbody>
+    </table>
+</div>
+
+@code {
+    // UI DTO (no name collision)
+    private class SymptomMappingDto
+    {
+        public long Id { get; set; }
+        public string Keyword { get; set; } = string.Empty;
+        public string SuggestedSpecialty { get; set; } = string.Empty;
+        public List<long> SuggestedDoctorIds { get; set; } = new();
+        public int Weight { get; set; } = 50;
+    }
+
+    private class DoctorUi
+    {
+        public long Id { get; set; }
+        public string DisplayName { get; set; } = string.Empty;
+    }
+
+    private List<SymptomMappingDto> Mappings { get; set; } = new();
+    private SymptomMappingDto EditModel { get; set; } = new SymptomMappingDto();
+    private List<DoctorUi> Doctors { get; set; } = new();
+    private Dictionary<long, DoctorUi> DoctorsById { get; set; } = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadDoctorsAsync();
+        await LoadMappingsAsync();
+    }
+
+    private async Task LoadDoctorsAsync()
+    {
+        var docs = (await DoctorRepository.GetAllAsync()).ToList();
+        Doctors = docs.Select(d => new DoctorUi
+        {
+            Id = GetDoctorId(d),
+            DisplayName = $"{GetDoctorFullName(d)} ({GetDoctorSpecialty(d)})"
+        }).ToList();
+
+        DoctorsById = Doctors.ToDictionary(x => x.Id, x => x);
+    }
+
+    private async Task LoadMappingsAsync()
+    {
+        var domainMappings = (await SymptomMappingRepository.GetAllMappingsAsync()).ToList();
+        Mappings = domainMappings.Select(dm => new SymptomMappingDto
+        {
+            Id = dm.Id,
+            Keyword = dm.Keyword,
+            SuggestedSpecialty = dm.SuggestedSpecialty,
+            SuggestedDoctorIds = dm.SuggestedDoctorIds?.ToList() ?? new List<long>(),
+            Weight = dm.Weight
+        }).ToList();
+    }
+
+    private async Task SaveAsync()
+    {
+        // Map DTO -> domain
+        var domain = new Clinix.Domain.Entities.Appointments.SymptomMapping
+        {
+            Id = EditModel.Id,
+            Keyword = EditModel.Keyword,
+            SuggestedSpecialty = EditModel.SuggestedSpecialty,
+            SuggestedDoctorIds = EditModel.SuggestedDoctorIds.ToList(),
+            Weight = EditModel.Weight
+        };
+
+        await SymptomMappingRepository.AddOrUpdateAsync(domain);
+        ToastService.ShowSuccess("Saved successfully");
+
+        await LoadMappingsAsync();
+        EditModel = new SymptomMappingDto();
+    }
+
+    private async Task DeleteAsync(long id)
+    {
+        await SymptomMappingRepository.DeleteAsync(id);
+        ToastService.ShowSuccess("Deleted successfully");
+        await LoadMappingsAsync();
+    }
+
+    private void ToggleDoctorSelection(long doctorId, ChangeEventArgs e)
+    {
+        var checkedValue = e?.Value as bool?;
+        var isChecked = checkedValue == true;
+
+        if (isChecked)
+        {
+            if (!EditModel.SuggestedDoctorIds.Contains(doctorId))
+                EditModel.SuggestedDoctorIds.Add(doctorId);
+        }
+        else
+        {
+            EditModel.SuggestedDoctorIds.RemoveAll(x => x == doctorId);
+        }
+    }
+
+    private async Task EditExistingAsync(long id)
+    {
+        var dm = Mappings.FirstOrDefault(x => x.Id == id);
+        if (dm == null) return;
+
+        EditModel = new SymptomMappingDto
+        {
+            Id = dm.Id,
+            Keyword = dm.Keyword,
+            SuggestedSpecialty = dm.SuggestedSpecialty,
+            SuggestedDoctorIds = dm.SuggestedDoctorIds.ToList(),
+            Weight = dm.Weight
+        };
+
+        await Task.Yield();
+        StateHasChanged();
+    }
+
+    // Helpers — adjust if your Doctor type shape differs
+    private static long GetDoctorId(object doctor)
+    {
+        var t = doctor.GetType();
+        var prop = t.GetProperty("Id") ?? t.GetProperty("DoctorId");
+        if (prop == null) throw new InvalidOperationException("Doctor must have Id or DoctorId property");
+        return Convert.ToInt64(prop.GetValue(doctor));
+    }
+
+    private static string GetDoctorFullName(object doctor)
+    {
+        var t = doctor.GetType();
+        var p = t.GetProperty("FullName") ?? t.GetProperty("Name");
+        if (p != null) return p.GetValue(doctor)?.ToString() ?? string.Empty;
+
+        var userProp = t.GetProperty("User");
+        if (userProp != null)
+        {
+            var u = userProp.GetValue(doctor);
+            if (u != null)
+            {
+                var uf = u.GetType().GetProperty("FullName") ?? u.GetType().GetProperty("Name");
+                if (uf != null) return uf.GetValue(u)?.ToString() ?? string.Empty;
+            }
+        }
+        return string.Empty;
+    }
+
+    private static string GetDoctorSpecialty(object doctor)
+    {
+        var t = doctor.GetType();
+        var p = t.GetProperty("Specialty");
+        return p != null ? (p.GetValue(doctor)?.ToString() ?? string.Empty) : string.Empty;
+    }
+}

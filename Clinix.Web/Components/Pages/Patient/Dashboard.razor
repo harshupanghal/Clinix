@@ -2,6 +2,7 @@
 @rendermode InteractiveServer
 @attribute [Authorize(Roles = "Patient")]
 @using Clinix.Application.Dtos
+@using Clinix.Application.Dtos.Patient
 @using Clinix.Web.Services
 @inject IPatientDashboardUiService DashboardUiService
 @inject AuthenticationStateProvider AuthProvider

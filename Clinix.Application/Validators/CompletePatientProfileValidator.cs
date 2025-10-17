@@ -1,4 +1,4 @@
-﻿using Clinix.Application.Dtos;
+﻿using Clinix.Application.Dtos.Patient;
 using FluentValidation;
 
 namespace Clinix.Application.Validators;

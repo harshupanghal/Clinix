@@ -1,4 +1,4 @@
-﻿using Clinix.Application.Dtos;
+﻿using Clinix.Application.Dtos.Patient;
 using Clinix.Application.Interfaces.Functionalities;
 using Clinix.Domain.Common;
 using Microsoft.Extensions.Logging;

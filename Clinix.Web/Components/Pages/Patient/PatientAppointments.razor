@@ -1,0 +1,60 @@
+﻿@page "/patient/appointments"
+@using Clinix.Application.Interfaces.Functionalities
+@using Clinix.Application.Interfaces.UserRepo
+@using Clinix.Domain.Entities.ApplicationUsers
+@using Clinix.Domain.Entities.Appointments
+@using Clinix.Web.Helpers
+@attribute [Authorize(Roles = "Patient")]
+@inject IAppointmentRepository AppointmentRepository
+@inject IDoctorRepository DoctorRepository
+@inject IPatientRepository PatientRepository
+@inject AuthenticationStateProvider AuthStateProvider
+@inject Blazored.Toast.Services.IToastService ToastService
+
+<h3>My Appointments</h3>
+<div class="card p-3 shadow-sm">
+    @if (Appointments is null || !Appointments.Any())
+    {
+        <div class="text-muted">No upcoming appointments.</div>
+    }
+    else
+    {
+        @foreach(var a in Appointments)
+        {
+            <AppointmentCard Appointment="a" 
+                                              DoctorDisplay="(Doctors.TryGetValue(a.DoctorId, out var d) ? d.FullName : a.DoctorId.ToString())" 
+                                              PatientDisplay="(Patients.TryGetValue(a.PatientId, out var p) ? p.FullName : a.PatientId.ToString())" />
+        }
+    }
+</div>
+
+@code {
+    private List<Appointment> Appointments = new();
+    private Dictionary<long, Doctor> Doctors = new();
+    private Dictionary<long, Patient> Patients = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        var auth = await AuthStateProvider.GetAuthenticationStateAsync();
+        var userIdStr = auth.User.FindFirst(c => c.Type == "sub")?.Value;
+        if (string.IsNullOrEmpty(userIdStr)) return;
+        var userId = long.Parse(userIdStr);
+
+        Appointments = (await AppointmentRepository.GetAppointmentsForPatientAsync(userId)).ToList();
+
+        // Preload doctors and patients
+        var doctorIds = Appointments.Select(a => a.DoctorId).Distinct();
+        foreach(var id in doctorIds)
+        {
+            var d = await DoctorRepository.GetByUserIdAsync(id);
+            if (d != null) Doctors[id] = d;
+        }
+
+        var patientIds = Appointments.Select(a => a.PatientId).Distinct();
+        foreach(var id in patientIds)
+        {
+            var p = await PatientRepository.GetByUserIdAsync(id);
+            if (p != null) Patients[id] = p;
+        }
+    }
+}

@@ -3,6 +3,7 @@ using Clinix.Domain.Entities.ApplicationUsers;
 using Clinix.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using System.Linq.Expressions; // Required for the predicate overload
 
 namespace Clinix.Infrastructure.Repositories;
 
@@ -16,6 +17,26 @@ public class PatientRepository : IPatientRepository
         _db = db;
         _logger = logger;
         }
+
+    // ----------------------------------------------------
+    // START: Implementation of IRepository<Patient>.CountAsync
+    // ----------------------------------------------------
+
+    public async Task<int> CountAsync(CancellationToken ct = default)
+        {
+        _logger.LogTrace("Counting all Patient records.");
+        return await _db.Patients.CountAsync(ct);
+        }
+
+    public async Task<int> CountAsync(Expression<Func<Patient, bool>> predicate, CancellationToken ct = default)
+        {
+        _logger.LogTrace("Counting Patient records with predicate.");
+        return await _db.Patients.CountAsync(predicate, ct);
+        }
+
+    // ----------------------------------------------------
+    // END: Implementation of IRepository<Patient>.CountAsync
+    // ----------------------------------------------------
 
     public async Task AddAsync(Patient patient, CancellationToken ct = default)
         {
@@ -53,5 +74,18 @@ public class PatientRepository : IPatientRepository
 
         _db.Patients.Update(existing);
         }
-    }
 
+    public async Task<IEnumerable<Patient>> GetAllPatientsAsync(CancellationToken ct = default)
+        {
+        return await _db.Patients.ToListAsync();
+        }
+    public async Task DeletePatientAsync(long id)
+        {
+        var patient = await GetByUserIdAsync(id);
+        if (patient != null)
+            {
+            _db.Patients.Remove(patient);
+            await _db.SaveChangesAsync();
+            }
+        }
+    }

@@ -22,98 +22,6 @@ namespace Clinix.Infrastructure.Persistence.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
-            modelBuilder.Entity("Appointment", b =>
-                {
-                    b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
-
-                    b.Property<long?>("AppointmentSlotId")
-                        .HasColumnType("bigint");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("datetime2")
-                        .HasDefaultValueSql("GETUTCDATE()");
-
-                    b.Property<long>("DoctorId")
-                        .HasColumnType("bigint");
-
-                    b.Property<DateTime>("EndTime")
-                        .HasColumnType("datetime2");
-
-                    b.Property<long>("PatientId")
-                        .HasColumnType("bigint");
-
-                    b.Property<string>("Reason")
-                        .HasMaxLength(2000)
-                        .HasColumnType("nvarchar(2000)");
-
-                    b.Property<DateTime>("StartTime")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
-
-                    b.Property<string>("Type")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime>("UpdatedAt")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("datetime2")
-                        .HasDefaultValueSql("GETUTCDATE()");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("AppointmentSlotId")
-                        .IsUnique()
-                        .HasFilter("[AppointmentSlotId] IS NOT NULL");
-
-                    b.HasIndex("DoctorId");
-
-                    b.HasIndex("PatientId");
-
-                    b.ToTable("Appointments", (string)null);
-                });
-
-            modelBuilder.Entity("AppointmentSlot", b =>
-                {
-                    b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
-
-                    b.Property<long>("DoctorId")
-                        .HasColumnType("bigint");
-
-                    b.Property<DateTime>("EndUtc")
-                        .HasColumnType("datetime2");
-
-                    b.Property<byte[]>("RowVersion")
-                        .IsConcurrencyToken()
-                        .ValueGeneratedOnAddOrUpdate()
-                        .HasColumnType("rowversion");
-
-                    b.Property<DateTime>("StartUtc")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("DoctorId", "StartUtc");
-
-                    b.ToTable("AppointmentSlots", (string)null);
-                });
-
             modelBuilder.Entity("Clinix.Domain.Entities.ApplicationUsers.Doctor", b =>
                 {
                     b.Property<long>("DoctorId")
@@ -157,6 +65,11 @@ namespace Clinix.Infrastructure.Persistence.Migrations
 
                     b.Property<string>("RoomNumber")
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
 
                     b.Property<string>("Specialty")
                         .HasMaxLength(100)
@@ -365,32 +278,7 @@ namespace Clinix.Infrastructure.Persistence.Migrations
                     b.ToTable("Users", (string)null);
                 });
 
-            modelBuilder.Entity("Clinix.Domain.Entities.Appointments.SymptomSpecialtyMap", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Keyword")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)");
-
-                    b.Property<string>("Specialty")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("Keyword");
-
-                    b.ToTable("SymptomSpecialtyMaps", (string)null);
-                });
-
-            modelBuilder.Entity("Clinix.Domain.Entities.FollowUps.FollowUp", b =>
+            modelBuilder.Entity("Clinix.Domain.Entities.Appointments.Appointment", b =>
                 {
                     b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
@@ -398,47 +286,95 @@ namespace Clinix.Infrastructure.Persistence.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
 
-                    b.Property<string>("Channel")
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("datetimeoffset");
 
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("JobId")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("LastError")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<long?>("PatientId")
+                    b.Property<long>("DoctorId")
                         .HasColumnType("bigint");
 
-                    b.Property<long>("PatientUserId")
+                    b.Property<DateTimeOffset>("EndAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.Property<long>("PatientId")
                         .HasColumnType("bigint");
 
-                    b.Property<DateTime>("ScheduledAtUtc")
-                        .HasColumnType("datetime2");
+                    b.Property<string>("Reason")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
 
-                    b.Property<DateTime?>("SentAtUtc")
-                        .HasColumnType("datetime2");
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
 
-                    b.Property<int>("Status")
-                        .HasColumnType("int");
+                    b.Property<DateTimeOffset>("StartAt")
+                        .HasColumnType("datetimeoffset");
 
-                    b.Property<string>("TemplateName")
+                    b.Property<string>("Status")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<DateTime>("UpdatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<long?>("VisitId")
-                        .HasColumnType("bigint");
+                    b.Property<DateTimeOffset?>("UpdatedAt")
+                        .HasColumnType("datetimeoffset");
 
                     b.HasKey("Id");
 
+                    b.HasIndex("DoctorId");
+
                     b.HasIndex("PatientId");
 
-                    b.ToTable("FollowUp");
+                    b.ToTable("Appointments");
+                });
+
+            modelBuilder.Entity("Clinix.Domain.Entities.Appointments.DoctorWorkingHours", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<string>("WeeklyHours")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("DoctorWorkingHours");
+                });
+
+            modelBuilder.Entity("Clinix.Domain.Entities.Appointments.SymptomMapping", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<string>("Keyword")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("SuggestedDoctorIds")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("SuggestedSpecialty")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<int>("Weight")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("SymptomMappings");
                 });
 
             modelBuilder.Entity("Clinix.Domain.Entities.Inventory.InventoryItem", b =>
@@ -521,41 +457,23 @@ namespace Clinix.Infrastructure.Persistence.Migrations
                     b.ToTable("InventoryTransactions");
                 });
 
-            modelBuilder.Entity("Appointment", b =>
+            modelBuilder.Entity("Clinix.Domain.Entities.ScheduleLock", b =>
                 {
-                    b.HasOne("AppointmentSlot", "AppointmentSlot")
-                        .WithOne("Appointment")
-                        .HasForeignKey("Appointment", "AppointmentSlotId")
-                        .OnDelete(DeleteBehavior.Restrict);
+                    b.Property<long>("DoctorId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
 
-                    b.HasOne("Clinix.Domain.Entities.ApplicationUsers.Doctor", "Doctor")
-                        .WithMany("Appointments")
-                        .HasForeignKey("DoctorId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("DoctorId"));
 
-                    b.HasOne("Clinix.Domain.Entities.ApplicationUsers.Patient", "Patient")
-                        .WithMany("Appointments")
-                        .HasForeignKey("PatientId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                    b.Property<string>("LockedBy")
+                        .HasColumnType("nvarchar(max)");
 
-                    b.Navigation("AppointmentSlot");
+                    b.Property<DateTimeOffset?>("LockedUntil")
+                        .HasColumnType("datetimeoffset");
 
-                    b.Navigation("Doctor");
+                    b.HasKey("DoctorId");
 
-                    b.Navigation("Patient");
-                });
-
-            modelBuilder.Entity("AppointmentSlot", b =>
-                {
-                    b.HasOne("Clinix.Domain.Entities.ApplicationUsers.Doctor", "Doctor")
-                        .WithMany("Slots")
-                        .HasForeignKey("DoctorId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Doctor");
+                    b.ToTable("ScheduleLocks");
                 });
 
             modelBuilder.Entity("Clinix.Domain.Entities.ApplicationUsers.Doctor", b =>
@@ -591,11 +509,23 @@ namespace Clinix.Infrastructure.Persistence.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("Clinix.Domain.Entities.FollowUps.FollowUp", b =>
+            modelBuilder.Entity("Clinix.Domain.Entities.Appointments.Appointment", b =>
                 {
-                    b.HasOne("Clinix.Domain.Entities.ApplicationUsers.Patient", null)
-                        .WithMany("FollowUps")
-                        .HasForeignKey("PatientId");
+                    b.HasOne("Clinix.Domain.Entities.ApplicationUsers.Doctor", "Doctor")
+                        .WithMany("Appointments")
+                        .HasForeignKey("DoctorId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Clinix.Domain.Entities.ApplicationUsers.Patient", "Patient")
+                        .WithMany("Appointments")
+                        .HasForeignKey("PatientId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Doctor");
+
+                    b.Navigation("Patient");
                 });
 
             modelBuilder.Entity("Clinix.Domain.Entities.Inventory.InventoryTransaction", b =>
@@ -609,23 +539,14 @@ namespace Clinix.Infrastructure.Persistence.Migrations
                     b.Navigation("InventoryItem");
                 });
 
-            modelBuilder.Entity("AppointmentSlot", b =>
-                {
-                    b.Navigation("Appointment");
-                });
-
             modelBuilder.Entity("Clinix.Domain.Entities.ApplicationUsers.Doctor", b =>
                 {
                     b.Navigation("Appointments");
-
-                    b.Navigation("Slots");
                 });
 
             modelBuilder.Entity("Clinix.Domain.Entities.ApplicationUsers.Patient", b =>
                 {
                     b.Navigation("Appointments");
-
-                    b.Navigation("FollowUps");
                 });
 
             modelBuilder.Entity("Clinix.Domain.Entities.Inventory.InventoryItem", b =>

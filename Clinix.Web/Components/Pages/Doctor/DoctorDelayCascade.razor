@@ -1,0 +1,57 @@
+﻿@* @page "/doctor-delay"
+@using Clinix.Application.Interfaces.Functionalities
+@using Clinix.Application.UseCases
+@using Clinix.Domain.Entities.Appointments
+@inject DelayCascadeUseCase DelayCascadeUseCase
+@inject IAppointmentRepository AppointmentRepository
+@inject Blazored.Toast.Services.IToastService ToastService
+
+<h3>Delay Appointments (Emergency)</h3>
+<div class="card p-4 shadow-sm">
+    <div class="mb-3">
+        <label>Select Appointment to Delay</label>
+        <select @bind="SelectedAppointmentId" class="form-select">
+            <option value="">Select</option>
+            @foreach(var a in UpcomingAppointments)
+            {
+                <option value="@a.Id">@a.StartAt:HH:mm - @a.EndAt:HH:mm (Patient: @a.PatientId)</option>
+            }
+        </select>
+    </div>
+
+    <div class="mb-3">
+        <label>Delay Duration (minutes)</label>
+        <input type="number" @bind="DelayMinutes" class="form-control" />
+    </div>
+
+    <button class="btn btn-warning" @onclick="DelayAppointmentsAsync">Apply Delay</button>
+</div>
+
+@code {
+    private List<Appointment> UpcomingAppointments = new();
+    private Guid SelectedAppointmentId { get; set; }
+    private int DelayMinutes { get; set; } = 60;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var doctorId = Guid.NewGuid(); // replace with logged-in doctor ID
+        UpcomingAppointments = await AppointmentRepository.GetUpcomingAppointmentsForDoctorAsync(doctorId);
+    }
+
+    private async Task DelayAppointmentsAsync()
+    {
+        if (SelectedAppointmentId == Guid.Empty) { ToastService.ShowWarning("Select an appointment"); return; }
+
+        try
+        {
+            var req = new DelayAppointmentRequest(Guid.NewGuid(), SelectedAppointmentId, TimeSpan.FromMinutes(DelayMinutes), Guid.NewGuid());
+            await DelayCascadeUseCase.DelayCascadeAsync(req);
+            ToastService.ShowSuccess("Appointments delayed successfully");
+            StateHasChanged();
+        }
+        catch(Exception ex)
+        {
+            ToastService.ShowError(ex.Message);
+        }
+    }
+} *@

@@ -1,4 +1,4 @@
-﻿using Clinix.Application.Dtos;
+﻿using Clinix.Application.Dtos.Patient;
 using Clinix.Domain.Common;
 
 namespace Clinix.Web.Services;

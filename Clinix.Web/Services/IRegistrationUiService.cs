@@ -1,4 +1,4 @@
-﻿using Clinix.Application.Dtos;
+﻿using Clinix.Application.Dtos.Patient;
 using Clinix.Application.DTOs;
 using Clinix.Domain.Common;
 

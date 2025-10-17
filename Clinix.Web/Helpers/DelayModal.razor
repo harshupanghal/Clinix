@@ -1,0 +1,49 @@
+﻿
+@using Microsoft.AspNetCore.Components.Forms
+@using Microsoft.AspNetCore.Components.Web
+
+<div class="modal @(Visible ? "show d-block" : "")" tabindex="-1" style="background: rgba(0,0,0,0.4);">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Delay Appointments</h5>
+                <button type="button" class="btn-close" aria-label="Close" @onclick="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label">Delay Minutes</label>
+                    <InputNumber class="form-control" @bind-Value="Minutes" />
+                </div>
+                <div class="text-muted small">This will cascade the delay to subsequent appointments. Patients will be notified.</div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" @onclick="Close">Cancel</button>
+                <button class="btn btn-warning" @onclick="Confirm">Apply Delay</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private bool Visible { get; set; }
+    private long _appointmentId;
+    private int Minutes { get; set; } = 60;
+
+    public event Func<(long, int), Task>? OnConfirmedDelay;
+
+    public void Show(long appointmentId)
+    {
+        _appointmentId = appointmentId;
+        Minutes = 60;
+        Visible = true;
+        StateHasChanged();
+    }
+
+    private void Close() { Visible = false; StateHasChanged(); }
+
+    private async Task Confirm()
+    {
+        Visible = false;
+        if (OnConfirmedDelay is not null) await OnConfirmedDelay.Invoke((_appointmentId, Minutes));
+    }
+}

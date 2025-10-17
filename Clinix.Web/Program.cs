@@ -1,5 +1,11 @@
+using Blazored.Toast;
+using Clinix.Application.Interfaces.Functionalities;
+using Clinix.Application.Interfaces.UserRepo;
 using Clinix.Application.Services;
+using Clinix.Application.UseCases;
 using Clinix.Application.Validators;
+using Clinix.Domain.Entities.ApplicationUsers;
+using Clinix.Domain.Entities.Appointments;
 using Clinix.Infrastructure.Data;
 using Clinix.Infrastructure.Persistence;
 using Clinix.Infrastructure.Repositories;
@@ -11,14 +17,14 @@ using FluentValidation;
 using FluentValidation.AspNetCore;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Components.Server;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
-using Blazored.Toast;
-using Clinix.Application.Interfaces.UserRepo;
-using Clinix.Application.Interfaces.Functionalities;
 
 var builder = WebApplication.CreateBuilder(args);
 //builder.Services.AddCascadingAuthenticationState();
 builder.Services.AddHttpContextAccessor();
+
+builder.Services.AddSignalR();
 
 var connectionString = builder.Configuration.GetConnectionString("ClinixConnection")
                        ?? "Server=(localdb)\\mssqllocaldb;Database=ClxDb;Trusted_Connection=True;";
@@ -35,15 +41,25 @@ builder.Services.AddScoped<IInventoryService, InventoryService>();
 builder.Services.AddScoped<IPatientDashboardService, PatientDashboardService>();
 
 builder.Services.AddScoped<IRegistrationService, RegistrationService>();
-builder.Services.AddScoped<IAppointmentService, AppointmentService>();
+
 
 builder.Services.AddScoped<IAuthenticationService, Clinix.Infrastructure.Services.AuthenticationService>();
 
 builder.Services.AddScoped<IRegistrationUiService, RegistrationUiService>();
 builder.Services.AddScoped<ISafeNavigationService, SafeNavigationService>();
 builder.Services.AddScoped<IPatientDashboardUiService, PatientDashboardUiService>();
-//builder.Services.AddSingleton<IPendingAuthService, PendingAuthService>();
 
+// Repositories
+builder.Services.AddScoped<IDoctorRepository, DoctorRepository>();
+
+builder.Services.AddScoped<IAppointmentRepository, EfAppointmentRepository>();
+builder.Services.AddScoped<IDoctorScheduleRepository, EfDoctorScheduleRepository>();
+builder.Services.AddScoped<ISymptomMappingRepository, EfSymptomMappingRepository>();
+builder.Services.AddScoped<INotificationService, NotificationService>();
+builder.Services.AddScoped<BookAppointmentUseCase>();
+builder.Services.AddScoped<ApproveRejectAppointmentUseCase>();
+builder.Services.AddScoped<DelayCascadeUseCase>();
+builder.Services.AddScoped<NotifyAppointmentChangeUseCase>();
 builder.Services.AddBlazoredToast();
 
 builder.Services.AddFluentValidationAutoValidation();   
@@ -117,12 +133,22 @@ app.MapControllers();
 app.MapRazorComponents<App>()
    .AddInteractiveServerRenderMode();
 
+app.MapHub<NotificationHub>("/notificationhub");
+
+
 // Seed Director
 using (var scope = app.Services.CreateScope())
     {
     var db = scope.ServiceProvider.GetRequiredService<ClinixDbContext>();
     db.Database.Migrate();
-    await DataSeeder.SeedAdminAsync(scope.ServiceProvider);
+    await DataSeeder.SeedAsync(scope.ServiceProvider);
     }
 
 app.Run();
+
+
+
+
+
+//await _notifyUseCase.NotifyAsync(patientId.ToString(), $"Your appointment with Dr. {doctor.FullName} at {appointment.StartAt:HH:mm} has been {appointment.Status}.");
+//await _notifyUseCase.NotifyAsync(doctorId.ToString(), $"Appointment with patient {patient.FullName} at {appointment.StartAt:HH:mm} has been {appointment.Status}.");

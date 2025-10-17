@@ -1,0 +1,100 @@
+﻿@page "/book-appointment"
+@using Clinix.Application.Dtos.Appointment
+@using Clinix.Application.Interfaces.Functionalities
+@using Clinix.Application.Interfaces.UserRepo
+@using Clinix.Application.UseCases
+@attribute [Authorize(Roles = "Patient")]
+@inject ISymptomMappingRepository SymptomMappingRepository
+@inject IDoctorRepository DoctorRepository
+@inject BookAppointmentUseCase BookAppointmentUseCase
+@inject NavigationManager Navigation
+@inject Blazored.Toast.Services.IToastService ToastService
+@inject AuthenticationStateProvider AuthStateProvider
+@using Clinix.Domain.Entities.ApplicationUsers
+
+<h3>Book an Appointment</h3>
+<div class="card p-4 shadow-sm" style="max-width:760px;">
+    <div class="mb-3">
+        <label class="form-label">Describe your symptoms</label>
+        <InputText class="form-control" @bind-Value="SymptomText" placeholder="e.g., chest pain, fever" />
+    </div>
+
+    <div class="mb-3">
+        <button class="btn btn-outline-secondary me-2" @onclick="SuggestDoctorsAsync">Suggest Doctors</button>
+        <select class="form-select d-inline-block" style="width:auto;" @bind="SelectedDoctorId">
+            <option value="">-- pick doctor --</option>
+            @foreach(var d in Doctors)
+            {
+                <option value="@d.DoctorId">@d.User.FullName (@d.Specialty)</option>
+            }
+        </select>
+    </div>
+
+    <div class="row g-2 mb-3">
+        <div class="col-md-6">
+            <label class="form-label">Date & Time</label>
+            <InputDate class="form-control" @bind-Value="Date" />
+        </div>
+        <div class="col-md-6">
+            <label class="form-label">Time</label>
+            <InputTime class="form-control" @bind="Time" />
+        </div>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Reason</label>
+        <InputTextArea class="form-control" @bind-Value="Reason" Rows="3" />
+    </div>
+
+    <button class="btn btn-primary" @onclick="HandleBookAsync">Book Appointment</button>
+</div>
+
+@code {
+    private string SymptomText { get; set; } = string.Empty;
+    private long SelectedDoctorId { get; set; } = default!;
+    private DateTime Date { get; set; } = DateTime.Today.AddDays(1);
+    private TimeSpan Time { get; set; } = TimeSpan.FromHours(10);
+    private string Reason { get; set; } = string.Empty;
+    private List<Doctor> Doctors = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        Doctors = (await DoctorRepository.GetAllAsync()).ToList();
+    }
+
+    private async Task SuggestDoctorsAsync()
+    {
+        if (string.IsNullOrWhiteSpace(SymptomText)) { ToastService.ShowWarning("Enter some symptoms first"); return; }
+        var mappings = await SymptomMappingRepository.SearchByKeywordsAsync(new[] { SymptomText });
+        var ids = mappings.SelectMany(m => m.SuggestedDoctorIds).Distinct();
+        Doctors = (await Task.WhenAll(ids.Select(id => DoctorRepository.GetByUserIdAsync(id)))).Where(d => d != null).Cast<Doctor>().ToList();
+    }
+
+    private async Task HandleBookAsync()
+    {
+        if (SelectedDoctorId == 0) { ToastService.ShowWarning("Please select a doctor"); return; }
+
+        var start = new DateTimeOffset(Date.Date + Time, TimeSpan.Zero);
+        var end = start.AddMinutes(30);
+
+        var auth = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user = auth.User;
+        var patientIdClaim = user.FindFirst("UserId") ?? user.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier);
+         if (patientIdClaim == null || !long.TryParse(patientIdClaim.Value, out var patientId))
+    {
+        ToastService.ShowError("Invalid user session. Please log in again.");
+        return;
+    }
+        var req = new CreateAppointmentRequest(SelectedDoctorId, patientId, start, end, Reason);
+        try
+        {
+            var appt = await BookAppointmentUseCase.ExecuteAsync(req, patientId.ToString());
+            ToastService.ShowSuccess("Appointment requested");
+            Navigation.NavigateTo("/appointments");
+        }
+        catch(Exception ex)
+        {
+            ToastService.ShowError(ex.Message);
+        }
+    }
+}

@@ -1,0 +1,42 @@
+﻿@using Microsoft.AspNetCore.SignalR.Client
+@using Microsoft.JSInterop
+@inject NavigationManager Navigation
+@implements IAsyncDisposable
+@inject IJSRuntime JS
+
+<div class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index:1100;">
+    @foreach(var n in _messages.ToArray())
+    {
+        <div class="toast show mb-2" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="toast-body">@n</div>
+        </div>
+    }
+</div>
+
+@code {
+    private readonly List<string> _messages = new();
+    private HubConnection? _hubConnection;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _hubConnection = new HubConnectionBuilder()
+            .WithUrl(Navigation.ToAbsoluteUri("/notificationhub"))
+            .WithAutomaticReconnect()
+            .Build();
+
+        _hubConnection.On<string>("ReceiveNotification", (msg) =>
+        {
+            _messages.Add(msg);
+            // keep list short
+            if (_messages.Count > 6) _messages.RemoveAt(0);
+            InvokeAsync(StateHasChanged);
+        });
+
+        await _hubConnection.StartAsync();
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (_hubConnection is not null) await _hubConnection.DisposeAsync();
+    }
+}
