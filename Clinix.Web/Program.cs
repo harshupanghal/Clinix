@@ -1,5 +1,6 @@
 using Blazored.Toast;
 using Clinix.Application.Interfaces.Functionalities;
+using Clinix.Application.Interfaces.Services;
 using Clinix.Application.Interfaces.UserRepo;
 using Clinix.Application.Services;
 using Clinix.Application.UseCases;
@@ -19,6 +20,7 @@ using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Components.Server;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
+using MudBlazor.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 //builder.Services.AddCascadingAuthenticationState();
@@ -60,7 +62,28 @@ builder.Services.AddScoped<BookAppointmentUseCase>();
 builder.Services.AddScoped<ApproveRejectAppointmentUseCase>();
 builder.Services.AddScoped<DelayCascadeUseCase>();
 builder.Services.AddScoped<NotifyAppointmentChangeUseCase>();
+// Infrastructure services
+builder.Services.AddScoped<INotificationDispatcher, InMemoryDispatcher>();
+builder.Services.AddHostedService<FollowUpTaskScheduler>();
+
+// Repositories (already above)
+builder.Services.AddScoped<IFollowUpTaskRepository, FollowUpTaskRepository>();
+builder.Services.AddScoped<IFollowUpService, FollowUpService>();
+
+
 builder.Services.AddBlazoredToast();
+// AutoMapper
+builder.Services.AddAutoMapper(typeof(Clinix.Application.Mappings.FollowUpMappingProfile).Assembly);
+
+// FluentValidation - if using
+builder.Services.AddValidatorsFromAssembly(typeof(CreateFollowUpFromAppointmentRequestValidator).Assembly);
+
+// Application services
+builder.Services.AddScoped<CreateFollowUpFromAppointmentHandler>();
+
+builder.Services.AddScoped<IAppointmentClinicalInfoRepository, AppointmentClinicalInfoRepository>();
+builder.Services.AddScoped<IFollowUpRepository, FollowUpRepository>();
+builder.Services.AddScoped<IFollowUpTaskRepository, FollowUpTaskRepository>();
 
 builder.Services.AddFluentValidationAutoValidation();   
 builder.Services.AddFluentValidationClientsideAdapters(); 
@@ -108,6 +131,7 @@ builder.Services.AddRazorComponents()
 
 builder.Services.AddRazorPages();
 builder.Services.AddHttpContextAccessor();
+builder.Services.AddMudServices();
 
 builder.Services.AddControllers();
 

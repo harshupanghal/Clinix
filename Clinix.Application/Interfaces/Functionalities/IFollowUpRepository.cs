@@ -1,12 +1,19 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
+using Clinix.Domain.Entities.FollowUps;
 
-namespace Clinix.Application.Interfaces.Functionalities
+namespace Clinix.Application.Interfaces.Functionalities;
+
+public interface IFollowUpRepository
     {
-    internal class IFollowUpRepository
-        {
-        }
+    Task AddAsync(FollowUpRecord followUp);
+    Task<FollowUpRecord?> GetByIdAsync(long id);
+    Task<IEnumerable<FollowUpRecord>> GetAllAsync(CancellationToken cancellationToken = default);
+    Task UpdateAsync(FollowUpRecord followUp, CancellationToken cancellationToken = default);
+
+    // add methods for queries as needed (GetForPatientAsync, Search, etc.)
+    }
+
+public interface IFollowUpRepositoryExtended : IFollowUpRepository
+    {
+    Task UpdateAsync(FollowUpRecord followUp);
     }

@@ -1,0 +1,118 @@
+﻿@page "/doctor/followups"
+@using Clinix.Domain.Entities.FollowUps
+@using MudBlazor
+@inject Clinix.Application.Interfaces.Functionalities.IFollowUpTaskRepository FollowUpTaskRepo
+@inject ILogger<DoctorFollowUps> Logger
+@inject AuthenticationStateProvider AuthStateProvider
+
+<PageTitle>Doctor Follow-Ups</PageTitle>
+
+<MudPaper Class="pa-4">
+    <MudText Typo="Typo.h5">Your Follow-Up Tasks</MudText>
+
+    @if (_loading)
+    {
+       <MudProgressCircular Indeterminate="true" Color="Color.Primary" Size="Size.Large" />
+    }
+    else
+    {
+        <MudTable Items="_tasks" Hover="true" Bordered="true" Striped="true" Dense="true">
+            <HeaderContent>
+                <MudTh>Patient</MudTh>
+                <MudTh>Task</MudTh>
+                <MudTh>Scheduled At</MudTh>
+                <MudTh>Status</MudTh>
+                <MudTh>Actions</MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd>@context.PatientName</MudTd>
+                <MudTd>@context.Description</MudTd>
+                <MudTd>@context.ScheduledAt.ToString("dd MMM yyyy HH:mm")</MudTd>
+                <MudTd>
+                    <MudChip Color="@GetStatusColor(context.Status)" Variant="Variant.Filled">@context.Status</MudChip>
+                </MudTd>
+                <MudTd>
+                    @if (context.Status == Domain.Enums.FollowUpTaskStatus.Pending)
+                    {
+                        <MudButton Size="Size.Small" Color="Color.Success" Variant="Variant.Outlined" OnClick="() => CompleteTask(context)">Mark Done</MudButton>
+                    }
+                    else
+                    {
+                        <MudText Typo="Typo.caption">No actions</MudText>
+                    }
+                </MudTd>
+            </RowTemplate>
+        </MudTable>
+    }
+</MudPaper>
+
+@code {
+    private bool _loading = true;
+    private List<FollowUpTaskDto> _tasks = new();
+    private long _doctorId;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+        _doctorId = long.Parse(user.FindFirst(c => c.Type == "Id")?.Value ?? "0");
+        await LoadTasksAsync();
+    }
+
+    private async Task LoadTasksAsync()
+    {
+        try
+        {
+            _loading = true;
+            var tasks = await FollowUpTaskRepo.GetTasksForDoctorAsync(_doctorId, CancellationToken.None);
+            _tasks = tasks.Select(t => new FollowUpTaskDto
+            {
+                Id = t.Id,
+                Description = t.Description,
+                ScheduledAt = t.ScheduledAt,
+                Status = t.Status,
+                PatientName = t.Record.Patient.FullName
+            }).ToList();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error loading doctor follow-up tasks.");
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task CompleteTask(FollowUpTaskDto task)
+    {
+        try
+        {
+            task.Status = Domain.Enums.FollowUpTaskStatus.Completed;
+            await FollowUpTaskRepo.UpdateAsync(new FollowUpTask { Id = task.Id, Status = task.Status });
+            await LoadTasksAsync();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error completing task {TaskId}", task.Id);
+        }
+    }
+
+    private Color GetStatusColor(Domain.Enums.FollowUpTaskStatus status) => status switch
+    {
+        Domain.Enums.FollowUpTaskStatus.Pending => Color.Info,
+        Domain.Enums.FollowUpTaskStatus.Completed => Color.Success,
+        Domain.Enums.FollowUpTaskStatus.Failed => Color.Error,
+        Domain.Enums.FollowUpTaskStatus.Cancelled => Color.Secondary,
+        _ => Color.Default
+    };
+
+    private class FollowUpTaskDto
+    {
+        public long Id { get; set; }
+        public string PatientName { get; set; } = string.Empty;
+        public string Description { get; set; } = string.Empty;
+        public DateTimeOffset ScheduledAt { get; set; }
+        public Domain.Enums.FollowUpTaskStatus Status { get; set; }
+    }
+}

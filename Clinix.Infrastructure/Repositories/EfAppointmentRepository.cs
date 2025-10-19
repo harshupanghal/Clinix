@@ -17,6 +17,16 @@ public class EfAppointmentRepository : IAppointmentRepository
         _db.Appointments.Add(appointment);
         await _db.SaveChangesAsync();
         }
+    public async Task<IEnumerable<Appointment>> GetUpcomingAppointmentsAsync(DateTimeOffset from, CancellationToken cancellationToken = default)
+        {
+        return await _db.Appointments
+            .AsNoTracking()
+            .Include(a => a.Patient)
+            .Include(a => a.Doctor).ThenInclude(d => d.User)
+            .Where(a => a.StartAt >= from && a.Status != AppointmentStatus.Cancelled)
+            .OrderBy(a => a.StartAt)
+            .ToListAsync(cancellationToken);
+        }
 
     public async Task DeleteAsync(long id)
         {
@@ -26,7 +36,13 @@ public class EfAppointmentRepository : IAppointmentRepository
         await _db.SaveChangesAsync();
         }
 
-    public async Task<Appointment?> GetByIdAsync(long id) => await _db.Appointments.FindAsync(id);
+    public async Task<Appointment?> GetByIdAsync(long id)
+        {
+        return await _db.Appointments
+            .AsNoTracking()
+            .Include(a => a.ClinicalInfo) // include clinical info if present
+            .FirstOrDefaultAsync(a => a.Id == id);
+        }
 
     public async Task<IEnumerable<Appointment>> GetAppointmentsForPatientAsync(long patientId)
         {

@@ -29,6 +29,8 @@ namespace Clinix.Domain.Entities.Appointments
         // 🔗 Navigation
         public Doctor Doctor { get; set; } = null!;
         public Patient Patient { get; set; } = null!;
+        public AppointmentClinicalInfo? ClinicalInfo { get; set; }
+
 
         // 📜 Domain audit
         public List<(DateTimeOffset When, string By, string Action, string? Meta)> Audit { get; } = new();
@@ -55,6 +57,20 @@ namespace Clinix.Domain.Entities.Appointments
             UpdatedAt = DateTimeOffset.UtcNow;
             Audit.Add((UpdatedAt.Value, actor, "approved", null));
             }
+
+        public void AttachClinicalInfo(AppointmentClinicalInfo info)
+            {
+            if (info == null)
+                {
+                throw new ArgumentNullException(nameof(info));
+                }
+
+            if (info.AppointmentId != Id) throw new InvalidOperationException("Clinical info appointment id mismatch.");
+            ClinicalInfo = info;
+            UpdatedAt = DateTimeOffset.UtcNow;
+            Audit.Add((UpdatedAt.Value, "system", "clinical-info-attached", null));
+            }
+
 
         public void Reject(string actor, string? reason = null)
             {

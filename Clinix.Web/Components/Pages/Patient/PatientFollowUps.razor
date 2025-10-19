@@ -1,0 +1,115 @@
+﻿@page "/patient/followups"
+@using Clinix.Domain.Entities.FollowUps
+@using MudBlazor
+@inject Clinix.Application.Interfaces.Functionalities.IFollowUpTaskRepository FollowUpTaskRepo
+@inject ILogger<PatientFollowUps> Logger
+@inject AuthenticationStateProvider AuthStateProvider
+
+
+<PageTitle>My Follow-Ups</PageTitle>
+
+<MudPaper Class="pa-4">
+    <MudText Typo="Typo.h5">Your Follow-Up Tasks</MudText>
+
+    @if (_loading)
+    {
+       <MudProgressCircular Indeterminate="true" Color="Color.Primary" Size="Size.Large" />
+    }
+    else
+    {
+        <MudTable Items="_tasks" Hover="true" Bordered="true" Striped="true" Dense="true">
+            <HeaderContent>
+                <MudTh>Task</MudTh>
+                <MudTh>Scheduled At</MudTh>
+                <MudTh>Status</MudTh>
+                <MudTh>Actions</MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd>@context.Description</MudTd>
+                <MudTd>@context.ScheduledAt.ToString("dd MMM yyyy HH:mm")</MudTd>
+                <MudTd>
+                    <MudChip Color="@GetStatusColor(context.Status)" Variant="Variant.Filled">@context.Status</MudChip>
+                </MudTd>
+                <MudTd>
+                    @if (context.Status == Domain.Enums.FollowUpTaskStatus.Pending)
+                    {
+                        <MudButton Size="Size.Small" Color="Color.Success" Variant="Variant.Outlined" OnClick="() => CompleteTask(context)">Mark Done</MudButton>
+                    }
+                    else
+                    {
+                        <MudText Typo="Typo.caption">No actions</MudText>
+                    }
+                </MudTd>
+            </RowTemplate>
+        </MudTable>
+    }
+</MudPaper>
+
+@code {
+    private bool _loading = true;
+    private List<FollowUpTaskDto> _tasks = new();
+    private long _patientId;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+        _patientId = long.Parse(user.FindFirst(c => c.Type == "Id")?.Value ?? "0");
+        await LoadTasksAsync();
+    }
+
+    private async Task LoadTasksAsync()
+    {
+        try
+        {
+            _loading = true;
+            var tasks = await FollowUpTaskRepo.GetTasksForPatientAsync(_patientId, CancellationToken.None);
+            _tasks = tasks.Select(t => new FollowUpTaskDto
+            {
+                Id = t.Id,
+                Description = t.Description,
+                ScheduledAt = t.ScheduledAt,
+                Status = t.Status
+            }).ToList();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error loading patient follow-up tasks.");
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task CompleteTask(FollowUpTaskDto task)
+    {
+        try
+        {
+            task.Status = Domain.Enums.FollowUpTaskStatus.Completed;
+            await FollowUpTaskRepo.UpdateAsync(new FollowUpTask { Id = task.Id, Status = task.Status });
+            await LoadTasksAsync();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error completing task {TaskId}", task.Id);
+        }
+    }
+
+    private Color GetStatusColor(Domain.Enums.FollowUpTaskStatus status) => status switch
+    {
+        Domain.Enums.FollowUpTaskStatus.Pending => Color.Info,
+        Domain.Enums.FollowUpTaskStatus.Completed => Color.Success,
+        Domain.Enums.FollowUpTaskStatus.Failed => Color.Error,
+        Domain.Enums.FollowUpTaskStatus.Cancelled => Color.Secondary,
+        _ => Color.Default
+    };
+
+    private class FollowUpTaskDto
+    {
+        public long Id { get; set; }
+        public string Description { get; set; } = string.Empty;
+        public DateTimeOffset ScheduledAt { get; set; }
+        public Domain.Enums.FollowUpTaskStatus Status { get; set; }
+    }
+}
