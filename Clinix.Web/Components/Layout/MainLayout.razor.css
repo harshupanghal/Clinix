@@ -1,102 +1,120 @@
-/*.page {
-    position: relative;
+/* ============================================
+   PAGE WRAPPER & LAYOUT
+   ============================================ */
+.page-wrapper {
     display: flex;
     flex-direction: column;
+    min-height: 100vh;
 }
 
-main {
+/* ============================================
+   MAIN CONTENT AREA - FIXED SPACING
+   ============================================ */
+.main-content-area {
     flex: 1;
-}*/
+    padding-top: 4rem; /* Height of topbar */
+    background-color: var(--clx-gray-50);
+    transition: margin-left var(--clx-transition-normal);
+}
 
-/* ADJUSTMENT: Replaced the distracting multi-color gradient with a solid, professional dark blue. */
-/*.sidebar {
-    background-color: #1F456E;*/ /* Muted Dark Blue for professionalism */
-/*}*/
+    /* Content padding */
+    .main-content-area .content {
+        padding: var(--clx-spacing-xl) var(--clx-spacing-lg);
+        max-width: 100%;
+    }
 
-/* ADJUSTMENT: Top row is now white with a light gray border for maximum clarity and contrast. */
-/*.top-row {
-    background-color: #FFFFFF;*/ /* Pure white for a clean look */
-    /*border-bottom: 1px solid #E0E0E0;*/ /* Very light gray border */
-    /*justify-content: flex-end;
-    height: 3.5rem;
+/* Desktop: account for sidebar */
+@media (min-width: 641px) {
+    .main-content-area {
+        margin-left: 260px; /* Width of expanded sidebar */
+    }
+}
+
+/* Collapsed sidebar state */
+.clinix-sidebar[data-collapsed="true"] ~ .main-content-area {
+    margin-left: 70px;
+}
+
+/* Mobile: no sidebar margin */
+@media (max-width: 640px) {
+    .main-content-area {
+        margin-left: 0;
+        padding-top: 4rem;
+    }
+
+        .main-content-area .content {
+            padding: var(--clx-spacing-md);
+        }
+}
+
+/* ============================================
+   ERROR UI
+   ============================================ */
+#blazor-error-ui {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 9999;
+    background: linear-gradient(135deg, #c82333 0%, #dc3545 100%);
+    box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.15);
+    display: none;
+}
+
+.error-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: var(--clx-spacing-lg);
     display: flex;
     align-items: center;
+    gap: var(--clx-spacing-md);
 }
 
-    .top-row ::deep a, .top-row ::deep .btn-link {
-        white-space: nowrap;
-        margin-left: 1.5rem;
-        text-decoration: none;
-        color: #4A4A4A;*/ /* Dark Gray for standard text */
-    /*}
+.error-icon {
+    flex-shrink: 0;
+    font-size: 2rem;
+    color: var(--clx-white);
+}
 
-        .top-row ::deep a:hover, .top-row ::deep .btn-link:hover {
-            text-decoration: underline;
-            color: #00A3A3;*/ /* Primary Teal hover for feedback */
-        /*}
+.error-content {
+    flex: 1;
+}
 
-        .top-row ::deep a:first-child {
-            overflow: hidden;
-            text-overflow: ellipsis;
+.error-title {
+    color: var(--clx-white);
+    font-size: 1rem;
+    font-weight: 600;
+    margin: 0 0 var(--clx-spacing-xs) 0;
+}
+
+.error-message {
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 0.875rem;
+    margin: 0 0 var(--clx-spacing-md) 0;
+}
+
+.error-actions {
+    display: flex;
+    gap: var(--clx-spacing-sm);
+}
+
+    .error-actions .btn {
+        font-size: 0.875rem;
+    }
+
+@media (max-width: 768px) {
+    .error-container {
+        flex-direction: column;
+        text-align: center;
+        padding: var(--clx-spacing-md);
+    }
+
+    .error-actions {
+        width: 100%;
+        flex-direction: column;
+    }
+
+        .error-actions .btn {
+            width: 100%;
         }
-
-@media (max-width: 640.98px) {
-    .top-row {
-        justify-content: space-between;
-    }
-
-        .top-row ::deep a, .top-row ::deep .btn-link {
-            margin-left: 0;
-        }
 }
-
-@media (min-width: 641px) {
-    .page {
-        flex-direction: row;
-    }
-
-    .sidebar {
-        width: 250px;
-        height: 100vh;
-        position: sticky;
-        top: 0;
-    }
-
-    .top-row {
-        position: sticky;
-        top: 0;
-        z-index: 1;
-    }
-
-        .top-row.auth ::deep a:first-child {
-            flex: 1;
-            text-align: right;
-            width: 0;
-        }
-
-    .top-row, article {
-        padding-left: 2rem !important;
-        padding-right: 1.5rem !important;
-    }
-}
-
-#blazor-error-ui {
-    color-scheme: light only;
-    background: #E0E0E0;*/ /* Light gray for a neutral error background */
-    /*bottom: 0;
-    box-shadow: 0 -1px 2px rgba(0, 0, 0, 0.2);
-    box-sizing: border-box;
-    display: none;
-    left: 0;
-    padding: 0.6rem 1.25rem 0.7rem 1.25rem;
-    position: fixed;
-    width: 100%;
-    z-index: 1000;
-}
-
-    #blazor-error-ui .dismiss {
-        cursor: pointer;
-        position: absolute;
-        right: 0.75rem;
-        top: 0.5rem;
-    }*/

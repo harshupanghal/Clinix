@@ -24,8 +24,8 @@ public interface IFollowUpRepository
 public interface IProviderRepository
     {
     Task<Provider?> GetByIdAsync(long id, CancellationToken ct = default);
-    Task<List<Provider>> SearchAsync(IEnumerable<string> tokens, CancellationToken ct = default);
+    Task<List<Provider>> SearchAsync(string[] keywords, CancellationToken ct = default);
     Task AddAsync(Provider provider, CancellationToken ct = default);
     Task UpdateAsync(Provider provider, CancellationToken ct = default);
-
     }
+

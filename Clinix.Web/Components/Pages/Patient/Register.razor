@@ -8,74 +8,535 @@
 @inject NavigationManager NavigationManager
 @inject Blazored.Toast.Services.IToastService ToastService
 
-<h3 class="mb-4 text-primary">Patient Registration</h3>
-
-@if (!string.IsNullOrEmpty(message))
-{
-    <div class="alert @(isSuccess ? "alert-success" : "alert-danger") alert-dismissible fade show" role="alert" aria-live="polite">
-        @message
-        <button type="button" class="btn-close" aria-label="Close" @onclick="() => message = null"></button>
-    </div>
-}
-
-<EditForm Model="registerModel" OnValidSubmit="OnValidSubmit" class="needs-validation" >
-    <FluentValidationValidator />
-
-    <div class="row g-3">
-        <div class="col-md-6 form-floating">
-            <InputText id="fullname" class="form-control" placeholder="Fullname" @bind-Value="registerModel.FullName" aria-describedby="fullnameHelp" />
-            <label for="fullname">Fullname</label>
-            <ValidationMessage For="@(() => registerModel.FullName)" />
-        </div>
-
-        <div class="col-md-6 form-floating">
-            <InputText id="phone" class="form-control" placeholder="Phone Number" @bind-Value="registerModel.Phone" @onblur="CheckPhoneAsync" aria-describedby="phoneHelp" />
-            <label for="phone">Phone Number</label>
-            <ValidationMessage For="@(() => registerModel.Phone)" />
-            @if (!string.IsNullOrEmpty(phoneError))
-            {
-                <div class="text-danger small" role="alert">@phoneError</div>
-            }
-        </div>
-
-        <div class="col-md-6 form-floating">
-            <InputText id="email" class="form-control" placeholder="Email" @bind-Value="registerModel.Email" />
-            <label for="email">Email</label>
-            <ValidationMessage For="@(() => registerModel.Email)" />
-            @if (!string.IsNullOrEmpty(emailError))
-            {
-                <div class="text-danger small" role="alert">@emailError</div>
-            }
-        </div>
-
-        <div class="col-md-6 form-floating">
-            <div class="input-group">
-                <InputText id="password" type="@(showPassword ? "text" : "password")" class="form-control"
-                           placeholder="Password" @bind-Value="registerModel.Password" @oninput="OnPasswordInput" aria-describedby="passwordHelp" />
-                <button type="button" class="btn btn-outline-secondary" @onclick="TogglePasswordVisibility" aria-pressed="@(showPassword)">
-                    @(showPassword ? "Hide" : "Show")
-                </button>
-                <label for="password">Password</label>
+<div class="register-page">
+    <div class="register-container">
+        
+        <!-- App Branding -->
+        <div class="register-branding">
+            <div class="brand-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="currentColor" viewBox="0 0 16 16">
+                    <path d="M11 5a3 3 0 1 1-6 0 3 3 0 0 1 6 0ZM8 7a2 2 0 1 0 0-4 2 2 0 0 0 0 4Zm.256 7a4.474 4.474 0 0 1-.229-1.004H3c.001-.246.154-.986.832-1.664C4.484 10.68 5.711 10 8 10c.26 0 .507.009.74.025.226-.341.496-.65.804-.918C9.077 9.038 8.564 9 8 9c-5 0-6 3-6 4s1 1 1 1h5.256Z"/>
+                    <path d="M12.5 16a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Zm.5-5v1h1a.5.5 0 0 1 0 1h-1v1a.5.5 0 0 1-1 0v-1h-1a.5.5 0 0 1 0-1h1v-1a.5.5 0 0 1 1 0Z"/>
+                </svg>
             </div>
-            <ValidationMessage For="@(() => registerModel.Password)" />
-            <div class="progress my-2" aria-hidden="false">
-                <div class="progress-bar @passwordStrengthColor" role="progressbar" style="@($"width: {passwordStrength};")" aria-valuenow="@passwordStrengthPercent" aria-valuemin="0" aria-valuemax="100"></div>
-            </div>
-            <small class="text-muted">@passwordStrengthText</small>
+            <h1 class="brand-name">Patient Registration</h1>
+            <p class="brand-tagline">Create your account to access healthcare services</p>
         </div>
-    </div>
 
-    <button type="submit" class="btn btn-primary mt-4 w-100" disabled="@isSubmitting" aria-disabled="@isSubmitting">
-        @if (isSubmitting)
+        @if (!string.IsNullOrEmpty(message))
         {
-            <span>Registering... <span class="spinner-border spinner-border-sm ms-2" role="status" aria-hidden="true"></span></span>
+            <div class="alert @(isSuccess ? "alert-success" : "alert-danger") alert-dismissible">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+                    @if (isSuccess)
+                    {
+                        <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zm-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/>
+                    }
+                    else
+                    {
+                        <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+                        <path d="M7.002 11a1 1 0 1 1 2 0 1 1 0 0 1-2 0zM7.1 4.995a.905.905 0 1 1 1.8 0l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 4.995z"/>
+                    }
+                </svg>
+                @message
+                <button type="button" class="btn-close" @onclick="() => message = null"></button>
+            </div>
         }
-        else
-        {
-            <span>Register</span>
+
+        <!-- Registration Form -->
+        <EditForm Model="registerModel" OnValidSubmit="OnValidSubmit" class="register-form">
+            <FluentValidationValidator />
+
+            <div class="form-grid">
+                <!-- Full Name -->
+                <div class="form-group form-group-full">
+                    <label for="fullname" class="form-label">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
+                            <path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm2-3a2 2 0 1 1-4 0 2 2 0 0 1 4 0zm4 8c0 1-1 1-1 1H3s-1 0-1-1 1-4 6-4 6 3 6 4zm-1-.004c-.001-.246-.154-.986-.832-1.664C11.516 10.68 10.289 10 8 10c-2.29 0-3.516.68-4.168 1.332-.678.678-.83 1.418-.832 1.664h10z"/>
+                        </svg>
+                        Full Name
+                    </label>
+                    <div class="input-with-icon">
+                        <svg class="input-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
+                            <path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/>
+                        </svg>
+                        <InputText id="fullname" class="form-control" @bind-Value="registerModel.FullName" placeholder="Enter your full name" />
+                    </div>
+                    <ValidationMessage For="@(() => registerModel.FullName)" class="validation-message" />
+                </div>
+
+                <!-- Phone Number -->
+                <div class="form-group">
+                    <label for="phone" class="form-label">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
+                            <path d="M3.654 1.328a.678.678 0 0 0-1.015-.063L1.605 2.3c-.483.484-.661 1.169-.45 1.77a17.568 17.568 0 0 0 4.168 6.608 17.569 17.569 0 0 0 6.608 4.168c.601.211 1.286.033 1.77-.45l1.034-1.034a.678.678 0 0 0-.063-1.015l-2.307-1.794a.678.678 0 0 0-.58-.122l-2.19.547a1.745 1.745 0 0 1-1.657-.459L5.482 8.062a1.745 1.745 0 0 1-.46-1.657l.548-2.19a.678.678 0 0 0-.122-.58L3.654 1.328z"/>
+                        </svg>
+                        Phone Number
+                    </label>
+                    <div class="input-with-icon">
+                        <svg class="input-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
+                            <path d="M3.654 1.328a.678.678 0 0 0-1.015-.063L1.605 2.3c-.483.484-.661 1.169-.45 1.77a17.568 17.568 0 0 0 4.168 6.608 17.569 17.569 0 0 0 6.608 4.168c.601.211 1.286.033 1.77-.45l1.034-1.034a.678.678 0 0 0-.063-1.015l-2.307-1.794a.678.678 0 0 0-.58-.122l-2.19.547a1.745 1.745 0 0 1-1.657-.459L5.482 8.062a1.745 1.745 0 0 1-.46-1.657l.548-2.19a.678.678 0 0 0-.122-.58L3.654 1.328z"/>
+                        </svg>
+                        <InputText id="phone" class="form-control" @bind-Value="registerModel.Phone" @onblur="CheckPhoneAsync" placeholder="Enter your phone number" />
+                    </div>
+                    <ValidationMessage For="@(() => registerModel.Phone)" class="validation-message" />
+                    @if (!string.IsNullOrEmpty(phoneError))
+                    {
+                        <div class="error-message">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="currentColor" viewBox="0 0 16 16">
+                                <path d="M8.982 1.566a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566zM8 5c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995A.905.905 0 0 1 8 5zm.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"/>
+                            </svg>
+                            @phoneError
+                        </div>
+                    }
+                </div>
+
+                <!-- Email -->
+                <div class="form-group">
+                    <label for="email" class="form-label">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
+                            <path d="M0 4a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V4z"/>
+                        </svg>
+                        Email Address
+                    </label>
+                    <div class="input-with-icon">
+                        <svg class="input-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
+                            <path d="M0 4a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V4z"/>
+                        </svg>
+                        <InputText id="email" class="form-control" @bind-Value="registerModel.Email" placeholder="your.email@example.com" />
+                    </div>
+                    <ValidationMessage For="@(() => registerModel.Email)" class="validation-message" />
+                    @if (!string.IsNullOrEmpty(emailError))
+                    {
+                        <div class="error-message">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="currentColor" viewBox="0 0 16 16">
+                                <path d="M8.982 1.566a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566zM8 5c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995A.905.905 0 0 1 8 5zm.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"/>
+                            </svg>
+                            @emailError
+                        </div>
+                    }
+                </div>
+
+                <!-- Password -->
+                <div class="form-group form-group-full">
+                    <label for="password" class="form-label">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
+                            <path d="M8 1a2 2 0 0 1 2 2v4H6V3a2 2 0 0 1 2-2zm3 6V3a3 3 0 0 0-6 0v4a2 2 0 0 0-2 2v5a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z"/>
+                        </svg>
+                        Password
+                    </label>
+                    <div class="password-input-container">
+                        <div class="input-with-icon">
+                            <svg class="input-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
+                                <path d="M8 1a2 2 0 0 1 2 2v4H6V3a2 2 0 0 1 2-2zm3 6V3a3 3 0 0 0-6 0v4a2 2 0 0 0-2 2v5a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z"/>
+                            </svg>
+                            <InputText id="password" type="@(showPassword ? "text" : "password")" class="form-control password-input" @bind-Value="registerModel.Password" @oninput="OnPasswordInput" placeholder="Create a strong password" />
+                            <button type="button" class="password-toggle-btn" @onclick="TogglePasswordVisibility">
+                                @if (showPassword)
+                                {
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
+                                        <path d="M13.359 11.238C15.06 9.72 16 8 16 8s-3-5.5-8-5.5a7.028 7.028 0 0 0-2.79.588l.77.771A5.944 5.944 0 0 1 8 3.5c2.12 0 3.879 1.168 5.168 2.457A13.134 13.134 0 0 1 14.828 8c-.058.087-.122.183-.195.288-.335.48-.83 1.12-1.465 1.755-.165.165-.337.328-.517.486l.708.709z"/>
+                                        <path d="M11.297 9.176a3.5 3.5 0 0 0-4.474-4.474l.823.823a2.5 2.5 0 0 1 2.829 2.829l.822.822zm-2.943 1.299.822.822a3.5 3.5 0 0 1-4.474-4.474l.823.823a2.5 2.5 0 0 0 2.829 2.829z"/>
+                                        <path d="M3.35 5.47c-.18.16-.353.322-.518.487A13.134 13.134 0 0 0 1.172 8l.195.288c.335.48.83 1.12 1.465 1.755C4.121 11.332 5.881 12.5 8 12.5c.716 0 1.39-.133 2.02-.36l.77.772A7.029 7.029 0 0 1 8 13.5C3 13.5 0 8 0 8s.939-1.721 2.641-3.238l.708.709zm10.296 8.884-12-12 .708-.708 12 12-.708.708z"/>
+                                    </svg>
+                                }
+                                else
+                                {
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
+                                        <path d="M16 8s-3-5.5-8-5.5S0 8 0 8s3 5.5 8 5.5S16 8 16 8zM1.173 8a13.133 13.133 0 0 1 1.66-2.043C4.12 4.668 5.88 3.5 8 3.5c2.12 0 3.879 1.168 5.168 2.457A13.133 13.133 0 0 1 14.828 8c-.058.087-.122.183-.195.288-.335.48-.83 1.12-1.465 1.755C11.879 11.332 10.119 12.5 8 12.5c-2.12 0-3.879-1.168-5.168-2.457A13.134 13.134 0 0 1 1.172 8z"/>
+                                        <path d="M8 5.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5zM4.5 8a3.5 3.5 0 1 1 7 0 3.5 3.5 0 0 1-7 0z"/>
+                                    </svg>
+                                }
+                            </button>
+                        </div>
+                    </div>
+                    <ValidationMessage For="@(() => registerModel.Password)" class="validation-message" />
+                    
+                    <!-- Password Strength Indicator -->
+                    <div class="password-strength-container">
+                        <div class="password-strength-bar">
+                            <div class="password-strength-fill @passwordStrengthColor" style="width: @passwordStrength"></div>
+                        </div>
+                        <span class="password-strength-text">@passwordStrengthText</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Submit Button -->
+            <button type="submit" class="btn btn-primary btn-lg submit-button" disabled="@isSubmitting">
+                @if (isSubmitting)
+                {
+                    <span class="button-content">
+                        <span class="spinner-border spinner-border-sm" role="status"></span>
+                        <span>Registering...</span>
+                    </span>
+                }
+                else
+                {
+                    <span class="button-content">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
+                            <path d="M12.736 3.97a.733.733 0 0 1 1.047 0c.286.289.29.756.01 1.05L7.88 12.01a.733.733 0 0 1-1.065.02L3.217 8.384a.757.757 0 0 1 0-1.06.733.733 0 0 1 1.047 0l3.052 3.093 5.4-6.425a.247.247 0 0 1 .02-.022Z"/>
+                        </svg>
+                        <span>Create Account</span>
+                    </span>
+                }
+            </button>
+
+            <!-- Login Link -->
+            <div class="login-link">
+                Already have an account? 
+                <a href="/login">Sign in</a>
+            </div>
+        </EditForm>
+    </div>
+</div>
+
+<style>
+    /* ============================================
+       REGISTER PAGE
+       ============================================ */
+    .register-page {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 100vh;
+        background: linear-gradient(135deg, var(--clx-primary-light) 0%, var(--clx-white) 100%);
+        padding: var(--clx-spacing-lg);
+    }
+
+    .register-container {
+        background-color: var(--clx-white);
+        border-radius: var(--clx-radius-xl);
+        box-shadow: var(--clx-shadow-xl);
+        padding: var(--clx-spacing-2xl);
+        max-width: 600px;
+        width: 100%;
+    }
+
+    /* ============================================
+       BRANDING
+       ============================================ */
+    .register-branding {
+        text-align: center;
+        margin-bottom: var(--clx-spacing-xl);
+    }
+
+    .brand-icon {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 80px;
+        height: 80px;
+        background: linear-gradient(135deg, var(--clx-primary) 0%, var(--clx-primary-hover) 100%);
+        border-radius: 50%;
+        margin-bottom: var(--clx-spacing-md);
+        box-shadow: var(--clx-shadow-lg);
+    }
+
+    .brand-icon svg {
+        color: var(--clx-white);
+    }
+
+    .brand-name {
+        font-size: 2rem;
+        font-weight: 700;
+        color: var(--clx-gray-900);
+        margin-bottom: var(--clx-spacing-xs);
+    }
+
+    .brand-tagline {
+        color: var(--clx-gray-600);
+        font-size: 0.9375rem;
+        margin: 0;
+    }
+
+    /* ============================================
+       ALERTS
+       ============================================ */
+    .alert {
+        display: flex;
+        align-items: center;
+        gap: var(--clx-spacing-sm);
+        margin-bottom: var(--clx-spacing-lg);
+    }
+
+    .alert svg {
+        flex-shrink: 0;
+    }
+
+    .alert-dismissible .btn-close {
+        margin-left: auto;
+    }
+
+    /* ============================================
+       REGISTER FORM
+       ============================================ */
+    .register-form {
+        display: flex;
+        flex-direction: column;
+        gap: var(--clx-spacing-lg);
+    }
+
+    .form-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: var(--clx-spacing-lg);
+    }
+
+    .form-group {
+        display: flex;
+        flex-direction: column;
+        gap: var(--clx-spacing-sm);
+    }
+
+    .form-group-full {
+        grid-column: 1 / -1;
+    }
+
+    .form-label {
+        display: flex;
+        align-items: center;
+        gap: var(--clx-spacing-xs);
+        font-weight: 600;
+        font-size: 0.875rem;
+        color: var(--clx-gray-700);
+    }
+
+    .form-label svg {
+        color: var(--clx-primary);
+    }
+
+    /* ============================================
+       INPUT WITH ICON
+       ============================================ */
+    .input-with-icon {
+        position: relative;
+        display: flex;
+        align-items: center;
+    }
+
+    .input-icon {
+        position: absolute;
+        left: var(--clx-spacing-md);
+        color: var(--clx-gray-500);
+        pointer-events: none;
+        z-index: 1;
+    }
+
+    .input-with-icon .form-control {
+        padding-left: calc(var(--clx-spacing-md) + 18px + var(--clx-spacing-sm));
+        height: 48px;
+        font-size: 0.9375rem;
+    }
+
+    .form-control {
+        border: 2px solid var(--clx-gray-300);
+        border-radius: var(--clx-radius-md);
+        transition: all var(--clx-transition-normal);
+    }
+
+    .form-control:focus {
+        border-color: var(--clx-primary);
+        outline: none;
+        box-shadow: 0 0 0 3px rgba(var(--clx-primary-rgb), 0.1);
+    }
+
+    .form-control::placeholder {
+        color: var(--clx-gray-500);
+    }
+
+    /* ============================================
+       PASSWORD INPUT
+       ============================================ */
+    .password-input-container {
+        position: relative;
+    }
+
+    .password-input {
+        padding-right: calc(var(--clx-spacing-md) + 40px);
+    }
+
+    .password-toggle-btn {
+        position: absolute;
+        right: var(--clx-spacing-md);
+        top: 50%;
+        transform: translateY(-50%);
+        background: none;
+        border: none;
+        color: var(--clx-gray-600);
+        cursor: pointer;
+        padding: var(--clx-spacing-xs);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: color var(--clx-transition-fast);
+    }
+
+    .password-toggle-btn:hover {
+        color: var(--clx-primary);
+    }
+
+    /* ============================================
+       PASSWORD STRENGTH
+       ============================================ */
+    .password-strength-container {
+        display: flex;
+        align-items: center;
+        gap: var(--clx-spacing-sm);
+    }
+
+    .password-strength-bar {
+        flex: 1;
+        height: 6px;
+        background-color: var(--clx-gray-200);
+        border-radius: var(--clx-radius-sm);
+        overflow: hidden;
+    }
+
+    .password-strength-fill {
+        height: 100%;
+        transition: width var(--clx-transition-normal), background-color var(--clx-transition-normal);
+    }
+
+    .bg-danger {
+        background-color: var(--clx-danger);
+    }
+
+    .bg-warning {
+        background-color: var(--clx-warning);
+    }
+
+    .bg-success {
+        background-color: var(--clx-success);
+    }
+
+    .password-strength-text {
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: var(--clx-gray-600);
+        white-space: nowrap;
+    }
+
+    /* ============================================
+       VALIDATION & ERROR MESSAGES
+       ============================================ */
+    .validation-message {
+        color: var(--clx-danger);
+        font-size: 0.8125rem;
+        margin-top: var(--clx-spacing-xs);
+    }
+
+    .error-message {
+        display: flex;
+        align-items: center;
+        gap: var(--clx-spacing-xs);
+        color: var(--clx-danger);
+        font-size: 0.8125rem;
+        margin-top: var(--clx-spacing-xs);
+    }
+
+    .error-message svg {
+        flex-shrink: 0;
+    }
+
+    /* ============================================
+       SUBMIT BUTTON
+       ============================================ */
+    .submit-button {
+        width: 100%;
+        height: 52px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: var(--clx-spacing-sm);
+        font-weight: 600;
+        font-size: 1rem;
+        transition: all var(--clx-transition-normal);
+    }
+
+    .submit-button:not(:disabled):hover {
+        transform: translateY(-2px);
+        box-shadow: var(--clx-shadow-lg);
+    }
+
+    .submit-button:not(:disabled):active {
+        transform: translateY(0);
+    }
+
+    .submit-button:disabled {
+        opacity: 0.7;
+        cursor: not-allowed;
+    }
+
+    .button-content {
+        display: flex;
+        align-items: center;
+        gap: var(--clx-spacing-sm);
+    }
+
+    /* ============================================
+       LOGIN LINK
+       ============================================ */
+    .login-link {
+        text-align: center;
+        font-size: 0.875rem;
+        color: var(--clx-gray-600);
+    }
+
+    .login-link a {
+        color: var(--clx-primary);
+        text-decoration: none;
+        font-weight: 600;
+        transition: color var(--clx-transition-fast);
+    }
+
+    .login-link a:hover {
+        color: var(--clx-primary-hover);
+        text-decoration: underline;
+    }
+
+    /* ============================================
+       RESPONSIVE DESIGN
+       ============================================ */
+    @@media (max-width: 768px) {
+        .register-page {
+            padding: var(--clx-spacing-md);
         }
-    </button>
-</EditForm>
+
+        .register-container {
+            padding: var(--clx-spacing-lg);
+        }
+
+        .brand-icon {
+            width: 64px;
+            height: 64px;
+        }
+
+        .brand-icon svg {
+            width: 32px;
+            height: 32px;
+        }
+
+        .brand-name {
+            font-size: 1.75rem;
+        }
+
+        .form-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .form-group-full {
+            grid-column: 1;
+        }
+
+        .input-with-icon .form-control {
+            height: 44px;
+        }
+
+        .submit-button {
+            height: 48px;
+        }
+    }
+</style>
 
 @code {
     private RegisterPatientRequest registerModel = new();
@@ -83,7 +544,7 @@
     private bool showPassword;
     private string passwordStrength = "0%";
     private int passwordStrengthPercent = 0;
-    private string passwordStrengthText = "Very weak";
+    private string passwordStrengthText = "Weak";
     private string passwordStrengthColor = "bg-danger";
 
     private string? message;
@@ -91,7 +552,6 @@
     private string? emailError;
     private string? phoneError;
 
-    // Cancellation token source for delayed redirect / long running tasks
     private CancellationTokenSource? cts;
 
     protected override void OnInitialized()
@@ -120,12 +580,11 @@
                 message = "Registration successful. Redirecting to login...";
                 ToastService.ShowSuccess(message);
 
-                // Delay before redirect to allow user to read the toast (cancellable)
                 try
                 {
                     await Task.Delay(1300, cts!.Token);
                 }
-                catch (TaskCanceledException) { /* ignore */ }
+                catch (TaskCanceledException) { }
 
                 if (!(cts?.IsCancellationRequested ?? true))
                 {

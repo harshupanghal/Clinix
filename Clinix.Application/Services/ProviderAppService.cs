@@ -22,14 +22,55 @@ public sealed class ProviderAppService : IProviderAppService
         return p is null ? null : new ProviderDto(p.Id, p.Name, p.Specialty, p.Tags, p.WorkStartTime, p.WorkEndTime);
         }
 
+    // Application/Services/ProviderAppService.cs
+    // Application/Services/ProviderAppService.cs
+    // Application/Services/ProviderAppService.cs
     public async Task<List<ProviderDto>> RecommendAsync(ProviderRecommendationRequest request, CancellationToken ct = default)
         {
-        var tokens = (request.Query ?? "")
+        Console.WriteLine($"[ProviderAppService] RecommendAsync called");
+        Console.WriteLine($"[ProviderAppService] Query: '{request.Query}'");
+
+        if (string.IsNullOrWhiteSpace(request.Query))
+            {
+            Console.WriteLine($"[ProviderAppService] Query is null/empty - returning empty list");
+            return new List<ProviderDto>();
+            }
+
+        // Split search text into keywords
+        var keywords = request.Query
             .ToLowerInvariant()
-            .Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-        var list = await _providers.SearchAsync(tokens, ct);
-        return list.Select(p => new ProviderDto(p.Id, p.Name, p.Specialty, p.Tags, p.WorkStartTime, p.WorkEndTime)).ToList();
+            .Split(new[] { ' ', ',', ';' }, StringSplitOptions.RemoveEmptyEntries)
+            .Select(k => k.Trim())
+            .Where(k => k.Length >= 2)
+            .ToArray();
+
+        Console.WriteLine($"[ProviderAppService] Keywords extracted: {string.Join(", ", keywords)}");
+
+        if (!keywords.Any())
+            {
+            Console.WriteLine($"[ProviderAppService] No valid keywords - returning empty list");
+            return new List<ProviderDto>();
+            }
+
+        // Search providers
+        Console.WriteLine($"[ProviderAppService] Calling repository.SearchAsync...");
+        var providers = await _providers.SearchAsync(keywords, ct);
+        Console.WriteLine($"[ProviderAppService] Repository returned {providers.Count} providers");
+
+        var dtos = providers.Select(p => new ProviderDto(
+            p.Id,
+            p.Name,
+            p.Specialty,
+            p.Tags ?? "",
+            p.WorkStartTime,
+            p.WorkEndTime
+        )).ToList();
+
+        Console.WriteLine($"[ProviderAppService] Returning {dtos.Count} DTOs");
+        return dtos;
         }
+
+
 
     public async Task<List<(DateTimeOffset Start, DateTimeOffset End)>> GetAvailableSlotsAsync(AvailableSlotsRequest req, CancellationToken ct = default)
         {

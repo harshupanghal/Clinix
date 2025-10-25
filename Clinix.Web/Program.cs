@@ -75,6 +75,8 @@ builder.Services.AddScoped<IDoctorActionsAppService, DoctorActionsAppService>();
 builder.Services.AddScoped<IRegistrationUiService, RegistrationUiService>();
 builder.Services.AddScoped<ISafeNavigationService, SafeNavigationService>();
 builder.Services.AddScoped<IPatientDashboardUiService, PatientDashboardUiService>();
+builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
+
 
 // NEW: Notification and background services
 builder.Services.AddSingleton<INotificationSender, RealNotificationSender>();

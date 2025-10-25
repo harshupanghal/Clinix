@@ -10,83 +10,372 @@
 @inject AuthenticationStateProvider AuthStateProvider
 @inject IJSRuntime Js
 
-<h3 class="mb-4 text-primary">Stock Management</h3>
-
-@if (_accessDenied)
-{
-    <div class="alert alert-danger">Access denied. Only Admins and Chemists can update stock.</div>
-}
-else if (_item == null)
-{
-    <div class="alert alert-info">Loading item details...</div>
-}
-else
-{
-    <div class="card shadow-lg p-5 mx-auto stock-card" style="max-width:800px; border-radius:1rem;">
-        <div class="mb-4">
-            <h5 class="text-secondary">Item Details</h5>
-            <hr />
-            <div class="d-flex justify-content-between">
-                <div><strong>Item:</strong> @_item.Name</div>
-                <div><strong>Current Stock:</strong> @_item.CurrentStock</div>
-            </div>
+<div class="stock-management-page">
+    <!-- Page Header -->
+    <div class="page-header">
+        <div>
+            <h1 class="page-title">
+                <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" fill="currentColor" viewBox="0 0 16 16">
+                    <path fill-rule="evenodd" d="M8 3a.5.5 0 0 1 .5.5v4a.5.5 0 0 1-1 0v-4A.5.5 0 0 1 8 3zm0 8a.5.5 0 0 1 .5.5v1.5a.5.5 0 0 1-1 0V11.5A.5.5 0 0 1 8 11z"/>
+                    <path d="M8 0a8 8 0 1 0 0 16A8 8 0 0 0 8 0zM1.5 8a6.5 6.5 0 1 1 13 0 6.5 6.5 0 0 1-13 0z"/>
+                </svg>
+                Stock Management
+            </h1>
+            <p class="page-subtitle">Record stock in/out transactions for inventory items</p>
         </div>
+        <button class="btn btn-secondary" @onclick="@(() => Navigation.NavigateTo("/inventory"))">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                <path fill-rule="evenodd" d="M15 8a.5.5 0 0 0-.5-.5H2.707l3.147-3.146a.5.5 0 1 0-.708-.708l-4 4a.5.5 0 0 0 0 .708l4 4a.5.5 0 0 0 .708-.708L2.707 8.5H14.5A.5.5 0 0 0 15 8z"/>
+            </svg>
+            Back to Inventory
+        </button>
+    </div>
 
-        <EditForm Model="_model" OnValidSubmit="HandleStock" FormName="StockForm">
-            <DataAnnotationsValidator />
-            <ValidationSummary class="text-danger mb-3" />
-
-            <div class="row g-3">
-                <div class="col-md-6">
-                    <label class="form-label fw-semibold text-primary">Transaction Type</label>
-                    <InputSelect @bind-Value="_model.TransactionType" class="form-select">
-                        <option value="">-- Select Type --</option>
-                        <option value="IN">Stock In</option>
-                        <option value="OUT">Stock Out</option>
-                    </InputSelect>
-                </div>
-
-                <div class="col-md-6">
-                    <label class="form-label fw-semibold text-primary">Quantity</label>
-                    <InputNumber @bind-Value="_model.Quantity" class="form-control" placeholder="Enter quantity" />
-                </div>
-
-                <div class="col-12">
-                    <label class="form-label fw-semibold text-primary">Description (Optional)</label>
-                    <InputTextArea @bind-Value="_model.Description" class="form-control" rows="3" placeholder="Add a note or reason..." />
-                </div>
-            </div>
-
-            <div class="d-flex gap-3 mt-4 flex-wrap">
-                <button type="submit" class="btn btn-primary flex-fill position-relative" disabled="@_isLoading">
-    @if (_isLoading)
+    @if (_accessDenied)
     {
-        <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-        <span>Processing...</span>
+        <div class="alert alert-danger">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+                <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+                <path d="M7.002 11a1 1 0 1 1 2 0 1 1 0 0 1-2 0zM7.1 4.995a.905.905 0 1 1 1.8 0l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 4.995z"/>
+            </svg>
+            <strong>Access Denied</strong> - Only Admins and Chemists can update stock.
+        </div>
+    }
+    else if (_item == null)
+    {
+        <div class="loading-container">
+            <div class="spinner-border text-primary" role="status"></div>
+            <p class="mt-3 text-muted">Loading item details...</p>
+        </div>
     }
     else
     {
-        <span><i class="bi bi-arrow-repeat me-1"></i> Submit</span>
-    }
-</button>
-
-
-                <button type="button" class="btn btn-secondary flex-fill" @onclick="@(() => Navigation.NavigateTo("/inventory"))">
-                    Cancel
-                </button>
+        <!-- Item Info Card -->
+        <div class="card item-info-card">
+            <div class="card-body">
+                <div class="item-info-grid">
+                    <div class="info-item">
+                        <span class="info-label">Item Name</span>
+                        <span class="info-value">@_item.Name</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Type</span>
+                        <span class="badge badge-primary">@_item.Type</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Current Stock</span>
+                        <span class="info-value stock-highlight">@_item.CurrentStock @_item.Unit</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Location</span>
+                        <span class="info-value">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
+                                <path d="M8 16s6-5.686 6-10A6 6 0 0 0 2 6c0 4.314 6 10 6 10zm0-7a3 3 0 1 1 0-6 3 3 0 0 1 0 6z"/>
+                            </svg>
+                            @_item.StockLocation
+                        </span>
+                    </div>
+                </div>
             </div>
+        </div>
 
-            @if (!string.IsNullOrEmpty(_error))
-            {
-                <div class="alert alert-danger mt-3">@_error</div>
-            }
-            @if (!string.IsNullOrEmpty(_success))
-            {
-                <div class="alert alert-success mt-3">@_success</div>
-            }
-        </EditForm>
-    </div>
-}
+        <!-- Transaction Form Card -->
+        <div class="card form-card">
+            <div class="card-body">
+                <h5 class="form-section-title">Transaction Details</h5>
+                
+                <EditForm Model="_model" OnValidSubmit="HandleStock" FormName="StockForm">
+                    <DataAnnotationsValidator />
+                    <ValidationSummary class="validation-summary" />
+
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label class="form-label">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
+                                    <path d="M8 3a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3zm4 8a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3zM5.5 7a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0zm.5 6a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3z"/>
+                                </svg>
+                                Transaction Type
+                            </label>
+                            <InputSelect @bind-Value="_model.TransactionType" class="form-select">
+                                <option value="">-- Select Type --</option>
+                                <option value="IN">Stock In (Add)</option>
+                                <option value="OUT">Stock Out (Deduct)</option>
+                            </InputSelect>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
+                                    <path d="M1 2.5A1.5 1.5 0 0 1 2.5 1h3A1.5 1.5 0 0 1 7 2.5v3A1.5 1.5 0 0 1 5.5 7h-3A1.5 1.5 0 0 1 1 5.5v-3zm8 0A1.5 1.5 0 0 1 10.5 1h3A1.5 1.5 0 0 1 15 2.5v3A1.5 1.5 0 0 1 13.5 7h-3A1.5 1.5 0 0 1 9 5.5v-3zm-8 8A1.5 1.5 0 0 1 2.5 9h3A1.5 1.5 0 0 1 7 10.5v3A1.5 1.5 0 0 1 5.5 15h-3A1.5 1.5 0 0 1 1 13.5v-3zm8 0A1.5 1.5 0 0 1 10.5 9h3a1.5 1.5 0 0 1 1.5 1.5v3a1.5 1.5 0 0 1-1.5 1.5h-3A1.5 1.5 0 0 1 9 13.5v-3z"/>
+                                </svg>
+                                Quantity
+                            </label>
+                            <InputNumber @bind-Value="_model.Quantity" class="form-control" placeholder="Enter quantity" />
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
+                                <path d="M14 1a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1h12zM2 0a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2H2z"/>
+                                <path d="M3 4.5a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5zM3 8a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9A.5.5 0 0 1 3 8zm0 3.5a.5.5 0 0 1 .5-.5h6a.5.5 0 0 1 0 1h-6a.5.5 0 0 1-.5-.5z"/>
+                            </svg>
+                            Description (Optional)
+                        </label>
+                        <InputTextArea @bind-Value="_model.Description" class="form-control" rows="3" placeholder="Add notes, reason, or supplier details..." />
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary" disabled="@_isLoading">
+                            @if (_isLoading)
+                            {
+                                <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+                                <span>Processing...</span>
+                            }
+                            else
+                            {
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                                    <path fill-rule="evenodd" d="M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425a.267.267 0 0 1 .02-.022z"/>
+                                </svg>
+                                <span>Submit Transaction</span>
+                            }
+                        </button>
+                        <button type="button" class="btn btn-secondary" @onclick="@(() => Navigation.NavigateTo("/inventory"))">
+                            Cancel
+                        </button>
+                    </div>
+
+                    @if (!string.IsNullOrEmpty(_error))
+                    {
+                        <div class="alert alert-danger mt-3">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
+                                <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+                                <path d="M7.002 11a1 1 0 1 1 2 0 1 1 0 0 1-2 0zM7.1 4.995a.905.905 0 1 1 1.8 0l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 4.995z"/>
+                            </svg>
+                            @_error
+                        </div>
+                    }
+                    @if (!string.IsNullOrEmpty(_success))
+                    {
+                        <div class="alert alert-success mt-3">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
+                                <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zm-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/>
+                            </svg>
+                            @_success
+                        </div>
+                    }
+                </EditForm>
+            </div>
+        </div>
+    }
+</div>
+
+<style>
+    /* ============================================
+       STOCK MANAGEMENT PAGE
+       ============================================ */
+    .stock-management-page {
+        padding: var(--clx-spacing-lg);
+        max-width: 900px;
+        margin: 0 auto;
+    }
+
+    /* ============================================
+       PAGE HEADER
+       ============================================ */
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: var(--clx-spacing-xl);
+        gap: var(--clx-spacing-md);
+    }
+
+    .page-title {
+        display: flex;
+        align-items: center;
+        gap: var(--clx-spacing-sm);
+        margin: 0 0 var(--clx-spacing-xs) 0;
+        color: var(--clx-gray-900);
+        font-size: 1.75rem;
+    }
+
+    .page-title svg {
+        color: var(--clx-primary);
+    }
+
+    .page-subtitle {
+        color: var(--clx-gray-600);
+        font-size: 0.875rem;
+        margin: 0;
+    }
+
+    /* ============================================
+       LOADING STATE
+       ============================================ */
+    .loading-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: var(--clx-spacing-2xl);
+        text-align: center;
+    }
+
+    /* ============================================
+       ITEM INFO CARD
+       ============================================ */
+    .item-info-card {
+        margin-bottom: var(--clx-spacing-lg);
+        background: linear-gradient(135deg, var(--clx-primary-light) 0%, var(--clx-white) 100%);
+        border: 1px solid var(--clx-primary);
+    }
+
+    .item-info-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: var(--clx-spacing-lg);
+    }
+
+    .info-item {
+        display: flex;
+        flex-direction: column;
+        gap: var(--clx-spacing-xs);
+    }
+
+    .info-label {
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: var(--clx-gray-600);
+    }
+
+    .info-value {
+        font-size: 1rem;
+        font-weight: 500;
+        color: var(--clx-gray-900);
+        display: flex;
+        align-items: center;
+        gap: var(--clx-spacing-xs);
+    }
+
+    .stock-highlight {
+        font-size: 1.25rem;
+        color: var(--clx-primary);
+        font-weight: 600;
+    }
+
+    /* ============================================
+       FORM CARD
+       ============================================ */
+    .form-card {
+        box-shadow: var(--clx-shadow-md);
+    }
+
+    .form-section-title {
+        color: var(--clx-gray-900);
+        font-size: 1.125rem;
+        font-weight: 600;
+        margin-bottom: var(--clx-spacing-lg);
+        padding-bottom: var(--clx-spacing-sm);
+        border-bottom: 2px solid var(--clx-gray-200);
+    }
+
+    .form-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: var(--clx-spacing-md);
+        margin-bottom: var(--clx-spacing-md);
+    }
+
+    .form-group {
+        margin-bottom: var(--clx-spacing-md);
+    }
+
+    .form-label {
+        display: flex;
+        align-items: center;
+        gap: var(--clx-spacing-xs);
+        font-weight: 500;
+        font-size: 0.875rem;
+        color: var(--clx-gray-700);
+        margin-bottom: var(--clx-spacing-sm);
+    }
+
+    .form-label svg {
+        color: var(--clx-primary);
+    }
+
+    .form-actions {
+        display: flex;
+        gap: var(--clx-spacing-md);
+        margin-top: var(--clx-spacing-lg);
+    }
+
+    .form-actions .btn {
+        flex: 1;
+    }
+
+    .validation-summary {
+        background-color: var(--clx-danger-light);
+        border: 1px solid var(--clx-danger);
+        border-radius: var(--clx-radius-md);
+        padding: var(--clx-spacing-md);
+        margin-bottom: var(--clx-spacing-md);
+        color: var(--clx-danger);
+    }
+
+    /* ============================================
+       ALERTS WITH ICONS
+       ============================================ */
+    .alert {
+        display: flex;
+        align-items: center;
+        gap: var(--clx-spacing-sm);
+    }
+
+    .alert svg {
+        flex-shrink: 0;
+    }
+
+    /* ============================================
+       BUTTON HOVER FIXES
+       ============================================ */
+    .btn:hover svg {
+        color: currentColor;
+    }
+
+    /* ============================================
+       RESPONSIVE DESIGN
+       ============================================ */
+    @@media (max-width: 768px) {
+        .stock-management-page {
+            padding: var(--clx-spacing-md);
+        }
+
+        .page-header {
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .page-header .btn {
+            width: 100%;
+        }
+
+        .item-info-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .form-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .form-actions {
+            flex-direction: column;
+        }
+    }
+</style>
 
 @code {
     [Parameter] public int ItemId { get; set; }
@@ -143,7 +432,7 @@ else
                 return;
             }
 
-            await Task.Delay(800); // short delay for UX
+            await Task.Delay(800);
             Navigation.NavigateTo("/inventory");
         }
         catch (Exception ex)

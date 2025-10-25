@@ -2,6 +2,7 @@
 using Clinix.Domain.Entities;
 using Clinix.Domain.Interfaces;
 using Clinix.Infrastructure.Persistence;
+using HandlebarsDotNet;
 using Microsoft.EntityFrameworkCore;
 
 namespace Clinix.Infrastructure.Repositories;
@@ -14,18 +15,57 @@ public sealed class ProviderRepository : IProviderRepository
     public Task<Provider?> GetByIdAsync(long id, CancellationToken ct = default) =>
         _db.Providers.FirstOrDefaultAsync(p => p.Id == id, ct);
 
-    public async Task<List<Provider>> SearchAsync(IEnumerable<string> tokens, CancellationToken ct = default)
+    // Infrastructure/Repositories/ProviderRepository.cs
+    public async Task<List<Provider>> SearchAsync(string[] keywords, CancellationToken ct = default)
         {
-        var q = _db.Providers.AsQueryable();
-        foreach (var t in tokens)
+        Console.WriteLine($"[ProviderRepo] SearchAsync called with {keywords?.Length ?? 0} keywords");
+
+        if (keywords == null || keywords.Length == 0)
             {
-            var term = t.Trim();
-            q = q.Where(p => EF.Functions.Like(p.Specialty, $"%{term}%")
-                          || p.Tags != null && EF.Functions.Like(p.Tags, $"%{term}%")
-                          || EF.Functions.Like(p.Name, $"%{term}%"));
+            Console.WriteLine($"[ProviderRepo] No keywords - returning all providers");
+            var all = await _db.Providers.AsNoTracking().OrderBy(p => p.Name).ToListAsync(ct);
+            Console.WriteLine($"[ProviderRepo] Returning {all.Count} providers");
+            return all;
             }
-        return await q.Take(20).ToListAsync(ct);
+
+        Console.WriteLine($"[ProviderRepo] Keywords: {string.Join(", ", keywords)}");
+
+        // Get all providers first
+        var allProviders = await _db.Providers.AsNoTracking().ToListAsync(ct);
+        Console.WriteLine($"[ProviderRepo] Total providers in DB: {allProviders.Count}");
+
+        if (allProviders.Count == 0)
+            {
+            Console.WriteLine($"[ProviderRepo] WARNING: No providers in database!");
+            return new List<Provider>();
+            }
+
+        // Log each provider
+        foreach (var p in allProviders)
+            {
+            Console.WriteLine($"[ProviderRepo] Provider: {p.Name} | Specialty: {p.Specialty} | Tags: {p.Tags ?? "NULL"}");
+            }
+
+        // Filter in memory
+        var results = allProviders.Where(p =>
+        {
+            var searchText = $"{p.Name} {p.Specialty} {p.Tags}".ToLowerInvariant();
+            var match = keywords.Any(k => searchText.Contains(k.ToLowerInvariant()));
+
+            if (match)
+                {
+                Console.WriteLine($"[ProviderRepo] MATCH: {p.Name} matched keyword");
+                }
+
+            return match;
+        })
+        .OrderBy(p => p.Name)
+        .ToList();
+
+        Console.WriteLine($"[ProviderRepo] Returning {results.Count} matching providers");
+        return results;
         }
+
 
     // Infrastructure/Persistence/Repositories/ProviderRepository.cs (add method)
     public async Task UpdateAsync(Provider provider, CancellationToken ct = default)

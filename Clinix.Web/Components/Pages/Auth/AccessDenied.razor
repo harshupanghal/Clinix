@@ -4,80 +4,417 @@
 @inject NavigationManager Navigation
 
 @{
-    // In a real app, this should be driven by app configuration or an environment variable.
-    // For this example, we check if the user is an Admin (assuming "Admin" role exists)
-    // or set a hardcoded flag for dev environments.
     bool isDebugModeEnabled = _user?.IsInRole("Admin") ?? false;
 }
 
-<div class="d-flex align-items-center justify-content-center vh-100 bg-light">
-    <div class="text-center p-5 bg-white shadow-lg rounded-4" style="max-width: 500px;">
+<div class="access-denied-page">
+    <div class="access-denied-container">
         
-        <i class="bi bi-x-octagon-fill text-danger display-1 mb-3"></i>
+        <!-- Error Icon -->
+        <svg class="error-icon" xmlns="http://www.w3.org/2000/svg" width="120" height="120" fill="currentColor" viewBox="0 0 16 16">
+            <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zM5.354 4.646a.5.5 0 1 0-.708.708L7.293 8l-2.647 2.646a.5.5 0 0 0 .708.708L8 8.707l2.646 2.647a.5.5 0 0 0 .708-.708L8.707 8l2.647-2.646a.5.5 0 0 0-.708-.708L8 7.293 5.354 4.646z"/>
+        </svg>
         
-        <h1 class="fw-bold text-danger mb-3">Access Denied</h1>
-        <p class="lead text-secondary mb-4">
+        <h1 class="error-title">Access Denied</h1>
+        <p class="error-message">
             You do not have the required permissions to view this page.
         </p>
 
         @if (_user?.Identity?.IsAuthenticated ?? false)
         {
-            <p class="mb-4">
-                You are logged in as **@(_user.Identity.Name)**. Please check with your system administrator if you believe this is an error.
-            </p>
+            <div class="user-info-box">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
+                    <path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm2-3a2 2 0 1 1-4 0 2 2 0 0 1 4 0zm4 8c0 1-1 1-1 1H3s-1 0-1-1 1-4 6-4 6 3 6 4zm-1-.004c-.001-.246-.154-.986-.832-1.664C11.516 10.68 10.289 10 8 10c-2.29 0-3.516.68-4.168 1.332-.678.678-.83 1.418-.832 1.664h10z"/>
+                </svg>
+                <div>
+                    <p class="user-info-text">
+                        You are logged in as <strong>@(_user.Identity.Name)</strong>.
+                    </p>
+                    <p class="user-info-subtext">
+                        Please check with your system administrator if you believe this is an error.
+                    </p>
+                </div>
+            </div>
         }
         else
         {
-            <p class="mb-4 text-warning">
-                You might not be logged in or your session has expired.
-            </p>
+            <div class="alert alert-warning">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+                    <path d="M8.982 1.566a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566zM8 5c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995A.905.905 0 0 1 8 5zm.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"/>
+                </svg>
+                <div>
+                    <strong>Session Issue:</strong> You might not be logged in or your session has expired.
+                </div>
+            </div>
         }
         
-        <div class="d-grid gap-2 col-8 mx-auto">
+        <div class="action-buttons">
             <button class="btn btn-primary btn-lg" @onclick="NavigateToHome">
-                <i class="bi bi-house-fill me-2"></i> Go to Home
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
+                    <path d="M8.707 1.5a1 1 0 0 0-1.414 0L.646 8.146a.5.5 0 0 0 .708.708L2 8.207V13.5A1.5 1.5 0 0 0 3.5 15h9a1.5 1.5 0 0 0 1.5-1.5V8.207l.646.647a.5.5 0 0 0 .708-.708L13 5.793V2.5a.5.5 0 0 0-.5-.5h-1a.5.5 0 0 0-.5.5v1.293L8.707 1.5zM13 7.207V13.5a.5.5 0 0 1-.5.5h-9a.5.5 0 0 1-.5-.5V7.207l5-5 5 5z"/>
+                </svg>
+                Go to Home
             </button>
         </div>
 
-        @* ------------------------------------------------------------------ *@
-        @* 🔍 Debug/Admin Info (Hidden for standard users) *@
+        @* Debug/Admin Info *@
         @if (isDebugModeEnabled)
         {
-            <hr class="my-4"/>
-            <div class="debug-info mt-3 border border-warning rounded p-3 bg-warning-subtle text-dark text-start">
-                <h5 class="fw-bold text-warning-dark mb-3"><i class="bi bi-bug-fill me-2"></i> Role/Claim Debug Information</h5>
+            <div class="debug-section">
+                <div class="debug-header">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
+                        <path d="M4.355.522a.5.5 0 0 1 .623.333l.291.956A4.979 4.979 0 0 1 8 1c1.007 0 1.946.298 2.731.811l.29-.956a.5.5 0 1 1 .957.29l-.41 1.352A4.985 4.985 0 0 1 13 6h.5a.5.5 0 0 0 .5-.5V5a.5.5 0 0 1 1 0v.5A1.5 1.5 0 0 1 13.5 7H13v1h1.5a.5.5 0 0 1 0 1H13v1h.5a1.5 1.5 0 0 1 1.5 1.5v.5a.5.5 0 1 1-1 0v-.5a.5.5 0 0 0-.5-.5H13a5 5 0 0 1-10 0h-.5a.5.5 0 0 0-.5.5v.5a.5.5 0 1 1-1 0v-.5A1.5 1.5 0 0 1 2.5 10H3V9H1.5a.5.5 0 0 1 0-1H3V7h-.5A1.5 1.5 0 0 1 1 5.5V5a.5.5 0 0 1 1 0v.5a.5.5 0 0 0 .5.5H3c0-1.364.547-2.601 1.432-3.503l-.41-1.352a.5.5 0 0 1 .333-.623zM4 7v4a4 4 0 0 0 3.5 3.97V7H4zm4.5 0v7.97A4 4 0 0 0 12 11V7H8.5zM12 6a3.989 3.989 0 0 0-1.334-2.982A3.983 3.983 0 0 0 8 2a3.983 3.983 0 0 0-2.667 1.018A3.989 3.989 0 0 0 4 6h8z"/>
+                    </svg>
+                    Role/Claim Debug Information
+                </div>
                 
                 @if (_user == null || _user.Identity == null || !_user.Identity.IsAuthenticated)
                 {
-                    <p class="text-danger">**Error:** Authentication state is missing or user is not authenticated.</p>
+                    <div class="debug-error">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                            <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+                            <path d="M7.002 11a1 1 0 1 1 2 0 1 1 0 0 1-2 0zM7.1 4.995a.905.905 0 1 1 1.8 0l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 4.995z"/>
+                        </svg>
+                        <strong>Error:</strong> Authentication state is missing or user is not authenticated.
+                    </div>
                 }
                 else
                 {
-                    <ul class="list-unstyled small mb-0">
-                        <li><strong>Authenticated:</strong> <span class="badge bg-success">@(_user.Identity.IsAuthenticated)</span></li>
-                        <li><strong>User Name:</strong> `@_user.Identity.Name`</li>
-                        <li><strong>Required Role for Page:</strong> `Admin` (from attribute)</li>
-                        <li>
-                            <strong>Detected Role:</strong> 
-                            <span class="text-info">@_roleClaim</span>
-                        </li>
-                    </ul>
+                    <div class="debug-info-grid">
+                        <div class="debug-item">
+                            <span class="debug-label">Authenticated:</span>
+                            <span class="badge badge-success">@(_user.Identity.IsAuthenticated)</span>
+                        </div>
+                        <div class="debug-item">
+                            <span class="debug-label">User Name:</span>
+                            <code class="debug-code">@_user.Identity.Name</code>
+                        </div>
+                        <div class="debug-item">
+                            <span class="debug-label">Required Role:</span>
+                            <code class="debug-code">Admin</code>
+                        </div>
+                        <div class="debug-item">
+                            <span class="debug-label">Detected Role:</span>
+                            <code class="debug-code debug-code-highlight">@_roleClaim</code>
+                        </div>
+                    </div>
                     
-                    <h6 class="mt-3 mb-2 small fw-bold">All User Claims:</h6>
-                    <div class="overflow-auto border rounded bg-white p-2" style="max-height: 150px;">
-                        <ul class="list-unstyled small mb-0 ps-3">
+                    <div class="debug-claims-section">
+                        <h6 class="debug-claims-title">All User Claims:</h6>
+                        <div class="debug-claims-container">
                             @foreach (var claim in _user.Claims)
                             {
-                                <li><code>@claim.Type</code> → `@claim.Value`</li>
+                                <div class="debug-claim-item">
+                                    <code class="claim-type">@claim.Type</code>
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="currentColor" viewBox="0 0 16 16">
+                                        <path fill-rule="evenodd" d="M1 8a.5.5 0 0 1 .5-.5h11.793l-3.147-3.146a.5.5 0 0 1 .708-.708l4 4a.5.5 0 0 1 0 .708l-4 4a.5.5 0 0 1-.708-.708L13.293 8.5H1.5A.5.5 0 0 1 1 8z"/>
+                                    </svg>
+                                    <code class="claim-value">@claim.Value</code>
+                                </div>
                             }
-                        </ul>
+                        </div>
                     </div>
                 }
             </div>
         }
-        @* ------------------------------------------------------------------ *@
     </div>
 </div>
+
+<style>
+    /* ============================================
+       ACCESS DENIED PAGE
+       ============================================ */
+    .access-denied-page {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 100vh;
+        background: linear-gradient(135deg, var(--clx-gray-50) 0%, var(--clx-gray-100) 100%);
+        padding: var(--clx-spacing-lg);
+    }
+
+    .access-denied-container {
+        background-color: var(--clx-white);
+        border-radius: var(--clx-radius-xl);
+        box-shadow: var(--clx-shadow-xl);
+        padding: var(--clx-spacing-2xl);
+        max-width: 600px;
+        width: 100%;
+        text-align: center;
+    }
+
+    /* ============================================
+       ERROR ICON & TEXT
+       ============================================ */
+    .error-icon {
+        color: var(--clx-danger);
+        margin-bottom: var(--clx-spacing-lg);
+        animation: pulse 2s ease-in-out infinite;
+    }
+
+    @@keyframes pulse {
+        0%, 100% { transform: scale(1); opacity: 1; }
+        50% { transform: scale(1.05); opacity: 0.8; }
+    }
+
+    .error-title {
+        color: var(--clx-danger);
+        font-size: 2rem;
+        font-weight: 700;
+        margin-bottom: var(--clx-spacing-md);
+    }
+
+    .error-message {
+        font-size: 1.125rem;
+        color: var(--clx-gray-700);
+        margin-bottom: var(--clx-spacing-xl);
+        line-height: 1.6;
+    }
+
+    /* ============================================
+       USER INFO BOX
+       ============================================ */
+    .user-info-box {
+        display: flex;
+        gap: var(--clx-spacing-md);
+        align-items: flex-start;
+        background-color: var(--clx-gray-50);
+        border: 1px solid var(--clx-gray-200);
+        border-radius: var(--clx-radius-md);
+        padding: var(--clx-spacing-md);
+        margin-bottom: var(--clx-spacing-xl);
+        text-align: left;
+    }
+
+    .user-info-box svg {
+        color: var(--clx-primary);
+        flex-shrink: 0;
+        margin-top: 2px;
+    }
+
+    .user-info-text {
+        margin: 0 0 var(--clx-spacing-xs) 0;
+        color: var(--clx-gray-900);
+        font-size: 0.9375rem;
+    }
+
+    .user-info-subtext {
+        margin: 0;
+        color: var(--clx-gray-600);
+        font-size: 0.875rem;
+    }
+
+    /* ============================================
+       ALERTS
+       ============================================ */
+    .alert {
+        display: flex;
+        gap: var(--clx-spacing-md);
+        align-items: flex-start;
+        margin-bottom: var(--clx-spacing-xl);
+        text-align: left;
+    }
+
+    .alert svg {
+        flex-shrink: 0;
+        margin-top: 2px;
+    }
+
+    /* ============================================
+       ACTION BUTTONS
+       ============================================ */
+    .action-buttons {
+        margin-bottom: var(--clx-spacing-xl);
+    }
+
+    .action-buttons .btn {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--clx-spacing-sm);
+        padding: var(--clx-spacing-md) var(--clx-spacing-xl);
+    }
+
+    /* ============================================
+       DEBUG SECTION
+       ============================================ */
+    .debug-section {
+        margin-top: var(--clx-spacing-xl);
+        padding-top: var(--clx-spacing-xl);
+        border-top: 2px solid var(--clx-gray-200);
+        text-align: left;
+    }
+
+    .debug-header {
+        display: flex;
+        align-items: center;
+        gap: var(--clx-spacing-sm);
+        background-color: var(--clx-warning-light);
+        border: 2px solid var(--clx-warning);
+        border-radius: var(--clx-radius-md);
+        padding: var(--clx-spacing-md);
+        margin-bottom: var(--clx-spacing-lg);
+        font-weight: 600;
+        color: var(--clx-warning-dark);
+    }
+
+    .debug-header svg {
+        color: var(--clx-warning);
+    }
+
+    .debug-error {
+        display: flex;
+        align-items: flex-start;
+        gap: var(--clx-spacing-sm);
+        background-color: var(--clx-danger-light);
+        border: 1px solid var(--clx-danger);
+        border-radius: var(--clx-radius-md);
+        padding: var(--clx-spacing-md);
+        color: var(--clx-danger);
+    }
+
+    .debug-error svg {
+        flex-shrink: 0;
+        margin-top: 2px;
+    }
+
+    .debug-info-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: var(--clx-spacing-md);
+        margin-bottom: var(--clx-spacing-lg);
+    }
+
+    .debug-item {
+        display: flex;
+        flex-direction: column;
+        gap: var(--clx-spacing-xs);
+        background-color: var(--clx-gray-50);
+        border: 1px solid var(--clx-gray-200);
+        border-radius: var(--clx-radius-sm);
+        padding: var(--clx-spacing-sm);
+    }
+
+    .debug-label {
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: var(--clx-gray-600);
+    }
+
+    .debug-code {
+        font-family: var(--clx-font-family-mono);
+        font-size: 0.875rem;
+        background-color: var(--clx-gray-100);
+        padding: var(--clx-spacing-xs) var(--clx-spacing-sm);
+        border-radius: var(--clx-radius-sm);
+        color: var(--clx-gray-900);
+    }
+
+    .debug-code-highlight {
+        background-color: var(--clx-info-light);
+        color: var(--clx-info);
+        font-weight: 600;
+    }
+
+    .badge-success {
+        background-color: var(--clx-success);
+        color: var(--clx-white);
+        padding: var(--clx-spacing-xs) var(--clx-spacing-sm);
+        border-radius: var(--clx-radius-sm);
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+
+    /* ============================================
+       DEBUG CLAIMS SECTION
+       ============================================ */
+    .debug-claims-section {
+        background-color: var(--clx-white);
+        border: 1px solid var(--clx-gray-300);
+        border-radius: var(--clx-radius-md);
+        padding: var(--clx-spacing-md);
+    }
+
+    .debug-claims-title {
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: var(--clx-gray-700);
+        margin-bottom: var(--clx-spacing-sm);
+    }
+
+    .debug-claims-container {
+        max-height: 200px;
+        overflow-y: auto;
+        background-color: var(--clx-gray-50);
+        border: 1px solid var(--clx-gray-200);
+        border-radius: var(--clx-radius-sm);
+        padding: var(--clx-spacing-sm);
+    }
+
+    .debug-claim-item {
+        display: flex;
+        align-items: center;
+        gap: var(--clx-spacing-sm);
+        padding: var(--clx-spacing-xs) 0;
+        font-size: 0.8125rem;
+        border-bottom: 1px solid var(--clx-gray-200);
+    }
+
+    .debug-claim-item:last-child {
+        border-bottom: none;
+    }
+
+    .claim-type {
+        font-family: var(--clx-font-family-mono);
+        color: var(--clx-primary);
+        font-weight: 600;
+    }
+
+    .claim-value {
+        font-family: var(--clx-font-family-mono);
+        color: var(--clx-gray-700);
+    }
+
+    .debug-claim-item svg {
+        color: var(--clx-gray-400);
+        flex-shrink: 0;
+    }
+
+    /* ============================================
+       RESPONSIVE DESIGN
+       ============================================ */
+    @@media (max-width: 768px) {
+        .access-denied-page {
+            padding: var(--clx-spacing-md);
+        }
+
+        .access-denied-container {
+            padding: var(--clx-spacing-lg);
+        }
+
+        .error-icon {
+            width: 80px;
+            height: 80px;
+        }
+
+        .error-title {
+            font-size: 1.5rem;
+        }
+
+        .error-message {
+            font-size: 1rem;
+        }
+
+        .debug-info-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .action-buttons .btn {
+            width: 100%;
+        }
+    }
+</style>
 
 @code {
     private ClaimsPrincipal? _user;
@@ -90,7 +427,6 @@
 
         if (_user.Identity?.IsAuthenticated == true)
         {
-            // Aggressively search for a role claim
             _roleClaim = _user.FindFirst(ClaimTypes.Role)?.Value ?? 
                          _user.FindFirst("role")?.Value ?? 
                          _user.FindFirst("Role")?.Value ?? 
@@ -105,7 +441,6 @@
 
     private void NavigateToHome()
     {
-        // Navigate to the root, or a safe default page for the user
         Navigation.NavigateTo("/", true);
     }
 }

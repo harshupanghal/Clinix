@@ -1,105 +1,703 @@
-﻿@* Pages/Appointments/Schedule.razor *@
-@page "/appointments/schedule"
+﻿@page "/appointments/schedule"
+@rendermode InteractiveServer
 @using Clinix.Application.DTOs
 @using Clinix.Application.Interfaces
 @using Clinix.Domain.Enums
+@using Clinix.Web.Services
 @using Microsoft.AspNetCore.Components.Forms
 @inject IAppointmentAppService AppointmentService
 @inject IProviderAppService ProviderService
+@inject ICurrentUserService CurrentUser
 @inject NavigationManager Nav
 
-<h3>Book an appointment</h3>
-
-<div class="mb-3">
-    <label class="form-label">Describe symptoms or disease</label>
-    <div class="position-relative">
-        <input type="text" class="form-control" @bind="SearchText" @bind:event="oninput" 
-               placeholder="e.g., chest pain, skin rash" />
-        @if (ShowSuggestions && Suggestions?.Any() == true)
-        {
-            <ul class="list-group position-absolute shadow" style="z-index: 1000; width: 100%; max-height: 240px; overflow: auto;">
-                @foreach (var suggestion in Suggestions)
-                {
-                    <li class="list-group-item list-group-item-action" 
-                        @onclick="@(() => SelectProvider(suggestion))">
-                        <div><strong>@suggestion.Name</strong> — @suggestion.Specialty</div>
-                        <small class="text-muted">@suggestion.Tags</small>
-                    </li>
-                }
-            </ul>
-        }
-    </div>
-</div>
-
-<div class="mb-3">
-    <label class="form-label">Chosen doctor</label>
-    <div class="input-group">
-        <input class="form-control" value="@ChosenProviderText" readonly />
-        <button type="button" class="btn btn-outline-secondary" @onclick="ClearProvider" disabled="@(!HasChosen)">Change</button>
-    </div>
-</div>
-
-<div class="row g-3 mb-2">
-    <div class="col-md-6">
-        <label class="form-label">Day</label>
-        <InputDate @bind-Value="SelectedDay" class="form-control" />
-    </div>
-    <div class="col-md-6 d-flex align-items-end">
-        <button type="button" class="btn btn-outline-primary" @onclick="LoadSlotsAsync" disabled="@(!CanLoadSlots)">Show Available Slots</button>
-    </div>
-</div>
-
-@if (LoadingSlots)
-{
-    <div class="text-muted mb-2">Loading slots...</div>
-}
-
-@if (Slots?.Count > 0)
-{
-    <div class="mb-3">
-        <label class="form-label">Available slots</label>
-        <div class="d-flex flex-wrap gap-2">
-            @foreach (var s in Slots)
-            {
-                var sel = SelectedSlot.HasValue && SelectedSlot.Value.Start == s.Start ? "btn-primary" : "btn-outline-primary";
-                <button type="button" class="btn btn-sm @sel" @onclick="@(() => PickSlot(s))">
-                    @s.Start.LocalDateTime.ToString("HH:mm") - @s.End.LocalDateTime.ToString("HH:mm")
-                </button>
-            }
+<div class="schedule-appointment-page">
+    <!-- Page Header -->
+    <div class="page-header">
+        <div>
+            <h1 class="page-title">
+                <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" fill="currentColor" viewBox="0 0 16 16">
+                    <path d="M8 1a2.5 2.5 0 0 1 2.5 2.5V4h-5v-.5A2.5 2.5 0 0 1 8 1zm3.5 3v-.5a3.5 3.5 0 1 0-7 0V4H1v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V4h-3.5z"/>
+                </svg>
+                Book an Appointment
+            </h1>
+            <p class="page-subtitle">Find a doctor and schedule your medical consultation</p>
         </div>
-    </div>
-}
-else if (Slots is not null)
-{
-    <div class="alert alert-warning">No free slots for the selected day. Try another day or provider.</div>
-}
-
-<EditForm Model="@Form" OnValidSubmit="SubmitAsync">
-    <DataAnnotationsValidator />
-    <ValidationSummary />
-
-    <div class="mb-3">
-        <label class="form-label">Appointment type</label>
-        <InputSelect @bind-Value="Form.Type" class="form-select">
-            @foreach (var t in Enum.GetValues<AppointmentType>())
-            {
-                <option value="@t">@t</option>
-            }
-        </InputSelect>
+        <a href="/appointments/patient" class="btn btn-secondary">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                <path d="M11 6.5a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1zm-3 0a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1zm-5 3a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1zm3 0a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1z"/>
+                <path d="M3.5 0a.5.5 0 0 1 .5.5V1h8V.5a.5.5 0 0 1 1 0V1h1a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2h1V.5a.5.5 0 0 1 .5-.5zM1 4v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V4H1z"/>
+            </svg>
+            My Appointments
+        </a>
     </div>
 
-    <div class="mb-3">
-        <label class="form-label">Notes (optional)</label>
-        <InputTextArea @bind-Value="Form.Notes" class="form-control" rows="3" />
-    </div>
+    @if (!_authorized)
+    {
+        <div class="alert alert-danger">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+                <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+                <path d="M7.002 11a1 1 0 1 1 2 0 1 1 0 0 1-2 0zM7.1 4.995a.905.905 0 1 1 1.8 0l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 4.995z"/>
+            </svg>
+            <strong>Access Denied</strong> - Please log in as a patient to book an appointment.
+        </div>
+    }
+    else
+    {
+        <!-- Step 1: Find a Doctor -->
+        <div class="card step-card">
+            <div class="card-header">
+                <div class="step-header">
+                    <span class="step-number">1</span>
+                    <h5 class="step-title">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+                            <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/>
+                        </svg>
+                        Find a Doctor
+                    </h5>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="form-group">
+                    <label class="form-label">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
+                            <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+                            <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z"/>
+                        </svg>
+                        Describe your symptoms or condition
+                    </label>
+                    <div class="search-container">
+                        <input type="text" 
+                               class="form-control form-control-lg search-input" 
+                               @bind="SearchText" 
+                               @bind:event="oninput" 
+                               placeholder="e.g., chest pain, fever, skin rash, headache..." />
+                        
+                        @if (ShowSuggestions && Suggestions?.Any() == true)
+                        {
+                            <div class="suggestions-dropdown">
+                                @foreach (var suggestion in Suggestions)
+                                {
+                                    <div class="suggestion-item" @onclick="@(() => SelectProvider(suggestion))">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="currentColor" viewBox="0 0 16 16" class="suggestion-icon">
+                                            <path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm2-3a2 2 0 1 1-4 0 2 2 0 0 1 4 0zm4 8c0 1-1 1-1 1H3s-1 0-1-1 1-4 6-4 6 3 6 4zm-1-.004c-.001-.246-.154-.986-.832-1.664C11.516 10.68 10.289 10 8 10c-2.29 0-3.516.68-4.168 1.332-.678.678-.83 1.418-.832 1.664h10z"/>
+                                        </svg>
+                                        <div class="suggestion-content">
+                                            <div class="suggestion-name">@suggestion.Name</div>
+                                            <div class="suggestion-specialty">@suggestion.Specialty</div>
+                                            <div class="suggestion-tags">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="currentColor" viewBox="0 0 16 16">
+                                                    <path d="M2 2a1 1 0 0 1 1-1h4.586a1 1 0 0 1 .707.293l7 7a1 1 0 0 1 0 1.414l-4.586 4.586a1 1 0 0 1-1.414 0l-7-7A1 1 0 0 1 2 6.586V2zm3.5 4a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3z"/>
+                                                </svg>
+                                                @suggestion.Tags
+                                            </div>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        }
+                        @if (ShowSuggestions && (Suggestions is null || !Suggestions.Any()))
+                        {
+                            <div class="no-results-message">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+                                    <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/>
+                                </svg>
+                                No doctors found for these symptoms. Try different keywords.
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
 
-    <button class="btn btn-primary" type="submit" disabled="@(!CanSubmit)">Book appointment</button>
-</EditForm>
+        <!-- Selected Doctor Card -->
+        @if (HasChosen)
+        {
+            <div class="card selected-doctor-card">
+                <div class="card-header card-header-success">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+                        <path d="M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425a.267.267 0 0 1 .02-.022z"/>
+                    </svg>
+                    Selected Doctor
+                </div>
+                <div class="card-body">
+                    <div class="selected-doctor-content">
+                        <div class="doctor-info">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="currentColor" viewBox="0 0 16 16" class="doctor-avatar">
+                                <path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm2-3a2 2 0 1 1-4 0 2 2 0 0 1 4 0zm4 8c0 1-1 1-1 1H3s-1 0-1-1 1-4 6-4 6 3 6 4zm-1-.004c-.001-.246-.154-.986-.832-1.664C11.516 10.68 10.289 10 8 10c-2.29 0-3.516.68-4.168 1.332-.678.678-.83 1.418-.832 1.664h10z"/>
+                            </svg>
+                            <div>
+                                <h5 class="doctor-name">@chosen!.Name</h5>
+                                <p class="doctor-specialty">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
+                                        <path d="M0 3.5A1.5 1.5 0 0 1 1.5 2h9A1.5 1.5 0 0 1 12 3.5V5h1.02a1.5 1.5 0 0 1 1.17.563l1.481 1.85a1.5 1.5 0 0 1 .329.938V10.5a1.5 1.5 0 0 1-1.5 1.5H14a2 2 0 1 1-4 0H5a2 2 0 1 1-4 0 1 1 0 0 1-1-1v-5z"/>
+                                    </svg>
+                                    @chosen.Specialty
+                                </p>
+                            </div>
+                        </div>
+                        <button type="button" class="btn btn-secondary" @onclick="ClearProvider">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                                <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+                                <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z"/>
+                            </svg>
+                            Change Doctor
+                        </button>
+                    </div>
+                </div>
+            </div>
 
-@if (!string.IsNullOrWhiteSpace(Error))
-{
-    <div class="alert alert-danger mt-3">@Error</div>
-}
+            <!-- Step 2: Select Date & Time -->
+            <div class="card step-card">
+                <div class="card-header">
+                    <div class="step-header">
+                        <span class="step-number">2</span>
+                        <h5 class="step-title">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+                                <path d="M3.5 0a.5.5 0 0 1 .5.5V1h8V.5a.5.5 0 0 1 1 0V1h1a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2h1V.5a.5.5 0 0 1 .5-.5zM1 4v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V4H1z"/>
+                            </svg>
+                            Select Date & Time
+                        </h5>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="date-time-grid">
+                        <div class="form-group">
+                            <label class="form-label">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
+                                    <path d="M3.5 0a.5.5 0 0 1 .5.5V1h8V.5a.5.5 0 0 1 1 0V1h1a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2h1V.5a.5.5 0 0 1 .5-.5z"/>
+                                </svg>
+                                Select Date
+                            </label>
+                            <InputDate @bind-Value="SelectedDay" class="form-control form-control-lg" />
+                        </div>
+                        <div class="load-slots-container">
+                            <button type="button" class="btn btn-primary btn-lg" @onclick="LoadSlotsAsync" disabled="@(!CanLoadSlots || LoadingSlots)">
+                                @if (LoadingSlots)
+                                {
+                                    <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+                                    <span>Loading...</span>
+                                }
+                                else
+                                {
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                                        <path d="M8 3.5a.5.5 0 0 0-1 0V9a.5.5 0 0 0 .252.434l3.5 2a.5.5 0 0 0 .496-.868L8 8.71V3.5z"/>
+                                        <path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16zm7-8A7 7 0 1 1 1 8a7 7 0 0 1 14 0z"/>
+                                    </svg>
+                                    <span>Show Available Slots</span>
+                                }
+                            </button>
+                        </div>
+                    </div>
+
+                    @if (Slots?.Count > 0)
+                    {
+                        <div class="slots-section">
+                            <label class="form-label">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
+                                    <path d="M8 3.5a.5.5 0 0 0-1 0V9a.5.5 0 0 0 .252.434l3.5 2a.5.5 0 0 0 .496-.868L8 8.71V3.5z"/>
+                                    <path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16zm7-8A7 7 0 1 1 1 8a7 7 0 0 1 14 0z"/>
+                                </svg>
+                                Available Time Slots
+                            </label>
+                            <div class="slots-grid">
+                                @foreach (var s in Slots)
+                                {
+                                    var isSelected = SelectedSlot.HasValue && SelectedSlot.Value.Start == s.Start;
+                                    var btnClass = isSelected ? "slot-button selected" : "slot-button";
+                                    <button type="button" class="@btnClass" @onclick="@(() => PickSlot(s))">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                                            <path d="M8 3.5a.5.5 0 0 0-1 0V9a.5.5 0 0 0 .252.434l3.5 2a.5.5 0 0 0 .496-.868L8 8.71V3.5z"/>
+                                            <path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16zm7-8A7 7 0 1 1 1 8a7 7 0 0 1 14 0z"/>
+                                        </svg>
+                                        <span>@s.Start.LocalDateTime.ToString("hh:mm tt")</span>
+                                        <span class="slot-separator">-</span>
+                                        <span>@s.End.LocalDateTime.ToString("hh:mm tt")</span>
+                                    </button>
+                                }
+                            </div>
+                        </div>
+                    }
+                    else if (Slots is not null)
+                    {
+                        <div class="alert alert-warning">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+                                <path d="M8.982 1.566a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566zM8 5c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995A.905.905 0 0 1 8 5zm.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"/>
+                            </svg>
+                            No available slots for this date. Please try another date or select a different doctor.
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+
+        <!-- Step 3: Appointment Details -->
+        @if (CanSubmit)
+        {
+            <div class="card step-card">
+                <div class="card-header">
+                    <div class="step-header">
+                        <span class="step-number">3</span>
+                        <h5 class="step-title">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+                                <path d="M12.146.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1 0 .708l-10 10a.5.5 0 0 1-.168.11l-5 2a.5.5 0 0 1-.65-.65l2-5a.5.5 0 0 1 .11-.168l10-10zM11.207 2.5 13.5 4.793 14.793 3.5 12.5 1.207 11.207 2.5zm1.586 3L10.5 3.207 4 9.707V10h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.293l6.5-6.5zm-9.761 5.175-.106.106-1.528 3.821 3.821-1.528.106-.106A.5.5 0 0 1 5 12.5V12h-.5a.5.5 0 0 1-.5-.5V11h-.5a.5.5 0 0 1-.468-.325z"/>
+                            </svg>
+                            Appointment Details
+                        </h5>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <EditForm Model="@Form" OnValidSubmit="SubmitAsync">
+                        <DataAnnotationsValidator />
+                        <ValidationSummary class="validation-summary" />
+
+                        <div class="form-group">
+                            <label class="form-label">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
+                                    <path d="M1 2.5A1.5 1.5 0 0 1 2.5 1h3A1.5 1.5 0 0 1 7 2.5v3A1.5 1.5 0 0 1 5.5 7h-3A1.5 1.5 0 0 1 1 5.5v-3zm8 0A1.5 1.5 0 0 1 10.5 1h3A1.5 1.5 0 0 1 15 2.5v3A1.5 1.5 0 0 1 13.5 7h-3A1.5 1.5 0 0 1 9 5.5v-3z"/>
+                                </svg>
+                                Appointment Type
+                            </label>
+                            <InputSelect @bind-Value="Form.Type" class="form-select form-select-lg">
+                                @foreach (var t in Enum.GetValues<AppointmentType>())
+                                {
+                                    <option value="@t">@t</option>
+                                }
+                            </InputSelect>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
+                                    <path d="M14 1a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1h12zM2 0a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2H2z"/>
+                                    <path d="M3 4.5a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5zM3 8a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9A.5.5 0 0 1 3 8zm0 3.5a.5.5 0 0 1 .5-.5h6a.5.5 0 0 1 0 1h-6a.5.5 0 0 1-.5-.5z"/>
+                                </svg>
+                                Additional Notes <span class="text-muted">(Optional)</span>
+                            </label>
+                            <InputTextArea @bind-Value="Form.Notes" 
+                                           class="form-control" 
+                                           rows="4" 
+                                           placeholder="Provide any additional information about your symptoms or concerns..." />
+                        </div>
+
+                        <button class="btn btn-success btn-lg submit-button" type="submit" disabled="@_submitting">
+                            @if (_submitting)
+                            {
+                                <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+                                <span>Booking Appointment...</span>
+                            }
+                            else
+                            {
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+                                    <path d="M12.736 3.97a.733.733 0 0 1 1.047 0c.286.289.29.756.01 1.05L7.88 12.01a.733.733 0 0 1-1.065.02L3.217 8.384a.757.757 0 0 1 0-1.06.733.733 0 0 1 1.047 0l3.052 3.093 5.4-6.425a.247.247 0 0 1 .02-.022Z"/>
+                                </svg>
+                                <span>Book Appointment</span>
+                            }
+                        </button>
+                    </EditForm>
+                </div>
+            </div>
+        }
+
+        @if (!string.IsNullOrWhiteSpace(Error))
+        {
+            <div class="alert alert-danger">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+                    <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+                    <path d="M7.002 11a1 1 0 1 1 2 0 1 1 0 0 1-2 0zM7.1 4.995a.905.905 0 1 1 1.8 0l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 4.995z"/>
+                </svg>
+                @Error
+            </div>
+        }
+    }
+</div>
+
+<style>
+    /* ============================================
+       SCHEDULE APPOINTMENT PAGE
+       ============================================ */
+    .schedule-appointment-page {
+        padding: var(--clx-spacing-lg);
+        max-width: 900px;
+        margin: 0 auto;
+    }
+
+    /* ============================================
+       PAGE HEADER
+       ============================================ */
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: var(--clx-spacing-xl);
+        gap: var(--clx-spacing-md);
+    }
+
+    .page-title {
+        display: flex;
+        align-items: center;
+        gap: var(--clx-spacing-sm);
+        margin: 0 0 var(--clx-spacing-xs) 0;
+        color: var(--clx-gray-900);
+        font-size: 1.75rem;
+    }
+
+    .page-title svg {
+        color: var(--clx-primary);
+    }
+
+    .page-subtitle {
+        color: var(--clx-gray-600);
+        font-size: 0.875rem;
+        margin: 0;
+    }
+
+    /* ============================================
+       STEP CARDS
+       ============================================ */
+    .step-card {
+        margin-bottom: var(--clx-spacing-lg);
+        box-shadow: var(--clx-shadow-md);
+    }
+
+    .step-card .card-header {
+        background-color: var(--clx-gray-50);
+        border-bottom: 2px solid var(--clx-gray-200);
+        padding: var(--clx-spacing-lg);
+    }
+
+    .step-header {
+        display: flex;
+        align-items: center;
+        gap: var(--clx-spacing-md);
+    }
+
+    .step-number {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 36px;
+        height: 36px;
+        background-color: var(--clx-primary);
+        color: var(--clx-white);
+        border-radius: 50%;
+        font-weight: 600;
+        font-size: 1.125rem;
+    }
+
+    .step-title {
+        display: flex;
+        align-items: center;
+        gap: var(--clx-spacing-sm);
+        margin: 0;
+        font-size: 1.125rem;
+        font-weight: 600;
+        color: var(--clx-gray-900);
+    }
+
+    .step-title svg {
+        color: var(--clx-primary);
+    }
+
+    /* ============================================
+       SEARCH CONTAINER
+       ============================================ */
+    .search-container {
+        position: relative;
+    }
+
+    .search-input {
+        padding-right: var(--clx-spacing-xl);
+    }
+
+    .suggestions-dropdown {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        background-color: var(--clx-white);
+        border: 1px solid var(--clx-gray-300);
+        border-radius: var(--clx-radius-md);
+        box-shadow: var(--clx-shadow-lg);
+        max-height: 400px;
+        overflow-y: auto;
+        z-index: 1000;
+        margin-top: var(--clx-spacing-xs);
+    }
+
+    .suggestion-item {
+        display: flex;
+        align-items: center;
+        gap: var(--clx-spacing-md);
+        padding: var(--clx-spacing-md);
+        cursor: pointer;
+        transition: background-color var(--clx-transition-fast);
+        border-bottom: 1px solid var(--clx-gray-100);
+    }
+
+    .suggestion-item:last-child {
+        border-bottom: none;
+    }
+
+    .suggestion-item:hover {
+        background-color: var(--clx-gray-50);
+    }
+
+    .suggestion-icon {
+        color: var(--clx-primary);
+        flex-shrink: 0;
+    }
+
+    .suggestion-content {
+        flex: 1;
+    }
+
+    .suggestion-name {
+        font-weight: 600;
+        color: var(--clx-gray-900);
+        margin-bottom: var(--clx-spacing-xs);
+    }
+
+    .suggestion-specialty {
+        font-size: 0.875rem;
+        color: var(--clx-gray-600);
+        margin-bottom: var(--clx-spacing-xs);
+    }
+
+    .suggestion-tags {
+        display: flex;
+        align-items: center;
+        gap: var(--clx-spacing-xs);
+        font-size: 0.8125rem;
+        color: var(--clx-gray-500);
+    }
+
+    .no-results-message {
+        padding: var(--clx-spacing-lg);
+        text-align: center;
+        color: var(--clx-gray-600);
+        background-color: var(--clx-white);
+        border: 1px solid var(--clx-gray-300);
+        border-radius: var(--clx-radius-md);
+        box-shadow: var(--clx-shadow-md);
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        z-index: 1000;
+        margin-top: var(--clx-spacing-xs);
+    }
+
+    .no-results-message svg {
+        margin-bottom: var(--clx-spacing-sm);
+    }
+
+    /* ============================================
+       SELECTED DOCTOR CARD
+       ============================================ */
+    .selected-doctor-card {
+        margin-bottom: var(--clx-spacing-lg);
+        box-shadow: var(--clx-shadow-md);
+    }
+
+    .card-header-success {
+        background-color: var(--clx-success-light);
+        border-bottom: 2px solid var(--clx-success);
+        color: var(--clx-success);
+        padding: var(--clx-spacing-lg);
+        display: flex;
+        align-items: center;
+        gap: var(--clx-spacing-sm);
+        font-weight: 600;
+    }
+
+    .selected-doctor-content {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: var(--clx-spacing-md);
+    }
+
+    .doctor-info {
+        display: flex;
+        align-items: center;
+        gap: var(--clx-spacing-md);
+    }
+
+    .doctor-avatar {
+        color: var(--clx-primary);
+    }
+
+    .doctor-name {
+        margin: 0 0 var(--clx-spacing-xs) 0;
+        color: var(--clx-gray-900);
+        font-size: 1.25rem;
+    }
+
+    .doctor-specialty {
+        display: flex;
+        align-items: center;
+        gap: var(--clx-spacing-xs);
+        margin: 0;
+        color: var(--clx-gray-600);
+        font-size: 0.875rem;
+    }
+
+    /* ============================================
+       DATE & TIME GRID
+       ============================================ */
+    .date-time-grid {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: var(--clx-spacing-md);
+        align-items: end;
+        margin-bottom: var(--clx-spacing-lg);
+    }
+
+    .load-slots-container {
+        display: flex;
+        align-items: flex-end;
+    }
+
+    /* ============================================
+       SLOTS SECTION
+       ============================================ */
+    .slots-section {
+        margin-top: var(--clx-spacing-lg);
+        padding-top: var(--clx-spacing-lg);
+        border-top: 1px solid var(--clx-gray-200);
+    }
+
+    .slots-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: var(--clx-spacing-sm);
+    }
+
+    .slot-button {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: var(--clx-spacing-xs);
+        padding: var(--clx-spacing-md);
+        background-color: var(--clx-white);
+        border: 2px solid var(--clx-gray-300);
+        border-radius: var(--clx-radius-md);
+        cursor: pointer;
+        transition: all var(--clx-transition-normal);
+        font-weight: 500;
+        color: var(--clx-gray-700);
+    }
+
+    .slot-button:hover {
+        border-color: var(--clx-primary);
+        background-color: var(--clx-primary-light);
+        color: var(--clx-primary);
+    }
+
+    .slot-button.selected {
+        background-color: var(--clx-primary);
+        border-color: var(--clx-primary);
+        color: var(--clx-white);
+    }
+
+    .slot-separator {
+        font-weight: 400;
+        opacity: 0.7;
+    }
+
+    /* ============================================
+       FORM ELEMENTS
+       ============================================ */
+    .form-group {
+        margin-bottom: var(--clx-spacing-lg);
+    }
+
+    .form-label {
+        display: flex;
+        align-items: center;
+        gap: var(--clx-spacing-xs);
+        font-weight: 500;
+        font-size: 0.875rem;
+        color: var(--clx-gray-700);
+        margin-bottom: var(--clx-spacing-sm);
+    }
+
+    .form-label svg {
+        color: var(--clx-primary);
+    }
+
+    .validation-summary {
+        background-color: var(--clx-danger-light);
+        border: 1px solid var(--clx-danger);
+        border-radius: var(--clx-radius-md);
+        padding: var(--clx-spacing-md);
+        margin-bottom: var(--clx-spacing-md);
+        color: var(--clx-danger);
+    }
+
+    /* ============================================
+       SUBMIT BUTTON
+       ============================================ */
+    .submit-button {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: var(--clx-spacing-sm);
+    }
+
+    .btn:hover svg {
+        color: currentColor;
+    }
+
+    /* ============================================
+       ALERTS
+       ============================================ */
+    .alert {
+        display: flex;
+        align-items: center;
+        gap: var(--clx-spacing-sm);
+    }
+
+    .alert svg {
+        flex-shrink: 0;
+    }
+
+    /* ============================================
+       RESPONSIVE DESIGN
+       ============================================ */
+    @@media (max-width: 768px) {
+        .schedule-appointment-page {
+            padding: var(--clx-spacing-md);
+        }
+
+        .page-header {
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .page-header .btn {
+            width: 100%;
+        }
+
+        .date-time-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .selected-doctor-content {
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .selected-doctor-content .btn {
+            width: 100%;
+        }
+
+        .slots-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
 
 @code {
     private class FormModel
@@ -110,7 +708,6 @@ else if (Slots is not null)
 
     private FormModel Form = new();
     private ProviderDto? chosen;
-    private string ChosenProviderText => chosen is null ? "" : $"{chosen.Name} — {chosen.Specialty}";
     private bool HasChosen => chosen is not null;
 
     private string _searchText = "";
@@ -127,18 +724,67 @@ else if (Slots is not null)
     private List<(DateTimeOffset Start, DateTimeOffset End)>? Slots;
     private (DateTimeOffset Start, DateTimeOffset End)? SelectedSlot;
     private bool LoadingSlots;
+    private bool _submitting;
     private string? Error;
+
+    private bool _authorized;
+    private CurrentUserInfo _userInfo = new(false, "", "", "");
+    private long _patientId;
 
     private bool CanLoadSlots => HasChosen;
     private bool CanSubmit => HasChosen && SelectedSlot.HasValue;
 
+    protected override async Task OnInitializedAsync()
+    {
+        _userInfo = await CurrentUser.GetCurrentUserAsync();
+        
+        if (!_userInfo.IsAuthenticated)
+        {
+            Nav.NavigateTo("/login");
+            return;
+        }
+
+        if (_userInfo.Role != "Patient")
+        {
+            _authorized = false;
+            return;
+        }
+
+        _authorized = true;
+        
+        if (long.TryParse(_userInfo.PatientId, out var patientId))
+        {
+            _patientId = patientId;
+        }
+        else
+        {
+            _authorized = false;
+            Error = "Patient ID not found. Please complete your profile.";
+        }
+    }
+
     private async Task OnSearchChangedAsync(string text)
     {
         if (string.IsNullOrWhiteSpace(text) || text.Length < 2)
-        { ShowSuggestions = false; Suggestions = null; return; }
+        { 
+            ShowSuggestions = false; 
+            Suggestions = null; 
+            return; 
+        }
         
-        Suggestions = await ProviderService.RecommendAsync(new ProviderRecommendationRequest(text, Form.Type, null));
-        ShowSuggestions = Suggestions?.Any() == true;
+        try
+        {
+            var request = new ProviderRecommendationRequest(text, Form.Type, null);
+            Suggestions = await ProviderService.RecommendAsync(request);
+            ShowSuggestions = true;
+        }
+        catch (Exception ex)
+        {
+            Error = $"Search failed: {ex.Message}";
+            Suggestions = new List<ProviderDto>();
+            ShowSuggestions = false;
+        }
+        
         StateHasChanged();
     }
 
@@ -150,53 +796,86 @@ else if (Slots is not null)
         Suggestions = null;
         Slots = null;
         SelectedSlot = null;
+        Error = null;
     }
 
     private void ClearProvider()
     {
-        chosen = null; Slots = null; SelectedSlot = null;
+        chosen = null; 
+        Slots = null; 
+        SelectedSlot = null;
+        Error = null;
     }
 
     private async Task LoadSlotsAsync()
     {
         if (!CanLoadSlots || chosen is null) return;
+
         LoadingSlots = true;
-        var req = new AvailableSlotsRequest(chosen.Id, DateOnly.FromDateTime(SelectedDay));
-        Slots = await ProviderService.GetAvailableSlotsAsync(req);
-        SelectedSlot = null;
-        LoadingSlots = false;
+        Error = null;
+
+        try
+        {
+            var req = new AvailableSlotsRequest(chosen.Id, DateOnly.FromDateTime(SelectedDay));
+            Slots = await ProviderService.GetAvailableSlotsAsync(req);
+            SelectedSlot = null;
+        }
+        catch (Exception ex)
+        {
+            Error = $"Failed to load slots: {ex.Message}";
+            Slots = null;
+        }
+        finally
+        {
+            LoadingSlots = false;
+        }
     }
 
     private void PickSlot((DateTimeOffset Start, DateTimeOffset End) s)
     {
         SelectedSlot = s;
+        Error = null;
     }
 
     private async Task SubmitAsync()
     {
         Error = null;
+        
         if (!CanSubmit || chosen is null || SelectedSlot is null)
         {
-            Error = "Choose a doctor and an available slot.";
+            Error = "Please choose a doctor and an available time slot.";
             return;
         }
 
-        var patientId = 12; // replace with actual from auth
+        if (_patientId == 0)
+        {
+            Error = "Patient ID not found. Please log in again.";
+            return;
+        }
 
-        var request = new ScheduleAppointmentRequest(
-            patientId,
-            chosen.Id,
-            Form.Type,
-            SelectedSlot.Value.Start,
-            SelectedSlot.Value.End,
-            Form.Notes
-        );
+        _submitting = true;
 
         try
         {
+            var request = new ScheduleAppointmentRequest(
+                _patientId,
+                chosen.Id,
+                Form.Type,
+                SelectedSlot.Value.Start,
+                SelectedSlot.Value.End,
+                Form.Notes
+            );
+
             var created = await AppointmentService.ScheduleAsync(request);
             Nav.NavigateTo($"/appointments/{created.Id}");
         }
-        catch (Exception ex) { Error = ex.Message; }
+        catch (Exception ex) 
+        { 
+            Error = $"Failed to book appointment: {ex.Message}";
+        }
+        finally
+        {
+            _submitting = false;
+        }
     }
 }

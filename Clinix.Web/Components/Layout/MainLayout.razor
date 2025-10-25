@@ -1,26 +1,36 @@
-﻿@using MudBlazor
+﻿@* Components/Layout/MainLayout.razor *@
+@using MudBlazor
 @inherits LayoutComponentBase
 
+<div class="page-wrapper">
+    <!-- NavMenu includes Topbar + Sidebar -->
+    <NavMenu />
 
-        <div class="page-wrapper">
+    <!-- Main Content Area -->
+    <main class="main-content-area">
+        <article class="content px-4">
+            @Body
+        </article>
+    </main>
+</div>
 
-            <!-- NavMenu includes Topbar + Sidebar -->
-            <NavMenu />
-
-            <!-- Main Content Area -->
-            <main class="main-content-area">
-                <article class="content">
-                    @Body
-                </article>
-            </main>
-
+<!-- Professional Error UI -->
+<div id="blazor-error-ui" data-nosnippet>
+    <div class="error-container">
+        <div class="error-icon">
+            <i class="bi bi-exclamation-triangle-fill"></i>
         </div>
-
-        <!-- Blazor Error UI -->
-        <div id="blazor-error-ui" data-nosnippet>
-            An unhandled error has occurred.
-            <a href="." class="reload">Reload</a>
-            <span class="dismiss">🗙</span>
+        <div class="error-content">
+            <h5 class="error-title">Oops! Something went wrong</h5>
+            <p class="error-message">An unexpected error has occurred. Please try reloading the page.</p>
+            <div class="error-actions">
+                <a href="." class="btn btn-primary">
+                    <i class="bi bi-arrow-clockwise me-2"></i>Reload Page
+                </a>
+                <button class="btn btn-outline-secondary" onclick="document.getElementById('blazor-error-ui').style.display='none'">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            </div>
         </div>
-
-    
+    </div>
+</div>

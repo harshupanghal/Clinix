@@ -1,107 +1,742 @@
-﻿@* Pages/Admin/SymptomMapping.razor *@
-@page "/admin/symptom-mapping"
+﻿@page "/admin/symptom-mapping"
 @rendermode InteractiveServer
 @using Clinix.Domain.Interfaces
 @using Clinix.Domain.Entities
+@using Clinix.Web.Services
 @inject IProviderRepository ProviderRepo
+@inject ICurrentUserService CurrentUser
+@inject NavigationManager Navigation
 
-<h3>Symptom to Provider Mapping (Admin)</h3>
-
-<p>Manage which symptoms/tags map to provider specialties.</p>
-
-@if (Providers is null)
-{
-    <div class="text-muted">Loading…</div>
-}
-else
-{
-    <div class="table-responsive">
-        <table class="table table-sm align-middle">
-            <thead class="table-light">
-                <tr>
-                    <th>Provider</th>
-                    <th>Specialty</th>
-                    <th>Tags (comma-separated)</th>
-                    <th></th>
-                </tr>
-            </thead>
-            <tbody>
-            @foreach (var p in Providers)
-            {
-                var pid = p.Id;
-                <tr>
-                    <td>@p.Name</td>
-                    <td>@p.Specialty</td>
-                    <td>
-                        @if (EditingId == p.Id)
-                        {
-                            <input type="text" class="form-control form-control-sm" @bind="EditTags" />
-                        }
-                        else
-                        {
-                            @p.Tags
-                        }
-                    </td>
-                    <td class="text-end">
-                        @if (EditingId == p.Id)
-                        {
-                            <button class="btn btn-success btn-sm me-2" @onclick="@(async () => await SaveTagsAsync(pid))">Save</button>
-                            <button class="btn btn-secondary btn-sm" @onclick="CancelEdit">Cancel</button>
-                        }
-                        else
-                        {
-                            <button class="btn btn-outline-primary btn-sm" @onclick="@(async () => await StartEditAsync(p))">Edit</button>
-                        }
-                    </td>
-                </tr>
-            }
-            </tbody>
-        </table>
+<div class="symptom-mapping-page">
+    <!-- Page Header -->
+    <div class="page-header">
+        <div>
+            <h1 class="page-title">
+                <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" fill="currentColor" viewBox="0 0 16 16">
+                    <path d="M6 12.5a.5.5 0 0 1 .5-.5h3a.5.5 0 0 1 0 1h-3a.5.5 0 0 1-.5-.5zM3 8.062C3 6.76 4.235 5.765 5.53 5.886a26.58 26.58 0 0 0 4.94 0C11.765 5.765 13 6.76 13 8.062v1.157a.933.933 0 0 1-.765.935 3.4 3.4 0 0 1-.696.058L11 10.5v.5a.5.5 0 0 1-.5.5h-5a.5.5 0 0 1-.5-.5v-.5l-.539-.343a3.4 3.4 0 0 1-.696-.058.933.933 0 0 1-.765-.935V8.062zm2.765-1.107a.25.25 0 0 0 .024.223c.218.321.54.555.935.555.394 0 .716-.234.934-.555a.25.25 0 0 0 .024-.223C7.498 6.686 7.259 6.5 7 6.5c-.26 0-.498.186-.682.455z"/>
+                </svg>
+                Symptom to Provider Mapping
+            </h1>
+            <p class="page-subtitle">Configure keyword mappings for intelligent doctor recommendations</p>
+        </div>
+        <a href="/admin/dashboard" class="btn btn-secondary">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                <path d="M8.515 1.019A7 7 0 0 0 8 1V0a8 8 0 0 1 .589.022l-.074.997zm2.004.45a7.003 7.003 0 0 0-.985-.299l.219-.976c.383.086.76.2 1.126.342l-.36.933zm1.37.71a7.01 7.01 0 0 0-.439-.27l.493-.87a8.025 8.025 0 0 1 .979.654l-.615.789a6.996 6.996 0 0 0-.418-.302zm1.834 1.79a6.99 6.99 0 0 0-.653-.796l.724-.69c.27.285.52.59.747.91l-.818.576zm.744 1.352a7.08 7.08 0 0 0-.214-.468l.893-.45a7.976 7.976 0 0 1 .45 1.088l-.95.313a7.023 7.023 0 0 0-.179-.483zm.53 2.507a6.991 6.991 0 0 0-.1-1.025l.985-.17c.067.386.106.778.116 1.17l-1 .025zm-.131 1.538c.033-.17.06-.339.081-.51l.993.123a7.957 7.957 0 0 1-.23 1.155l-.964-.267c.046-.165.086-.332.12-.501z"/>
+                <path d="M8 10c-1.105 0-2-.895-2-2 0-.552.225-1.052.587-1.413a.5.5 0 1 1 .707.707A1.001 1.001 0 0 0 8 9c.551 0 1-.449 1-1a.5.5 0 0 1 1 0c0 1.105-.895 2-2 2z"/>
+            </svg>
+            Back to Dashboard
+        </a>
     </div>
-}
 
-@if (!string.IsNullOrWhiteSpace(Message))
-{
-    <div class="alert alert-success mt-3">@Message</div>
-}
+    @if (!_authorized)
+    {
+        <div class="alert alert-danger">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+                <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+                <path d="M7.002 11a1 1 0 1 1 2 0 1 1 0 0 1-2 0zM7.1 4.995a.905.905 0 1 1 1.8 0l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 4.995z"/>
+            </svg>
+            <strong>Access Denied</strong> - Only administrators can manage symptom mappings.
+        </div>
+    }
+    else
+    {
+        <div class="alert alert-info info-box">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+                <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+                <path d="m8.93 6.588-2.29.287-.082.38.45.083c.294.07.352.176.288.469l-.738 3.468c-.194.897.105 1.319.808 1.319.545 0 1.178-.252 1.465-.598l.088-.416c-.2.176-.492.246-.686.246-.275 0-.375-.193-.304-.533L8.93 6.588zM9 4.5a1 1 0 1 1-2 0 1 1 0 0 1 2 0z"/>
+            </svg>
+            <div>
+                <strong>How it works:</strong> Manage which symptoms/keywords map to each provider's specialty. Patients use these to find the right doctor.
+            </div>
+        </div>
+
+        @if (Providers is null)
+        {
+            <div class="loading-container">
+                <div class="spinner-border text-primary" role="status"></div>
+                <p class="mt-3 text-muted">Loading providers...</p>
+            </div>
+        }
+        else if (Providers.Count == 0)
+        {
+            <div class="card empty-state-card">
+                <div class="card-body">
+                    <svg class="empty-icon" xmlns="http://www.w3.org/2000/svg" width="80" height="80" fill="currentColor" viewBox="0 0 16 16">
+                        <path d="M8 1a2.5 2.5 0 0 1 2.5 2.5V4h-5v-.5A2.5 2.5 0 0 1 8 1zm3.5 3v-.5a3.5 3.5 0 1 0-7 0V4H1v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V4h-3.5z"/>
+                    </svg>
+                    <h5 class="empty-title">No Providers Found</h5>
+                    <p class="empty-subtitle">Create some providers first to manage their symptom mappings.</p>
+                </div>
+            </div>
+        }
+        else
+        {
+            <div class="card">
+                <div class="table-responsive">
+                    <table class="table mapping-table">
+                        <thead>
+                            <tr>
+                                <th style="width: 220px;">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
+                                        <path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm2-3a2 2 0 1 1-4 0 2 2 0 0 1 4 0zm4 8c0 1-1 1-1 1H3s-1 0-1-1 1-4 6-4 6 3 6 4zm-1-.004c-.001-.246-.154-.986-.832-1.664C11.516 10.68 10.289 10 8 10c-2.29 0-3.516.68-4.168 1.332-.678.678-.83 1.418-.832 1.664h10z"/>
+                                    </svg>
+                                    Provider Name
+                                </th>
+                                <th style="width: 160px;">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
+                                        <path d="M0 3.5A1.5 1.5 0 0 1 1.5 2h9A1.5 1.5 0 0 1 12 3.5V5h1.02a1.5 1.5 0 0 1 1.17.563l1.481 1.85a1.5 1.5 0 0 1 .329.938V10.5a1.5 1.5 0 0 1-1.5 1.5H14a2 2 0 1 1-4 0H5a2 2 0 1 1-4 0 1 1 0 0 1-1-1v-5z"/>
+                                    </svg>
+                                    Specialty
+                                </th>
+                                <th>
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
+                                        <path d="M2 2a1 1 0 0 1 1-1h4.586a1 1 0 0 1 .707.293l7 7a1 1 0 0 1 0 1.414l-4.586 4.586a1 1 0 0 1-1.414 0l-7-7A1 1 0 0 1 2 6.586V2zm3.5 4a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3z"/>
+                                    </svg>
+                                    Symptom Tags
+                                </th>
+                                <th style="width: 160px;" class="text-end">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        @foreach (var p in Providers)
+                        {
+                            var pid = p.Id;
+                            <tr class="@(EditingId == p.Id ? "editing-row" : "")">
+                                <td>
+                                    <div class="provider-name-cell">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 16 16" class="provider-icon">
+                                            <path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm2-3a2 2 0 1 1-4 0 2 2 0 0 1 4 0zm4 8c0 1-1 1-1 1H3s-1 0-1-1 1-4 6-4 6 3 6 4zm-1-.004c-.001-.246-.154-.986-.832-1.664C11.516 10.68 10.289 10 8 10c-2.29 0-3.516.68-4.168 1.332-.678.678-.83 1.418-.832 1.664h10z"/>
+                                        </svg>
+                                        <strong>@p.Name</strong>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="specialty-badge">@p.Specialty</span>
+                                </td>
+                                <td>
+                                    @if (EditingId == p.Id)
+                                    {
+                                        <div class="edit-tags-container">
+                                            <textarea class="form-control tags-textarea" 
+                                                      rows="3" 
+                                                      @bind="EditTags" 
+                                                      placeholder="e.g., chest pain, heart attack, palpitations..."></textarea>
+                                            <small class="form-text">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="currentColor" viewBox="0 0 16 16">
+                                                    <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+                                                    <path d="m8.93 6.588-2.29.287-.082.38.45.083c.294.07.352.176.288.469l-.738 3.468c-.194.897.105 1.319.808 1.319.545 0 1.178-.252 1.465-.598l.088-.416c-.2.176-.492.246-.686.246-.275 0-.375-.193-.304-.533L8.93 6.588zM9 4.5a1 1 0 1 1-2 0 1 1 0 0 1 2 0z"/>
+                                                </svg>
+                                                Use commas to separate multiple symptoms
+                                            </small>
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <div class="tags-display">
+                                            @if (!string.IsNullOrWhiteSpace(p.Tags))
+                                            {
+                                                var allTags = p.Tags.Split(',', StringSplitOptions.RemoveEmptyEntries);
+                                                @foreach (var tag in allTags.Take(5))
+                                                {
+                                                    <span class="tag-badge">@tag.Trim()</span>
+                                                }
+                                                @if (allTags.Length > 5)
+                                                {
+                                                    <span class="tag-badge tag-more">+@(allTags.Length - 5) more</span>
+                                                }
+                                            }
+                                            else
+                                            {
+                                                <span class="no-tags-text">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
+                                                        <path d="M8.982 1.566a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566zM8 5c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995A.905.905 0 0 1 8 5zm.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"/>
+                                                    </svg>
+                                                    No tags defined
+                                                </span>
+                                            }
+                                        </div>
+                                    }
+                                </td>
+                                <td>
+                                    <div class="action-buttons-mapping">
+                                        @if (EditingId == p.Id)
+                                        {
+                                            <button class="btn btn-sm btn-success" @onclick="@(async () => await SaveTagsAsync(pid))" disabled="@_saving">
+                                                @if (_saving)
+                                                {
+                                                    <span class="spinner-border spinner-border-sm"></span>
+                                                }
+                                                else
+                                                {
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
+                                                        <path d="M12.736 3.97a.733.733 0 0 1 1.047 0c.286.289.29.756.01 1.05L7.88 12.01a.733.733 0 0 1-1.065.02L3.217 8.384a.757.757 0 0 1 0-1.06.733.733 0 0 1 1.047 0l3.052 3.093 5.4-6.425a.247.247 0 0 1 .02-.022Z"/>
+                                                    </svg>
+                                                }
+                                            </button>
+                                            <button class="btn btn-sm btn-secondary" @onclick="CancelEdit" disabled="@_saving">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
+                                                    <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z"/>
+                                                </svg>
+                                            </button>
+                                        }
+                                        else
+                                        {
+                                            <button class="btn btn-sm btn-primary" @onclick="@(() => StartEdit(p))">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
+                                                    <path d="M12.146.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1 0 .708l-10 10a.5.5 0 0 1-.168.11l-5 2a.5.5 0 0 1-.65-.65l2-5a.5.5 0 0 1 .11-.168l10-10zM11.207 2.5 13.5 4.793 14.793 3.5 12.5 1.207 11.207 2.5zm1.586 3L10.5 3.207 4 9.707V10h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.293l6.5-6.5z"/>
+                                                </svg>
+                                                Edit Tags
+                                            </button>
+                                        }
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                        </tbody>
+                    </table>
+                </div>
+                <div class="card-footer">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
+                        <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+                        <path d="m8.93 6.588-2.29.287-.082.38.45.083c.294.07.352.176.288.469l-.738 3.468c-.194.897.105 1.319.808 1.319.545 0 1.178-.252 1.465-.598l.088-.416c-.2.176-.492.246-.686.246-.275 0-.375-.193-.304-.533L8.93 6.588zM9 4.5a1 1 0 1 1-2 0 1 1 0 0 1 2 0z"/>
+                    </svg>
+                    Total Providers: @Providers.Count
+                </div>
+            </div>
+
+            <!-- Guidelines Card -->
+            <div class="card guidelines-card">
+                <div class="card-header">
+                    <h5 class="guidelines-title">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+                            <path d="M9.5 0a.5.5 0 0 1 .5.5.5.5 0 0 0 .5.5.5.5 0 0 1 .5.5V2a.5.5 0 0 1-.5.5h-5A.5.5 0 0 1 5 2v-.5a.5.5 0 0 1 .5-.5.5.5 0 0 0 .5-.5.5.5 0 0 1 .5-.5h3z"/>
+                            <path d="M3 2.5a.5.5 0 0 1 .5-.5H4a.5.5 0 0 0 0-1h-.5A1.5 1.5 0 0 0 2 2.5v12A1.5 1.5 0 0 0 3.5 16h9a1.5 1.5 0 0 0 1.5-1.5v-12A1.5 1.5 0 0 0 12.5 1H12a.5.5 0 0 0 0 1h.5a.5.5 0 0 1 .5.5v12a.5.5 0 0 1-.5.5h-9a.5.5 0 0 1-.5-.5v-12z"/>
+                            <path d="M8.5 6.5a.5.5 0 0 0-1 0V8H6a.5.5 0 0 0 0 1h1.5v1.5a.5.5 0 0 0 1 0V9H10a.5.5 0 0 0 0-1H8.5V6.5z"/>
+                        </svg>
+                        Tag Guidelines
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <ul class="guidelines-list">
+                        <li>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                                <path d="M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425a.267.267 0 0 1 .02-.022z"/>
+                            </svg>
+                            Use lowercase for consistency
+                        </li>
+                        <li>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                                <path d="M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425a.267.267 0 0 1 .02-.022z"/>
+                            </svg>
+                            Separate multiple symptoms with commas
+                        </li>
+                        <li>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                                <path d="M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425a.267.267 0 0 1 .02-.022z"/>
+                            </svg>
+                            Include common variations (e.g., "chest pain", "heart pain")
+                        </li>
+                        <li>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                                <path d="M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425a.267.267 0 0 1 .02-.022z"/>
+                            </svg>
+                            Include medical and colloquial terms
+                        </li>
+                        <li class="example-item">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                                <path d="M2.5 1A1.5 1.5 0 0 0 1 2.5v11A1.5 1.5 0 0 0 2.5 15h6.086a1.5 1.5 0 0 0 1.06-.44l4.915-4.914A1.5 1.5 0 0 0 15 8.586V2.5A1.5 1.5 0 0 0 13.5 1h-11zM2 2.5a.5.5 0 0 1 .5-.5h11a.5.5 0 0 1 .5.5V8H9.5A1.5 1.5 0 0 0 8 9.5V14H2.5a.5.5 0 0 1-.5-.5v-11zm7 11.293V9.5a.5.5 0 0 1 .5-.5h4.293L9 13.793z"/>
+                            </svg>
+                            <strong>Example:</strong>
+                            <code>chest pain,heart attack,palpitations,angina,cardiac arrest</code>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        }
+
+        @if (!string.IsNullOrWhiteSpace(Success))
+        {
+            <div class="alert alert-success">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+                    <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zm-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/>
+                </svg>
+                @Success
+            </div>
+        }
+
+        @if (!string.IsNullOrWhiteSpace(Error))
+        {
+            <div class="alert alert-danger">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+                    <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+                    <path d="M7.002 11a1 1 0 1 1 2 0 1 1 0 0 1-2 0zM7.1 4.995a.905.905 0 1 1 1.8 0l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 4.995z"/>
+                </svg>
+                @Error
+            </div>
+        }
+    }
+</div>
+
+<style>
+    /* ============================================
+       SYMPTOM MAPPING PAGE
+       ============================================ */
+    .symptom-mapping-page {
+        padding: var(--clx-spacing-lg);
+        max-width: 1400px;
+        margin: 0 auto;
+    }
+
+    /* ============================================
+       PAGE HEADER
+       ============================================ */
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: var(--clx-spacing-xl);
+        gap: var(--clx-spacing-md);
+    }
+
+    .page-title {
+        display: flex;
+        align-items: center;
+        gap: var(--clx-spacing-sm);
+        margin: 0 0 var(--clx-spacing-xs) 0;
+        color: var(--clx-gray-900);
+        font-size: 1.75rem;
+    }
+
+    .page-title svg {
+        color: var(--clx-primary);
+    }
+
+    .page-subtitle {
+        color: var(--clx-gray-600);
+        font-size: 0.875rem;
+        margin: 0;
+    }
+
+    /* ============================================
+       INFO BOX
+       ============================================ */
+    .info-box {
+        display: flex;
+        gap: var(--clx-spacing-md);
+        align-items: flex-start;
+        margin-bottom: var(--clx-spacing-lg);
+    }
+
+    .info-box svg {
+        flex-shrink: 0;
+        margin-top: 2px;
+    }
+
+    /* ============================================
+       LOADING & EMPTY STATES
+       ============================================ */
+    .loading-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: var(--clx-spacing-2xl);
+        text-align: center;
+    }
+
+    .empty-state-card {
+        text-align: center;
+        box-shadow: var(--clx-shadow-md);
+    }
+
+    .empty-state-card .card-body {
+        padding: var(--clx-spacing-2xl);
+    }
+
+    .empty-icon {
+        color: var(--clx-gray-400);
+        margin-bottom: var(--clx-spacing-lg);
+    }
+
+    .empty-title {
+        color: var(--clx-gray-900);
+        font-size: 1.25rem;
+        font-weight: 600;
+        margin-bottom: var(--clx-spacing-sm);
+    }
+
+    .empty-subtitle {
+        color: var(--clx-gray-600);
+        font-size: 0.875rem;
+        margin-bottom: 0;
+    }
+
+    /* ============================================
+       MAPPING TABLE
+       ============================================ */
+    .mapping-table {
+        font-size: 0.875rem;
+        margin: 0;
+    }
+
+    .mapping-table thead {
+        background-color: var(--clx-gray-100);
+    }
+
+    .mapping-table th {
+        font-weight: 600;
+        color: var(--clx-gray-700);
+        font-size: 0.8125rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        padding: var(--clx-spacing-md);
+        border-bottom: 2px solid var(--clx-gray-300);
+        white-space: nowrap;
+    }
+
+    .mapping-table th svg {
+        color: var(--clx-primary);
+        margin-right: var(--clx-spacing-xs);
+        vertical-align: text-bottom;
+    }
+
+    .mapping-table td {
+        padding: var(--clx-spacing-md);
+        vertical-align: middle;
+    }
+
+    .mapping-table tbody tr {
+        transition: background-color var(--clx-transition-fast);
+    }
+
+    .mapping-table tbody tr:hover {
+        background-color: var(--clx-gray-50);
+    }
+
+    .mapping-table tbody tr.editing-row {
+        background-color: var(--clx-primary-light);
+    }
+
+    /* ============================================
+       TABLE CELLS
+       ============================================ */
+    .provider-name-cell {
+        display: flex;
+        align-items: center;
+        gap: var(--clx-spacing-sm);
+    }
+
+    .provider-icon {
+        color: var(--clx-primary);
+    }
+
+    .specialty-badge {
+        display: inline-flex;
+        padding: var(--clx-spacing-xs) var(--clx-spacing-sm);
+        background-color: var(--clx-primary);
+        color: var(--clx-white);
+        border-radius: var(--clx-radius-sm);
+        font-size: 0.8125rem;
+        font-weight: 500;
+    }
+
+    .tags-display {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--clx-spacing-xs);
+    }
+
+    .tag-badge {
+        display: inline-flex;
+        padding: var(--clx-spacing-xs) var(--clx-spacing-sm);
+        background-color: var(--clx-gray-100);
+        border: 1px solid var(--clx-gray-300);
+        border-radius: var(--clx-radius-sm);
+        font-size: 0.8125rem;
+        color: var(--clx-gray-900);
+    }
+
+    .tag-more {
+        background-color: var(--clx-gray-600);
+        color: var(--clx-white);
+        border-color: var(--clx-gray-600);
+    }
+
+    .no-tags-text {
+        display: flex;
+        align-items: center;
+        gap: var(--clx-spacing-xs);
+        color: var(--clx-gray-500);
+        font-style: italic;
+        font-size: 0.8125rem;
+    }
+
+    /* ============================================
+       EDIT MODE
+       ============================================ */
+    .edit-tags-container {
+        display: flex;
+        flex-direction: column;
+        gap: var(--clx-spacing-xs);
+    }
+
+    .tags-textarea {
+        font-size: 0.875rem;
+        resize: vertical;
+    }
+
+    .form-text {
+        display: flex;
+        align-items: center;
+        gap: var(--clx-spacing-xs);
+        color: var(--clx-gray-600);
+        font-size: 0.75rem;
+    }
+
+    /* ============================================
+       ACTION BUTTONS
+       ============================================ */
+    .action-buttons-mapping {
+        display: flex;
+        gap: var(--clx-spacing-xs);
+        justify-content: flex-end;
+    }
+
+    .btn:hover svg {
+        color: currentColor;
+    }
+
+    /* ============================================
+       CARD FOOTER
+       ============================================ */
+    .card-footer {
+        display: flex;
+        align-items: center;
+        gap: var(--clx-spacing-xs);
+        background-color: var(--clx-gray-50);
+        color: var(--clx-gray-600);
+        font-size: 0.875rem;
+    }
+
+    .card-footer svg {
+        color: var(--clx-primary);
+    }
+
+    /* ============================================
+       GUIDELINES CARD
+       ============================================ */
+    .guidelines-card {
+        margin-top: var(--clx-spacing-lg);
+        box-shadow: var(--clx-shadow-md);
+    }
+
+    .guidelines-card .card-header {
+        background-color: var(--clx-gray-50);
+        border-bottom: 2px solid var(--clx-gray-200);
+        padding: var(--clx-spacing-lg);
+    }
+
+    .guidelines-title {
+        display: flex;
+        align-items: center;
+        gap: var(--clx-spacing-sm);
+        margin: 0;
+        font-size: 1.125rem;
+        font-weight: 600;
+        color: var(--clx-gray-900);
+    }
+
+    .guidelines-title svg {
+        color: var(--clx-warning);
+    }
+
+    .guidelines-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    .guidelines-list li {
+        display: flex;
+        align-items: flex-start;
+        gap: var(--clx-spacing-sm);
+        padding: var(--clx-spacing-sm) 0;
+        color: var(--clx-gray-700);
+    }
+
+    .guidelines-list li svg {
+        color: var(--clx-success);
+        flex-shrink: 0;
+        margin-top: 2px;
+    }
+
+    .example-item {
+        flex-direction: column;
+        background-color: var(--clx-gray-50);
+        padding: var(--clx-spacing-md);
+        border-radius: var(--clx-radius-md);
+        margin-top: var(--clx-spacing-sm);
+    }
+
+    .example-item svg {
+        color: var(--clx-primary);
+    }
+
+    .example-item code {
+        display: block;
+        margin-top: var(--clx-spacing-xs);
+        padding: var(--clx-spacing-sm);
+        background-color: var(--clx-gray-200);
+        border-radius: var(--clx-radius-sm);
+        font-size: 0.8125rem;
+    }
+
+    /* ============================================
+       ALERTS
+       ============================================ */
+    .alert {
+        display: flex;
+        align-items: center;
+        gap: var(--clx-spacing-sm);
+    }
+
+    .alert svg {
+        flex-shrink: 0;
+    }
+
+    /* ============================================
+       RESPONSIVE DESIGN
+       ============================================ */
+    @@media (max-width: 768px) {
+        .symptom-mapping-page {
+            padding: var(--clx-spacing-md);
+        }
+
+        .page-header {
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .page-header .btn {
+            width: 100%;
+        }
+
+        .mapping-table {
+            font-size: 0.75rem;
+        }
+
+        .mapping-table th,
+        .mapping-table td {
+            padding: var(--clx-spacing-xs);
+        }
+
+        .mapping-table th svg {
+            display: none;
+        }
+
+        .action-buttons-mapping {
+            flex-direction: column;
+        }
+    }
+</style>
 
 @code {
     private List<Provider>? Providers;
     private long? EditingId;
     private string EditTags = "";
-    private string? Message;
+    private string? Success;
+    private string? Error;
+    private bool _saving;
+
+    private bool _authorized;
+    private CurrentUserInfo _userInfo = new(false, "", "", "");
 
     protected override async Task OnInitializedAsync()
     {
-        // load all providers; in a real setup use a dedicated admin service
-        Providers = await ProviderRepo.SearchAsync(new[] { "" }); // empty search returns all in simple setup
+        _userInfo = await CurrentUser.GetCurrentUserAsync();
+        
+        if (!_userInfo.IsAuthenticated)
+        {
+            Navigation.NavigateTo("/login");
+            return;
+        }
+
+        if (_userInfo.Role != "Admin")
+        {
+            _authorized = false;
+            return;
+        }
+
+        _authorized = true;
+        await LoadProvidersAsync();
     }
 
-    private Task StartEditAsync(Provider p)
+    private async Task LoadProvidersAsync()
+    {
+        try
+        {
+            Providers = await ProviderRepo.SearchAsync(new[] { "" });
+        }
+        catch (Exception ex)
+        {
+            Error = $"Failed to load providers: {ex.Message}";
+            Providers = new List<Provider>();
+        }
+    }
+
+    private void StartEdit(Provider p)
     {
         EditingId = p.Id;
         EditTags = p.Tags ?? "";
-        return Task.CompletedTask;
+        Success = null;
+        Error = null;
     }
 
     private void CancelEdit()
     {
         EditingId = null;
         EditTags = "";
+        Success = null;
+        Error = null;
     }
 
     private async Task SaveTagsAsync(long providerId)
     {
-        var p = await ProviderRepo.GetByIdAsync(providerId);
-        if (p is null) return;
+        _saving = true;
+        Success = null;
+        Error = null;
 
-        // update tags via reflection (quick approach for internship-level)
-        p.GetType().GetProperty("Tags")!.SetValue(p, EditTags.Trim());
+        try
+        {
+            var p = await ProviderRepo.GetByIdAsync(providerId);
+            if (p is null)
+            {
+                Error = "Provider not found.";
+                return;
+            }
 
-        // persist (adjust to your actual setup)
-        Message = $"Tags updated for {p.Name}.";
-        EditingId = null;
-        EditTags = "";
-        await OnInitializedAsync(); // reload
+            var cleanedTags = string.Join(",", 
+                EditTags.Split(',', StringSplitOptions.RemoveEmptyEntries)
+                        .Select(t => t.Trim().ToLowerInvariant())
+                        .Where(t => !string.IsNullOrWhiteSpace(t))
+                        .Distinct());
+
+            p.UpdateTags(cleanedTags);
+            await ProviderRepo.UpdateAsync(p);
+            
+            Success = $"Symptom tags updated successfully for {p.Name}.";
+            EditingId = null;
+            EditTags = "";
+            
+            await LoadProvidersAsync();
+        }
+        catch (Exception ex)
+        {
+            Error = $"Error saving tags: {ex.Message}";
+        }
+        finally
+        {
+            _saving = false;
+        }
     }
 }

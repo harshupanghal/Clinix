@@ -8,290 +8,823 @@
 @inject NavigationManager Navigation
 @inject Blazored.Toast.Services.IToastService ToastService
 
-<div class="container my-5">
-    <div class="card shadow-lg border-0 rounded-4">
-        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center py-3 rounded-top-4">
-            <h3 class="mb-0 fw-bold"><i class="bi bi-person-plus-fill me-2"></i> Register New Staff Member</h3>
-            <button class="btn btn-light btn-sm d-flex align-items-center" @onclick="NavigateBack">
-                <i class="bi bi-arrow-left me-1"></i> Back to Dashboard
-            </button>
+<div class="create-staff-page">
+    <!-- Page Header -->
+    <div class="page-header">
+        <div>
+            <h1 class="page-title">
+                <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" fill="currentColor" viewBox="0 0 16 16">
+                    <path d="M15 14s1 0 1-1-1-4-5-4-5 3-5 4 1 1 1 1h8zm-7.978-1A.261.261 0 0 1 7 12.996c.001-.264.167-1.03.76-1.72C8.312 10.629 9.282 10 11 10c1.717 0 2.687.63 3.24 1.276.593.69.758 1.457.76 1.72l-.008.002a.274.274 0 0 1-.014.002H7.022zM11 7a2 2 0 1 0 0-4 2 2 0 0 0 0 4zm3-2a3 3 0 1 1-6 0 3 3 0 0 1 6 0zM6.936 9.28a5.88 5.88 0 0 0-1.23-.247A7.35 7.35 0 0 0 5 9c-4 0-5 3-5 4 0 .667.333 1 1 1h4.216A2.238 2.238 0 0 1 5 13c0-1.01.377-2.042 1.09-2.904.243-.294.526-.569.846-.816zM4.92 10A5.493 5.493 0 0 0 4 13H1c0-.26.164-1.03.76-1.724.545-.636 1.492-1.256 3.16-1.275zM1.5 5.5a3 3 0 1 1 6 0 3 3 0 0 1-6 0zm3-2a2 2 0 1 0 0 4 2 2 0 0 0 0-4z"/>
+                </svg>
+                Register New Staff Member
+            </h1>
+            <p class="page-subtitle">Create staff accounts and configure role-specific details</p>
         </div>
+        <button class="btn btn-secondary" @onclick="NavigateBack">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                <path fill-rule="evenodd" d="M15 8a.5.5 0 0 0-.5-.5H2.707l3.147-3.146a.5.5 0 1 0-.708-.708l-4 4a.5.5 0 0 0 0 .708l4 4a.5.5 0 0 0 .708-.708L2.707 8.5H14.5A.5.5 0 0 0 15 8z"/>
+            </svg>
+            Back to Dashboard
+        </button>
+    </div>
 
-        <div class="card-body p-5">
-            <EditForm Model="_model" OnValidSubmit="OnValidSubmit" FormName="createStaffForm">
-                <FluentValidationValidator />
+    <EditForm Model="_model" OnValidSubmit="OnValidSubmit" FormName="createStaffForm">
+        <FluentValidationValidator />
 
-                <h4 class="mb-4 text-primary fw-semibold border-bottom pb-2">1. Account and Contact Details</h4>
-                <div class="row g-4 mb-4">
-                    <div class="col-md-6 form-floating">
-                        <InputText id="fullName" class="form-control" placeholder="Full Name" @bind-Value="_model.FullName" />
-                        <label for="fullName" class="ms-2">Full Name <span class="text-danger">*</span></label>
-                        <ValidationMessage For="() => _model.FullName" />
+        <!-- Section 1: Basic Information -->
+        <div class="card form-section">
+            <div class="card-body">
+                <h5 class="section-title">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+                        <path d="M3 14s-1 0-1-1 1-4 6-4 6 3 6 4-1 1-1 1H3zm5-6a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/>
+                    </svg>
+                    Account & Contact Information
+                </h5>
+
+                <div class="form-grid-2col">
+                    <div class="form-group">
+                        <label class="form-label required">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
+                                <path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm2-3a2 2 0 1 1-4 0 2 2 0 0 1 4 0zm4 8c0 1-1 1-1 1H3s-1 0-1-1 1-4 6-4 6 3 6 4zm-1-.004c-.001-.246-.154-.986-.832-1.664C11.516 10.68 10.289 10 8 10c-2.29 0-3.516.68-4.168 1.332-.678.678-.83 1.418-.832 1.664h10z"/>
+                            </svg>
+                            Full Name
+                        </label>
+                        <InputText class="form-control" placeholder="Enter full name" @bind-Value="_model.FullName" />
+                        <ValidationMessage For="() => _model.FullName" class="validation-message" />
                     </div>
 
-                    <div class="col-md-6 form-floating">
-                        <InputText id="email" class="form-control" type="email" placeholder="Email Address" @bind-Value="_model.Email" />
-                        <label for="email" class="ms-2">Email Address <span class="text-danger">*</span></label>
-                        <ValidationMessage For="() => _model.Email" />
+                    <div class="form-group">
+                        <label class="form-label required">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
+                                <path d="M0 4a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V4zm2-1a1 1 0 0 0-1 1v.217l7 4.2 7-4.2V4a1 1 0 0 0-1-1H2zm13 2.383-4.758 2.855L15 11.114v-5.73zm-.034 6.878L9.271 8.82 8 9.583 6.728 8.82l-5.694 3.44A1 1 0 0 0 2 13h12a1 1 0 0 0 .966-.739zM1 11.114l4.758-2.876L1 5.383v5.73z"/>
+                            </svg>
+                            Email Address
+                        </label>
+                        <InputText type="email" class="form-control" placeholder="name@example.com" @bind-Value="_model.Email" />
+                        <ValidationMessage For="() => _model.Email" class="validation-message" />
                     </div>
 
-                    <div class="col-md-6 form-floating">
-                        <InputText id="phone" class="form-control" placeholder="Phone Number" @bind-Value="_model.Phone" />
-                        <label for="phone" class="ms-2">Phone Number <span class="text-danger">*</span></label>
-                        <ValidationMessage For="() => _model.Phone" />
+                    <div class="form-group">
+                        <label class="form-label required">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
+                                <path d="M3.654 1.328a.678.678 0 0 0-1.015-.063L1.605 2.3c-.483.484-.661 1.169-.45 1.77a17.568 17.568 0 0 0 4.168 6.608 17.569 17.569 0 0 0 6.608 4.168c.601.211 1.286.033 1.77-.45l1.034-1.034a.678.678 0 0 0-.063-1.015l-2.307-1.794a.678.678 0 0 0-.58-.122l-2.19.547a1.745 1.745 0 0 1-1.657-.459L5.482 8.062a1.745 1.745 0 0 1-.46-1.657l.548-2.19a.678.678 0 0 0-.122-.58L3.654 1.328zM1.884.511a1.745 1.745 0 0 1 2.612.163L6.29 2.98c.329.423.445.974.315 1.494l-.547 2.19a.678.678 0 0 0 .178.643l2.457 2.457a.678.678 0 0 0 .644.178l2.189-.547a1.745 1.745 0 0 1 1.494.315l2.306 1.794c.829.645.905 1.87.163 2.611l-1.034 1.034c-.74.74-1.846 1.065-2.877.702a18.634 18.634 0 0 1-7.01-4.42 18.634 18.634 0 0 1-4.42-7.009c-.362-1.03-.037-2.137.703-2.877L1.885.511z"/>
+                            </svg>
+                            Phone Number
+                        </label>
+                        <InputText class="form-control" placeholder="Enter phone number" @bind-Value="_model.Phone" />
+                        <ValidationMessage For="() => _model.Phone" class="validation-message" />
                     </div>
 
-                    <div class="col-md-6 form-floating position-relative">
-                        <InputText id="password" class="form-control pe-5" type="@(_showPassword ? "text" : "password")" placeholder="Temporary Password" @bind-Value="_model.Password" />
-                        <label for="password" class="ms-2">Temporary Password <span class="text-danger">*</span></label>
-                        <ValidationMessage For="() => _model.Password" />
-                        <button type="button" class="btn btn-sm btn-outline-secondary position-absolute top-50 end-0 translate-middle-y me-3 border-0" @onclick="TogglePassword" title="Show/Hide Password">
-                            <i class="bi @(_showPassword ? "bi-eye-slash" : "bi-eye")"></i>
-                        </button>
+                    <div class="form-group">
+                        <label class="form-label required">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
+                                <path d="M8 1a2 2 0 0 1 2 2v4H6V3a2 2 0 0 1 2-2zm3 6V3a3 3 0 0 0-6 0v4a2 2 0 0 0-2 2v5a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z"/>
+                            </svg>
+                            Temporary Password
+                        </label>
+                        <div class="password-input-wrapper">
+                            <InputText type="@(_showPassword ? "text" : "password")" class="form-control" placeholder="Enter temporary password" @bind-Value="_model.Password" />
+                            <button type="button" class="password-toggle-btn" @onclick="TogglePassword" title="@(_showPassword ? "Hide" : "Show") Password">
+                                @if (_showPassword)
+                                {
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                                        <path d="m10.79 12.912-1.614-1.615a3.5 3.5 0 0 1-4.474-4.474l-2.06-2.06C.938 6.278 0 8 0 8s3 5.5 8 5.5a7.029 7.029 0 0 0 2.79-.588zM5.21 3.088A7.028 7.028 0 0 1 8 2.5c5 0 8 5.5 8 5.5s-.939 1.721-2.641 3.238l-2.062-2.062a3.5 3.5 0 0 0-4.474-4.474L5.21 3.089z"/>
+                                        <path d="M5.525 7.646a2.5 2.5 0 0 0 2.829 2.829l-2.83-2.829zm4.95.708-2.829-2.83a2.5 2.5 0 0 1 2.829 2.829zm3.171 6-12-12 .708-.708 12 12-.708.708z"/>
+                                    </svg>
+                                }
+                                else
+                                {
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                                        <path d="M16 8s-3-5.5-8-5.5S0 8 0 8s3 5.5 8 5.5S16 8 16 8zM1.173 8a13.133 13.133 0 0 1 1.66-2.043C4.12 4.668 5.88 3.5 8 3.5c2.12 0 3.879 1.168 5.168 2.457A13.133 13.133 0 0 1 14.828 8c-.058.087-.122.183-.195.288-.335.48-.83 1.12-1.465 1.755C11.879 11.332 10.119 12.5 8 12.5c-2.12 0-3.879-1.168-5.168-2.457A13.134 13.134 0 0 1 1.172 8z"/>
+                                        <path d="M8 5.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5zM4.5 8a3.5 3.5 0 1 1 7 0 3.5 3.5 0 0 1-7 0z"/>
+                                    </svg>
+                                }
+                            </button>
+                        </div>
+                        <ValidationMessage For="() => _model.Password" class="validation-message" />
                     </div>
 
-                    <div class="col-md-6 form-floating">
-                        <InputSelect id="position" class="form-select" @bind-Value="_model.Position" @onchange="OnPositionChanged">
+                    <div class="form-group">
+                        <label class="form-label required">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
+                                <path d="M7 14s-1 0-1-1 1-4 5-4 5 3 5 4-1 1-1 1H7zm4-6a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/>
+                                <path fill-rule="evenodd" d="M5.216 14A2.238 2.238 0 0 1 5 13c0-1.355.68-2.75 1.936-3.72A6.325 6.325 0 0 0 5 9c-4 0-5 3-5 4s1 1 1 1h4.216z"/>
+                                <path d="M4.5 8a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5z"/>
+                            </svg>
+                            Role / Position
+                        </label>
+                        <InputSelect class="form-select" @bind-Value="_model.Position" @onchange="OnPositionChanged">
                             <option value="">-- Select Role / Position --</option>
                             <option value="Doctor">Doctor</option>
                             <option value="Receptionist">Receptionist</option>
                             <option value="Chemist">Chemist</option>
                         </InputSelect>
-                        <label for="position" class="ms-2">Role / Position <span class="text-danger">*</span></label>
-                        <ValidationMessage For="() => _model.Position" />
+                        <ValidationMessage For="() => _model.Position" class="validation-message" />
                     </div>
                 </div>
+            </div>
+        </div>
 
-                @if (!string.IsNullOrWhiteSpace(_model.Position))
-                {
-                    <div class="mt-4 pt-4 border-top">
-                      @* Replace this section in CreateStaff.razor *@
-@if (_model.Position == "Doctor")
-{
-    <h4 class="mb-4 text-success fw-semibold border-bottom pb-2"><i class="bi bi-heart-pulse-fill me-2"></i> 2. Doctor Professional Details</h4>
-    <div class="row g-4">
-        <div class="col-md-6 form-floating">
-            <InputText id="degree" class="form-control" placeholder="Medical Degree (e.g., MBBS, MD)" @bind-Value="_model.Degree" />
-            <label for="degree" class="ms-2">Degree</label>
-            <ValidationMessage For="() => _model.Degree" />
-        </div>
-        <div class="col-md-6 form-floating">
-            <InputText id="specialty" class="form-control" placeholder="Specialty (e.g., Cardiology, Pediatrics)" @bind-Value="_model.Specialty" />
-            <label for="specialty" class="ms-2">Specialty</label>
-            <ValidationMessage For="() => _model.Specialty" />
-        </div>
-        <div class="col-md-6 form-floating">
-            <InputText id="license" class="form-control" placeholder="License Number" @bind-Value="_model.LicenseNumber" />
-            <label for="license" class="ms-2">License Number</label>
-            <ValidationMessage For="() => _model.LicenseNumber" />
-        </div>
-        <div class="col-md-6 form-floating">
-            <InputNumber id="experience" class="form-control" placeholder="Years of Experience" @bind-Value="_model.ExperienceYears" />
-            <label for="experience" class="ms-2">Experience (Years)</label>
-            <ValidationMessage For="() => _model.ExperienceYears" />
-        </div>
-        <div class="col-md-6 form-floating">
-            <InputNumber id="fee" class="form-control" placeholder="Consultation Fee (in currency)" @bind-Value="_model.ConsultationFee" />
-            <label for="fee" class="ms-2">Consultation Fee</label>
-            <ValidationMessage For="() => _model.ConsultationFee" />
-        </div>
-        <div class="col-md-6 form-floating">
-            <InputText id="room" class="form-control" placeholder="Consultation Room Number" @bind-Value="_model.RoomNumber" />
-            <label for="room" class="ms-2">Room Number</label>
-            <ValidationMessage For="() => _model.RoomNumber" />
-        </div>
-        <div class="col-md-6 form-floating">
-            <InputText id="extension" class="form-control" placeholder="Internal Extension Number" @bind-Value="_model.ExtensionNumber" />
-            <label for="extension" class="ms-2">Extension Number</label>
-            <ValidationMessage For="() => _model.ExtensionNumber" />
-        </div>
-        
-        @* NEW: Weekly Schedule Builder *@
-   <div class="col-12">
-    <h5 class="text-success mb-3"><i class="bi bi-calendar-week me-2"></i>Weekly Working Schedule</h5>
-    <div class="table-responsive">
-        <table class="table table-bordered table-sm">
-            <thead class="table-light">
-                <tr>
-                    <th>Day</th>
-                    <th>Available</th>
-                    <th>Start Time</th>
-                    <th>End Time</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach (var schedule in _model.Schedules)
-                {
-                    <tr>
-                        <td>@schedule.DayOfWeek</td>
-                        <td>
-                            <input type="checkbox" class="form-check-input" @bind="schedule.IsAvailable" />
-                        </td>
-                        <td>
-                            <input type="time" class="form-control form-control-sm" 
-                                   value="@schedule.StartTimeStr" 
-                                   @onchange="@(e => schedule.StartTimeStr = e.Value?.ToString() ?? "09:00")" 
-                                   disabled="@(!schedule.IsAvailable)" />
-                        </td>
-                        <td>
-                            <input type="time" class="form-control form-control-sm" 
-                                   value="@schedule.EndTimeStr" 
-                                   @onchange="@(e => schedule.EndTimeStr = e.Value?.ToString() ?? "17:00")" 
-                                   disabled="@(!schedule.IsAvailable)" />
-                        </td>
-                    </tr>
-                }
-            </tbody>
-        </table>
-    </div>
-</div>
-        
-        <div class="col-12 form-floating">
-            <InputTextArea id="notes" class="form-control" rows="3" placeholder="Additional Notes for Doctor" @bind-Value="_model.Notes" style="min-height: 100px;"/>
-            <label for="notes" class="ms-2">Doctor Notes</label>
-            <ValidationMessage For="() => _model.Notes" />
-        </div>
-    </div>
-}
+        <!-- Section 2: Role-Specific Details -->
+        @if (!string.IsNullOrWhiteSpace(_model.Position))
+        {
+            @if (_model.Position == "Doctor")
+            {
+                <!-- Doctor Professional Details -->
+                <div class="card form-section">
+                    <div class="card-body">
+                        <h5 class="section-title section-title-doctor">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+                                <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+                                <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z"/>
+                            </svg>
+                            Doctor Professional Details
+                        </h5>
 
-
-                        @if (_model.Position == "Receptionist" || _model.Position == "Chemist")
-                        {
-                            <h4 class="mb-4 text-info fw-semibold border-bottom pb-2"><i class="bi bi-person-workspace me-2"></i> 2. Staff Work Details</h4>
-                            <div class="row g-4">
-                                <div class="col-md-6 form-floating">
-                                    <InputText id="department" class="form-control" placeholder="Department (e.g., Administration, Pharmacy)" @bind-Value="_model.Department" />
-                                    <label for="department" class="ms-2">Department</label>
-                                    <ValidationMessage For="() => _model.Department" />
-                                </div>
-                                <div class="col-md-6 form-floating">
-                                    <InputText id="location" class="form-control" placeholder="Assigned Location" @bind-Value="_model.AssignedLocation" />
-                                    <label for="location" class="ms-2">Assigned Location</label>
-                                    <ValidationMessage For="() => _model.AssignedLocation" />
-                                </div>
-                                <div class="col-md-6 form-floating">
-                                    <InputText id="supervisor" class="form-control" placeholder="Direct Supervisor Name" @bind-Value="_model.SupervisorName" />
-                                    <label for="supervisor" class="ms-2">Supervisor Name</label>
-                                    <ValidationMessage For="() => _model.SupervisorName" />
-                                </div>
-                                <div class="col-md-6 form-floating">
-                                    @* Assuming ShiftJson will be replaced by a better control later, leaving the DTO field visible for now *@
-                                    <InputText id="shift" class="form-control" placeholder="Shift Details (JSON)" @bind-Value="_model.ShiftJson" />
-                                    <label for="shift" class="ms-2">Shift (JSON)</label>
-                                    <ValidationMessage For="() => _model.ShiftJson" />
-                                </div>
-                                <div class="col-12 form-floating">
-                                    <InputTextArea id="notes2" class="form-control" rows="3" placeholder="Additional Notes for Staff" @bind-Value="_model.Notes" style="min-height: 100px;"/>
-                                    <label for="notes2" class="ms-2">Staff Notes</label>
-                                    <ValidationMessage For="() => _model.Notes" />
-                                </div>
+                        <div class="form-grid-2col">
+                            <div class="form-group">
+                                <label class="form-label">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
+                                        <path d="M8.211 2.047a.5.5 0 0 0-.422 0l-7.5 3.5a.5.5 0 0 0 .025.917l7.5 3a.5.5 0 0 0 .372 0L14 7.14V13a1 1 0 0 0-1 1v2h3v-2a1 1 0 0 0-1-1V6.739l.686-.275a.5.5 0 0 0 .025-.917l-7.5-3.5Z"/>
+                                        <path d="M4.176 9.032a.5.5 0 0 0-.656.327l-.5 1.7a.5.5 0 0 0 .294.605l4.5 1.8a.5.5 0 0 0 .372 0l4.5-1.8a.5.5 0 0 0 .294-.605l-.5-1.7a.5.5 0 0 0-.656-.327L8 10.466 4.176 9.032Z"/>
+                                    </svg>
+                                    Medical Degree
+                                </label>
+                                <InputText class="form-control" placeholder="e.g., MBBS, MD" @bind-Value="_model.Degree" />
+                                <ValidationMessage For="() => _model.Degree" class="validation-message" />
                             </div>
-                        }
+
+                            <div class="form-group">
+                                <label class="form-label">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
+                                        <path d="M9.828 3h3.982a2 2 0 0 1 1.992 2.181l-.637 7A2 2 0 0 1 13.174 14H2.825a2 2 0 0 1-1.991-1.819l-.637-7a1.99 1.99 0 0 1 .342-1.31L.5 3a2 2 0 0 1 2-2h3.672a2 2 0 0 1 1.414.586l.828.828A2 2 0 0 0 9.828 3zm-8.322.12C1.72 3.042 1.95 3 2.19 3h5.396l-.707-.707A1 1 0 0 0 6.172 2H2.5a1 1 0 0 0-1 .981l.006.139z"/>
+                                    </svg>
+                                    Specialty
+                                </label>
+                                <InputText class="form-control" placeholder="e.g., Cardiology, Pediatrics" @bind-Value="_model.Specialty" />
+                                <ValidationMessage For="() => _model.Specialty" class="validation-message" />
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
+                                        <path d="M2.5 1A1.5 1.5 0 0 0 1 2.5v11A1.5 1.5 0 0 0 2.5 15h6.086a1.5 1.5 0 0 0 1.06-.44l4.915-4.914A1.5 1.5 0 0 0 15 8.586V2.5A1.5 1.5 0 0 0 13.5 1h-11zM2 2.5a.5.5 0 0 1 .5-.5h11a.5.5 0 0 1 .5.5V8H9.5A1.5 1.5 0 0 0 8 9.5V14H2.5a.5.5 0 0 1-.5-.5v-11zm7 11.293V9.5a.5.5 0 0 1 .5-.5h4.293L9 13.793z"/>
+                                    </svg>
+                                    License Number
+                                </label>
+                                <InputText class="form-control" placeholder="Enter license number" @bind-Value="_model.LicenseNumber" />
+                                <ValidationMessage For="() => _model.LicenseNumber" class="validation-message" />
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
+                                        <path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16zm7-8A7 7 0 1 1 1 8a7 7 0 0 1 14 0z"/>
+                                        <path d="M8 3.5a.5.5 0 0 0-1 0V9a.5.5 0 0 0 .252.434l3.5 2a.5.5 0 0 0 .496-.868L8 8.71V3.5z"/>
+                                    </svg>
+                                    Years of Experience
+                                </label>
+                                <InputNumber class="form-control" placeholder="e.g., 5" @bind-Value="_model.ExperienceYears" />
+                                <ValidationMessage For="() => _model.ExperienceYears" class="validation-message" />
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
+                                        <path d="M5.5 9.511c.076.954.83 1.697 2.182 1.785V12h.6v-.709c1.4-.098 2.218-.846 2.218-1.932 0-.987-.626-1.496-1.745-1.76l-.473-.112V5.57c.6.068.982.396 1.074.85h1.052c-.076-.919-.864-1.638-2.126-1.716V4h-.6v.719c-1.195.117-2.01.836-2.01 1.853 0 .9.606 1.472 1.613 1.707l.397.098v2.034c-.615-.093-1.022-.43-1.114-.9H5.5zm2.177-2.166c-.59-.137-.91-.416-.91-.836 0-.47.345-.822.915-.925v1.76h-.005zm.692 1.193c.717.166 1.048.435 1.048.91 0 .542-.412.914-1.135.982V8.518l.087.02z"/>
+                                        <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+                                    </svg>
+                                    Consultation Fee
+                                </label>
+                                <InputNumber class="form-control" placeholder="e.g., 500" @bind-Value="_model.ConsultationFee" />
+                                <ValidationMessage For="() => _model.ConsultationFee" class="validation-message" />
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
+                                        <path d="M2.5 0A1.5 1.5 0 0 0 1 1.5v13A1.5 1.5 0 0 0 2.5 16h11a1.5 1.5 0 0 0 1.5-1.5v-13A1.5 1.5 0 0 0 13.5 0h-11zM2 2.5a.5.5 0 0 1 .5-.5h11a.5.5 0 0 1 .5.5v13a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5v-13z"/>
+                                    </svg>
+                                    Room Number
+                                </label>
+                                <InputText class="form-control" placeholder="e.g., 301" @bind-Value="_model.RoomNumber" />
+                                <ValidationMessage For="() => _model.RoomNumber" class="validation-message" />
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
+                                        <path d="M3.654 1.328a.678.678 0 0 0-1.015-.063L1.605 2.3c-.483.484-.661 1.169-.45 1.77a17.568 17.568 0 0 0 4.168 6.608 17.569 17.569 0 0 0 6.608 4.168c.601.211 1.286.033 1.77-.45l1.034-1.034a.678.678 0 0 0-.063-1.015l-2.307-1.794a.678.678 0 0 0-.58-.122l-2.19.547a1.745 1.745 0 0 1-1.657-.459L5.482 8.062a1.745 1.745 0 0 1-.46-1.657l.548-2.19a.678.678 0 0 0-.122-.58L3.654 1.328z"/>
+                                    </svg>
+                                    Extension Number
+                                </label>
+                                <InputText class="form-control" placeholder="e.g., ext. 1234" @bind-Value="_model.ExtensionNumber" />
+                                <ValidationMessage For="() => _model.ExtensionNumber" class="validation-message" />
+                            </div>
+                        </div>
+
+                        <!-- Weekly Schedule -->
+                        <div class="schedule-section">
+                            <h6 class="schedule-title">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
+                                    <path d="M3.5 0a.5.5 0 0 1 .5.5V1h8V.5a.5.5 0 0 1 1 0V1h1a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2h1V.5a.5.5 0 0 1 .5-.5zM1 4v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V4H1z"/>
+                                </svg>
+                                Weekly Working Schedule
+                            </h6>
+                            <div class="table-responsive">
+                                <table class="schedule-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Day</th>
+                                            <th class="text-center">Available</th>
+                                            <th>Start Time</th>
+                                            <th>End Time</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var schedule in _model.Schedules)
+                                        {
+                                            <tr class="@(schedule.IsAvailable ? "" : "schedule-disabled")">
+                                                <td class="day-label">@schedule.DayOfWeek</td>
+                                                <td class="text-center">
+                                                    <input type="checkbox" class="form-check-input schedule-checkbox" @bind="schedule.IsAvailable" />
+                                                </td>
+                                                <td>
+                                                    <input type="time" 
+                                                           class="form-control form-control-sm time-input" 
+                                                           value="@schedule.StartTimeStr" 
+                                                           @onchange="@(e => schedule.StartTimeStr = e.Value?.ToString() ?? "09:00")" 
+                                                           disabled="@(!schedule.IsAvailable)" />
+                                                </td>
+                                                <td>
+                                                    <input type="time" 
+                                                           class="form-control form-control-sm time-input" 
+                                                           value="@schedule.EndTimeStr" 
+                                                           @onchange="@(e => schedule.EndTimeStr = e.Value?.ToString() ?? "17:00")" 
+                                                           disabled="@(!schedule.IsAvailable)" />
+                                                </td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Notes -->
+                        <div class="form-group">
+                            <label class="form-label">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
+                                    <path d="M14 1a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1h12zM2 0a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2H2z"/>
+                                    <path d="M3 4.5a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5zM3 8a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9A.5.5 0 0 1 3 8zm0 3.5a.5.5 0 0 1 .5-.5h6a.5.5 0 0 1 0 1h-6a.5.5 0 0 1-.5-.5z"/>
+                                </svg>
+                                Additional Notes
+                            </label>
+                            <InputTextArea class="form-control" rows="3" placeholder="Add any additional information about this doctor..." @bind-Value="_model.Notes" />
+                            <ValidationMessage For="() => _model.Notes" class="validation-message" />
+                        </div>
                     </div>
+                </div>
+            }
+
+            @if (_model.Position == "Receptionist" || _model.Position == "Chemist")
+            {
+                <!-- Staff Work Details -->
+                <div class="card form-section">
+                    <div class="card-body">
+                        <h5 class="section-title section-title-staff">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+                                <path d="M0 3.5A1.5 1.5 0 0 1 1.5 2h9A1.5 1.5 0 0 1 12 3.5V5h1.02a1.5 1.5 0 0 1 1.17.563l1.481 1.85a1.5 1.5 0 0 1 .329.938V10.5a1.5 1.5 0 0 1-1.5 1.5H14a2 2 0 1 1-4 0H5a2 2 0 1 1-4 0 1 1 0 0 1-1-1v-5zm1.5-.5a.5.5 0 0 0-.5.5v4.667c.166-.043.34-.064.518-.073C1.875 7.822 2.396 7.62 3 7.62c.604 0 1.125.202 1.482.474A.497.497 0 0 0 5 8a.5.5 0 0 0 .018-.094c.357-.272.878-.474 1.482-.474.604 0 1.125.202 1.482.474A.497.497 0 0 0 8.5 8V4.5a.5.5 0 0 0-.5-.5h-7z"/>
+                            </svg>
+                            Staff Work Details
+                        </h5>
+
+                        <div class="form-grid-2col">
+                            <div class="form-group">
+                                <label class="form-label">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
+                                        <path d="M9.828 3h3.982a2 2 0 0 1 1.992 2.181l-.637 7A2 2 0 0 1 13.174 14H2.825a2 2 0 0 1-1.991-1.819l-.637-7a1.99 1.99 0 0 1 .342-1.31L.5 3a2 2 0 0 1 2-2h3.672a2 2 0 0 1 1.414.586l.828.828A2 2 0 0 0 9.828 3zm-8.322.12C1.72 3.042 1.95 3 2.19 3h5.396l-.707-.707A1 1 0 0 0 6.172 2H2.5a1 1 0 0 0-1 .981l.006.139z"/>
+                                    </svg>
+                                    Department
+                                </label>
+                                <InputText class="form-control" placeholder="e.g., Administration, Pharmacy" @bind-Value="_model.Department" />
+                                <ValidationMessage For="() => _model.Department" class="validation-message" />
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
+                                        <path d="M8 16s6-5.686 6-10A6 6 0 0 0 2 6c0 4.314 6 10 6 10zm0-7a3 3 0 1 1 0-6 3 3 0 0 1 0 6z"/>
+                                    </svg>
+                                    Assigned Location
+                                </label>
+                                <InputText class="form-control" placeholder="e.g., Front Desk, Store Room" @bind-Value="_model.AssignedLocation" />
+                                <ValidationMessage For="() => _model.AssignedLocation" class="validation-message" />
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
+                                        <path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm2-3a2 2 0 1 1-4 0 2 2 0 0 1 4 0zm4 8c0 1-1 1-1 1H3s-1 0-1-1 1-4 6-4 6 3 6 4zm-1-.004c-.001-.246-.154-.986-.832-1.664C11.516 10.68 10.289 10 8 10c-2.29 0-3.516.68-4.168 1.332-.678.678-.83 1.418-.832 1.664h10z"/>
+                                    </svg>
+                                    Supervisor Name
+                                </label>
+                                <InputText class="form-control" placeholder="Enter supervisor's name" @bind-Value="_model.SupervisorName" />
+                                <ValidationMessage For="() => _model.SupervisorName" class="validation-message" />
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
+                                        <path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16zm7-8A7 7 0 1 1 1 8a7 7 0 0 1 14 0z"/>
+                                        <path d="M8 3.5a.5.5 0 0 0-1 0V9a.5.5 0 0 0 .252.434l3.5 2a.5.5 0 0 0 .496-.868L8 8.71V3.5z"/>
+                                    </svg>
+                                    Shift Details (JSON)
+                                </label>
+                                <InputText class="form-control" placeholder='e.g., {"type": "morning"}' @bind-Value="_model.ShiftJson" />
+                                <ValidationMessage For="() => _model.ShiftJson" class="validation-message" />
+                            </div>
+                        </div>
+
+                        <!-- Notes -->
+                        <div class="form-group">
+                            <label class="form-label">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
+                                    <path d="M14 1a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1h12zM2 0a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2H2z"/>
+                                    <path d="M3 4.5a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5zM3 8a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9A.5.5 0 0 1 3 8zm0 3.5a.5.5 0 0 1 .5-.5h6a.5.5 0 0 1 0 1h-6a.5.5 0 0 1-.5-.5z"/>
+                                </svg>
+                                Additional Notes
+                            </label>
+                            <InputTextArea class="form-control" rows="3" placeholder="Add any additional information..." @bind-Value="_model.Notes" />
+                            <ValidationMessage For="() => _model.Notes" class="validation-message" />
+                        </div>
+                    </div>
+                </div>
+            }
+        }
+        else
+        {
+            <div class="alert alert-info info-prompt">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 16 16">
+                    <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+                    <path d="m8.93 6.588-2.29.287-.082.38.45.083c.294.07.352.176.288.469l-.738 3.468c-.194.897.105 1.319.808 1.319.545 0 1.178-.252 1.465-.598l.088-.416c-.2.176-.492.246-.686.246-.275 0-.375-.193-.304-.533L8.93 6.588zM9 4.5a1 1 0 1 1-2 0 1 1 0 0 1 2 0z"/>
+                </svg>
+                <div>
+                    <strong>Select a Role / Position</strong> above to display role-specific fields.
+                </div>
+            </div>
+        }
+
+        <!-- Form Actions -->
+        <div class="form-actions">
+            <button class="btn btn-secondary" type="button" @onclick="NavigateBack" disabled="@_isSubmitting">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                    <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+                    <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z"/>
+                </svg>
+                Cancel
+            </button>
+            <button class="btn btn-success" type="submit" disabled="@_isSubmitting">
+                @if (_isSubmitting)
+                {
+                    <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+                    <span>Creating...</span>
                 }
                 else
                 {
-                    <div class="alert alert-info mt-4 text-center">
-                        <i class="bi bi-info-circle me-2"></i> Select a **Role / Position** to display specific details.
-                    </div>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                        <path d="M12.736 3.97a.733.733 0 0 1 1.047 0c.286.289.29.756.01 1.05L7.88 12.01a.733.733 0 0 1-1.065.02L3.217 8.384a.757.757 0 0 1 0-1.06.733.733 0 0 1 1.047 0l3.052 3.093 5.4-6.425a.247.247 0 0 1 .02-.022Z"/>
+                    </svg>
+                    <span>Create Staff Member</span>
                 }
-
-                <div class="mt-5 pt-3 border-top d-flex justify-content-end gap-3">
-                    <button class="btn btn-lg btn-outline-secondary px-5" type="button" @onclick="NavigateBack" disabled="@_isSubmitting">
-                        <i class="bi bi-x-circle me-2"></i> Cancel
-                    </button>
-                    <button class="btn btn-lg btn-success px-5" type="submit" disabled="@_isSubmitting">
-                        @if (_isSubmitting)
-                        {
-                            <span class="spinner-border spinner-border-sm me-2" role="status"></span>
-                            <span>Creating...</span>
-                        }
-                        else
-                        {
-                            <i class="bi bi-check-circle-fill me-2"></i> <span>Create Staff</span>
-                        }
-                    </button>
-                </div>
-            </EditForm>
+            </button>
         </div>
-    </div>
+    </EditForm>
 </div>
+
+<style>
+    /* ============================================
+       CREATE STAFF PAGE
+       ============================================ */
+    .create-staff-page {
+        padding: var(--clx-spacing-lg);
+        max-width: 1100px;
+        margin: 0 auto;
+    }
+
+    /* ============================================
+       PAGE HEADER
+       ============================================ */
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: var(--clx-spacing-xl);
+        gap: var(--clx-spacing-md);
+    }
+
+    .page-title {
+        display: flex;
+        align-items: center;
+        gap: var(--clx-spacing-sm);
+        margin: 0 0 var(--clx-spacing-xs) 0;
+        color: var(--clx-gray-900);
+        font-size: 1.75rem;
+    }
+
+    .page-title svg {
+        color: var(--clx-primary);
+    }
+
+    .page-subtitle {
+        color: var(--clx-gray-600);
+        font-size: 0.875rem;
+        margin: 0;
+    }
+
+    /* ============================================
+       FORM SECTIONS
+       ============================================ */
+    .form-section {
+        margin-bottom: var(--clx-spacing-lg);
+        box-shadow: var(--clx-shadow-md);
+    }
+
+    .section-title {
+        display: flex;
+        align-items: center;
+        gap: var(--clx-spacing-sm);
+        color: var(--clx-gray-900);
+        font-size: 1.125rem;
+        font-weight: 600;
+        margin-bottom: var(--clx-spacing-lg);
+        padding-bottom: var(--clx-spacing-sm);
+        border-bottom: 2px solid var(--clx-gray-200);
+    }
+
+    .section-title svg {
+        color: var(--clx-primary);
+    }
+
+    .section-title-doctor svg {
+        color: var(--clx-success);
+    }
+
+    .section-title-staff svg {
+        color: var(--clx-info);
+    }
+
+    /* ============================================
+       FORM LAYOUT
+       ============================================ */
+    .form-grid-2col {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: var(--clx-spacing-md);
+        margin-bottom: var(--clx-spacing-md);
+    }
+
+    .form-group {
+        margin-bottom: var(--clx-spacing-md);
+    }
+
+    .form-label {
+        display: flex;
+        align-items: center;
+        gap: var(--clx-spacing-xs);
+        font-weight: 500;
+        font-size: 0.875rem;
+        color: var(--clx-gray-700);
+        margin-bottom: var(--clx-spacing-sm);
+    }
+
+    .form-label svg {
+        color: var(--clx-primary);
+        flex-shrink: 0;
+    }
+
+    .form-label.required::after {
+        content: "*";
+        color: var(--clx-danger);
+        margin-left: var(--clx-spacing-xs);
+    }
+
+    .validation-message {
+        display: block;
+        margin-top: var(--clx-spacing-xs);
+        font-size: 0.8125rem;
+        color: var(--clx-danger);
+    }
+
+    /* ============================================
+       PASSWORD INPUT
+       ============================================ */
+    .password-input-wrapper {
+        position: relative;
+    }
+
+    .password-toggle-btn {
+        position: absolute;
+        right: var(--clx-spacing-sm);
+        top: 50%;
+        transform: translateY(-50%);
+        background: none;
+        border: none;
+        color: var(--clx-gray-600);
+        cursor: pointer;
+        padding: var(--clx-spacing-xs);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: var(--clx-radius-sm);
+        transition: all var(--clx-transition-fast);
+    }
+
+    .password-toggle-btn:hover {
+        color: var(--clx-primary);
+        background-color: var(--clx-gray-100);
+    }
+
+    /* ============================================
+       SCHEDULE TABLE
+       ============================================ */
+    .schedule-section {
+        margin-top: var(--clx-spacing-lg);
+        padding-top: var(--clx-spacing-lg);
+        border-top: 1px solid var(--clx-gray-200);
+    }
+
+    .schedule-title {
+        display: flex;
+        align-items: center;
+        gap: var(--clx-spacing-sm);
+        color: var(--clx-success);
+        font-size: 1rem;
+        font-weight: 600;
+        margin-bottom: var(--clx-spacing-md);
+    }
+
+    .schedule-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.875rem;
+    }
+
+    .schedule-table thead {
+        background-color: var(--clx-gray-100);
+    }
+
+    .schedule-table th,
+    .schedule-table td {
+        padding: var(--clx-spacing-sm) var(--clx-spacing-md);
+        border: 1px solid var(--clx-gray-200);
+        text-align: left;
+    }
+
+    .schedule-table th {
+        font-weight: 600;
+        color: var(--clx-gray-700);
+        font-size: 0.8125rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .schedule-table tbody tr {
+        transition: background-color var(--clx-transition-fast);
+    }
+
+    .schedule-table tbody tr:hover:not(.schedule-disabled) {
+        background-color: var(--clx-gray-50);
+    }
+
+    .schedule-disabled {
+        background-color: var(--clx-gray-100);
+        opacity: 0.6;
+    }
+
+    .day-label {
+        font-weight: 500;
+        color: var(--clx-gray-900);
+    }
+
+    .schedule-checkbox {
+        cursor: pointer;
+    }
+
+    .time-input {
+        max-width: 140px;
+    }
+
+    /* ============================================
+       INFO PROMPT
+       ============================================ */
+    .info-prompt {
+        display: flex;
+        align-items: center;
+        gap: var(--clx-spacing-md);
+        padding: var(--clx-spacing-lg);
+        margin: var(--clx-spacing-lg) 0;
+        background-color: var(--clx-info-light);
+        border: 1px solid var(--clx-info);
+        border-radius: var(--clx-radius-lg);
+    }
+
+    .info-prompt svg {
+        flex-shrink: 0;
+        color: var(--clx-info);
+    }
+
+    /* ============================================
+       FORM ACTIONS
+       ============================================ */
+    .form-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: var(--clx-spacing-md);
+        margin-top: var(--clx-spacing-xl);
+        padding-top: var(--clx-spacing-lg);
+        border-top: 2px solid var(--clx-gray-200);
+    }
+
+    .form-actions .btn {
+        min-width: 150px;
+    }
+
+    /* ============================================
+       BUTTON HOVER FIXES
+       ============================================ */
+    .btn:hover svg {
+        color: currentColor;
+    }
+
+    /* ============================================
+       RESPONSIVE DESIGN
+       ============================================ */
+    @@media (max-width: 768px) {
+        .create-staff-page {
+            padding: var(--clx-spacing-md);
+        }
+
+        .page-header {
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .page-header .btn {
+            width: 100%;
+        }
+
+        .form-grid-2col {
+            grid-template-columns: 1fr;
+        }
+
+        .form-actions {
+            flex-direction: column-reverse;
+        }
+
+        .form-actions .btn {
+            width: 100%;
+        }
+
+        .schedule-table {
+            font-size: 0.75rem;
+        }
+
+        .schedule-table th,
+        .schedule-table td {
+            padding: var(--clx-spacing-xs);
+        }
+
+        .time-input {
+            max-width: 100%;
+        }
+    }
+</style>
 
 @code {
     private CreateStaffUiModel _model = new();
     private bool _isSubmitting;
     private bool _showPassword;
 
-    // Helper to get the form's name for Toast messages
-    private string GetPositionDisplayName() => string.IsNullOrWhiteSpace(_model.Position) ? "Staff Member" : _model.Position;
-
     private void TogglePassword() => _showPassword = !_showPassword;
 
     private void OnPositionChanged(ChangeEventArgs _) => StateHasChanged();
 
- private async Task OnValidSubmit()
-{
-    if (string.IsNullOrWhiteSpace(_model.Position))
+    private async Task OnValidSubmit()
     {
-        ToastService.ShowError("Please select a role/position before submitting.");
-        return;
-    }
-
-    _isSubmitting = true;
-    try
-    {
-        if (_model.Position == "Doctor")
+        if (string.IsNullOrWhiteSpace(_model.Position))
         {
-            var schedules = _model.Schedules.Select(s => s.ToDto()).ToList();
-            
-            var dto = new CreateDoctorRequest(
-                _model.FullName, _model.Email, _model.Phone, _model.Password,
-                _model.Degree, _model.Specialty, _model.LicenseNumber,
-                _model.ExperienceYears ?? 0, _model.RoomNumber,
-                _model.ExtensionNumber, _model.ConsultationFee, _model.Notes,
-                schedules // NEW: Pass schedules
-            );
-
-            var result = await RegistrationUiService.CreateDoctorAsync(dto, createdBy: "admin");
-            if (result.IsSuccess)
-            {
-                ToastService.ShowSuccess("Doctor created successfully! Provider auto-created for appointments.");
-                await Task.Delay(500);
-                ClearFormAndNavigate();
-            }
-            else ToastService.ShowError($"Error creating Doctor: {result.Error}");
+            ToastService.ShowError("Please select a role/position before submitting.");
             return;
         }
 
-        // Staff creation remains unchanged
-        // ...
-    }
-    catch (Exception ex)
-    {
-        ToastService.ShowError($"An unexpected error occurred: {ex.Message}");
-    }
-    finally { _isSubmitting = false; }
-}
+        _isSubmitting = true;
+        try
+        {
+            if (_model.Position == "Doctor")
+            {
+                var schedules = _model.Schedules
+                    .Where(s => s.IsAvailable)
+                    .Select(s => s.ToDto())
+                    .ToList();
+                
+                var dto = new CreateDoctorRequest(
+                    _model.FullName, 
+                    _model.Email, 
+                    _model.Phone, 
+                    _model.Password,
+                    _model.Degree ?? "", 
+                    _model.Specialty ?? "", 
+                    _model.LicenseNumber ?? "",
+                    _model.ExperienceYears ?? 0, 
+                    _model.RoomNumber ?? "",
+                    _model.ExtensionNumber ?? "", 
+                    _model.ConsultationFee, 
+                    _model.Notes,
+                    schedules
+                );
 
+                var result = await RegistrationUiService.CreateDoctorAsync(dto, createdBy: "admin");
+                if (result.IsSuccess)
+                {
+                    ToastService.ShowSuccess("Doctor created successfully! Provider auto-created for appointments.");
+                    await Task.Delay(500);
+                    ClearFormAndNavigate();
+                }
+                else 
+                {
+                    ToastService.ShowError($"Error creating Doctor: {result.Error}");
+                }
+                return;
+            }
+
+            // ===== STAFF CREATION (Receptionist/Chemist) =====
+            if (_model.Position == "Receptionist" || _model.Position == "Chemist")
+            {
+                var staffDto = new CreateStaffRequest(
+                    FullName: _model.FullName,
+                    Email: _model.Email,
+                    Phone: _model.Phone,
+                    Password: _model.Password,
+                    Position: _model.Position,
+                    Department: _model.Department ?? "",
+                    ShiftJson: _model.ShiftJson ?? "{}",
+                    AssignedLocation: _model.AssignedLocation ?? "",
+                    SupervisorName: _model.SupervisorName ?? "",
+                    Notes: _model.Notes
+                );
+
+                var result = await RegistrationUiService.CreateStaffAsync(staffDto, createdBy: "admin");
+                
+                if (result.IsSuccess)
+                {
+                    ToastService.ShowSuccess($"{_model.Position} created successfully!");
+                    await Task.Delay(500);
+                    ClearFormAndNavigate();
+                }
+                else 
+                {
+                    ToastService.ShowError($"Error creating {_model.Position}: {result.Error}");
+                }
+                return;
+            }
+
+            // Fallback for unknown position
+            ToastService.ShowError($"Unknown position: {_model.Position}");
+        }
+        catch (Exception ex)
+        {
+            ToastService.ShowError($"An unexpected error occurred: {ex.Message}");
+        }
+        finally 
+        { 
+            _isSubmitting = false; 
+        }
+    }
 
     private void ClearFormAndNavigate()
     {
         _model = new CreateStaffUiModel();
-        // Use `forceLoad: true` if you want to completely re-render the target page and clear its state.
         Navigation.NavigateTo("/admin/dashboard", forceLoad: true);
     }
 
     private void NavigateBack() => Navigation.NavigateTo("/admin/dashboard", forceLoad: true);
 
-    // Simplified and focused model definition
-   @code {
     private class CreateStaffUiModel
     {
-        [Required(ErrorMessage = "Full Name is required.")] public string FullName { get; set; } = "";
-        [Required(ErrorMessage = "Email is required."), EmailAddress(ErrorMessage = "Invalid email format.")] public string Email { get; set; } = "";
-        [Required(ErrorMessage = "Phone Number is required.")] public string Phone { get; set; } = "";
-        [Required(ErrorMessage = "Password is required.")] public string Password { get; set; } = "";
-        [Required(ErrorMessage = "A Role/Position must be selected.")] public string Position { get; set; } = "";
+        [Required(ErrorMessage = "Full Name is required.")] 
+        public string FullName { get; set; } = "";
+        
+        [Required(ErrorMessage = "Email is required."), EmailAddress(ErrorMessage = "Invalid email format.")] 
+        public string Email { get; set; } = "";
+        
+        [Required(ErrorMessage = "Phone Number is required.")] 
+        public string Phone { get; set; } = "";
+        
+        [Required(ErrorMessage = "Password is required.")] 
+        public string Password { get; set; } = "";
+        
+        [Required(ErrorMessage = "A Role/Position must be selected.")] 
+        public string Position { get; set; } = "";
 
         // Doctor fields
         public string? Degree { get; set; }
@@ -302,12 +835,11 @@
         public string? ExtensionNumber { get; set; }
         public decimal ConsultationFee { get; set; }
         
-        // NEW: Weekly schedules
         public List<ScheduleEntry> Schedules { get; set; } = Enum.GetValues<DayOfWeek>()
             .Select(day => new ScheduleEntry
             {
                 DayOfWeek = day,
-                IsAvailable = day != DayOfWeek.Sunday, // Default: all except Sunday
+                IsAvailable = day != DayOfWeek.Sunday,
                 StartTimeStr = "09:00",
                 EndTimeStr = "17:00"
             }).ToList();
@@ -320,7 +852,6 @@
         public string? Notes { get; set; }
     }
     
-    // NEW: Helper class for schedule entries
     private class ScheduleEntry
     {
         public DayOfWeek DayOfWeek { get; set; }
@@ -337,4 +868,3 @@
     }
 }
 
-}
