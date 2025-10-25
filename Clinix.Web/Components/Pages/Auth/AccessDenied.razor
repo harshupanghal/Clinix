@@ -1,38 +1,87 @@
 ﻿@page "/access-denied"
 @using System.Security.Claims
 @inject AuthenticationStateProvider AuthStateProvider
+@inject NavigationManager Navigation
 
-<h3 class="text-danger mb-3">Access Denied</h3>
-<p>You do not have permission to view this page.</p>
-
-<hr />
-
-@if (_user == null)
-{
-    <p class="text-warning">No user information found. You might not be logged in.</p>
+@{
+    // In a real app, this should be driven by app configuration or an environment variable.
+    // For this example, we check if the user is an Admin (assuming "Admin" role exists)
+    // or set a hardcoded flag for dev environments.
+    bool isDebugModeEnabled = _user?.IsInRole("Admin") ?? false;
 }
-else
-{
-    <div class="debug-info mt-3 border rounded p-3 bg-light text-dark shadow-sm">
-        <h5>🔍 Debug Info</h5>
-        <ul class="list-unstyled">
-            <li><strong>Is Authenticated:</strong> @_user.Identity?.IsAuthenticated</li>
-            <li><strong>User Name:</strong> @_user.Identity?.Name</li>
-            <li><strong>Role Claim (ClaimTypes.Role):</strong> @_roleClaim</li>
-            <li><strong>All Claims:</strong></li>
-            <ul>
-                @foreach (var claim in _user.Claims)
+
+<div class="d-flex align-items-center justify-content-center vh-100 bg-light">
+    <div class="text-center p-5 bg-white shadow-lg rounded-4" style="max-width: 500px;">
+        
+        <i class="bi bi-x-octagon-fill text-danger display-1 mb-3"></i>
+        
+        <h1 class="fw-bold text-danger mb-3">Access Denied</h1>
+        <p class="lead text-secondary mb-4">
+            You do not have the required permissions to view this page.
+        </p>
+
+        @if (_user?.Identity?.IsAuthenticated ?? false)
+        {
+            <p class="mb-4">
+                You are logged in as **@(_user.Identity.Name)**. Please check with your system administrator if you believe this is an error.
+            </p>
+        }
+        else
+        {
+            <p class="mb-4 text-warning">
+                You might not be logged in or your session has expired.
+            </p>
+        }
+        
+        <div class="d-grid gap-2 col-8 mx-auto">
+            <button class="btn btn-primary btn-lg" @onclick="NavigateToHome">
+                <i class="bi bi-house-fill me-2"></i> Go to Home
+            </button>
+        </div>
+
+        @* ------------------------------------------------------------------ *@
+        @* 🔍 Debug/Admin Info (Hidden for standard users) *@
+        @if (isDebugModeEnabled)
+        {
+            <hr class="my-4"/>
+            <div class="debug-info mt-3 border border-warning rounded p-3 bg-warning-subtle text-dark text-start">
+                <h5 class="fw-bold text-warning-dark mb-3"><i class="bi bi-bug-fill me-2"></i> Role/Claim Debug Information</h5>
+                
+                @if (_user == null || _user.Identity == null || !_user.Identity.IsAuthenticated)
                 {
-                    <li>@claim.Type → @claim.Value</li>
+                    <p class="text-danger">**Error:** Authentication state is missing or user is not authenticated.</p>
                 }
-            </ul>
-        </ul>
+                else
+                {
+                    <ul class="list-unstyled small mb-0">
+                        <li><strong>Authenticated:</strong> <span class="badge bg-success">@(_user.Identity.IsAuthenticated)</span></li>
+                        <li><strong>User Name:</strong> `@_user.Identity.Name`</li>
+                        <li><strong>Required Role for Page:</strong> `Admin` (from attribute)</li>
+                        <li>
+                            <strong>Detected Role:</strong> 
+                            <span class="text-info">@_roleClaim</span>
+                        </li>
+                    </ul>
+                    
+                    <h6 class="mt-3 mb-2 small fw-bold">All User Claims:</h6>
+                    <div class="overflow-auto border rounded bg-white p-2" style="max-height: 150px;">
+                        <ul class="list-unstyled small mb-0 ps-3">
+                            @foreach (var claim in _user.Claims)
+                            {
+                                <li><code>@claim.Type</code> → `@claim.Value`</li>
+                            }
+                        </ul>
+                    </div>
+                }
+            </div>
+        }
+        @* ------------------------------------------------------------------ *@
     </div>
-}
+</div>
 
 @code {
     private ClaimsPrincipal? _user;
-    private string? _roleClaim;
+    private string _roleClaim = "(fetching...)";
 
     protected override async Task OnInitializedAsync()
     {
@@ -41,9 +90,22 @@ else
 
         if (_user.Identity?.IsAuthenticated == true)
         {
+            // Aggressively search for a role claim
             _roleClaim = _user.FindFirst(ClaimTypes.Role)?.Value ?? 
+                         _user.FindFirst("role")?.Value ?? 
                          _user.FindFirst("Role")?.Value ?? 
-                         "(no role claim found)";
+                         _user.FindFirst("http://schemas.microsoft.com/ws/2008/06/identity/claims/role")?.Value ?? 
+                         "(No role claim found)";
         }
+        else
+        {
+            _roleClaim = "(Not authenticated)";
+        }
+    }
+
+    private void NavigateToHome()
+    {
+        // Navigate to the root, or a safe default page for the user
+        Navigation.NavigateTo("/", true);
     }
 }

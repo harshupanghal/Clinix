@@ -1,0 +1,202 @@
+﻿@* Pages/Appointments/Schedule.razor *@
+@page "/appointments/schedule"
+@using Clinix.Application.DTOs
+@using Clinix.Application.Interfaces
+@using Clinix.Domain.Enums
+@using Microsoft.AspNetCore.Components.Forms
+@inject IAppointmentAppService AppointmentService
+@inject IProviderAppService ProviderService
+@inject NavigationManager Nav
+
+<h3>Book an appointment</h3>
+
+<div class="mb-3">
+    <label class="form-label">Describe symptoms or disease</label>
+    <div class="position-relative">
+        <input type="text" class="form-control" @bind="SearchText" @bind:event="oninput" 
+               placeholder="e.g., chest pain, skin rash" />
+        @if (ShowSuggestions && Suggestions?.Any() == true)
+        {
+            <ul class="list-group position-absolute shadow" style="z-index: 1000; width: 100%; max-height: 240px; overflow: auto;">
+                @foreach (var suggestion in Suggestions)
+                {
+                    <li class="list-group-item list-group-item-action" 
+                        @onclick="@(() => SelectProvider(suggestion))">
+                        <div><strong>@suggestion.Name</strong> — @suggestion.Specialty</div>
+                        <small class="text-muted">@suggestion.Tags</small>
+                    </li>
+                }
+            </ul>
+        }
+    </div>
+</div>
+
+<div class="mb-3">
+    <label class="form-label">Chosen doctor</label>
+    <div class="input-group">
+        <input class="form-control" value="@ChosenProviderText" readonly />
+        <button type="button" class="btn btn-outline-secondary" @onclick="ClearProvider" disabled="@(!HasChosen)">Change</button>
+    </div>
+</div>
+
+<div class="row g-3 mb-2">
+    <div class="col-md-6">
+        <label class="form-label">Day</label>
+        <InputDate @bind-Value="SelectedDay" class="form-control" />
+    </div>
+    <div class="col-md-6 d-flex align-items-end">
+        <button type="button" class="btn btn-outline-primary" @onclick="LoadSlotsAsync" disabled="@(!CanLoadSlots)">Show Available Slots</button>
+    </div>
+</div>
+
+@if (LoadingSlots)
+{
+    <div class="text-muted mb-2">Loading slots...</div>
+}
+
+@if (Slots?.Count > 0)
+{
+    <div class="mb-3">
+        <label class="form-label">Available slots</label>
+        <div class="d-flex flex-wrap gap-2">
+            @foreach (var s in Slots)
+            {
+                var sel = SelectedSlot.HasValue && SelectedSlot.Value.Start == s.Start ? "btn-primary" : "btn-outline-primary";
+                <button type="button" class="btn btn-sm @sel" @onclick="@(() => PickSlot(s))">
+                    @s.Start.LocalDateTime.ToString("HH:mm") - @s.End.LocalDateTime.ToString("HH:mm")
+                </button>
+            }
+        </div>
+    </div>
+}
+else if (Slots is not null)
+{
+    <div class="alert alert-warning">No free slots for the selected day. Try another day or provider.</div>
+}
+
+<EditForm Model="@Form" OnValidSubmit="SubmitAsync">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <div class="mb-3">
+        <label class="form-label">Appointment type</label>
+        <InputSelect @bind-Value="Form.Type" class="form-select">
+            @foreach (var t in Enum.GetValues<AppointmentType>())
+            {
+                <option value="@t">@t</option>
+            }
+        </InputSelect>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Notes (optional)</label>
+        <InputTextArea @bind-Value="Form.Notes" class="form-control" rows="3" />
+    </div>
+
+    <button class="btn btn-primary" type="submit" disabled="@(!CanSubmit)">Book appointment</button>
+</EditForm>
+
+@if (!string.IsNullOrWhiteSpace(Error))
+{
+    <div class="alert alert-danger mt-3">@Error</div>
+}
+
+@code {
+    private class FormModel
+    {
+        public AppointmentType Type { get; set; } = AppointmentType.Consultation;
+        public string? Notes { get; set; }
+    }
+
+    private FormModel Form = new();
+    private ProviderDto? chosen;
+    private string ChosenProviderText => chosen is null ? "" : $"{chosen.Name} — {chosen.Specialty}";
+    private bool HasChosen => chosen is not null;
+
+    private string _searchText = "";
+    private string SearchText
+    {
+        get => _searchText;
+        set { _searchText = value; _ = OnSearchChangedAsync(value); }
+    }
+    
+    private List<ProviderDto>? Suggestions;
+    private bool ShowSuggestions;
+
+    private DateTime SelectedDay = DateTime.Today;
+    private List<(DateTimeOffset Start, DateTimeOffset End)>? Slots;
+    private (DateTimeOffset Start, DateTimeOffset End)? SelectedSlot;
+    private bool LoadingSlots;
+    private string? Error;
+
+    private bool CanLoadSlots => HasChosen;
+    private bool CanSubmit => HasChosen && SelectedSlot.HasValue;
+
+    private async Task OnSearchChangedAsync(string text)
+    {
+        if (string.IsNullOrWhiteSpace(text) || text.Length < 2)
+        { ShowSuggestions = false; Suggestions = null; return; }
+        
+        Suggestions = await ProviderService.RecommendAsync(new ProviderRecommendationRequest(text, Form.Type, null));
+        ShowSuggestions = Suggestions?.Any() == true;
+        StateHasChanged();
+    }
+
+    private void SelectProvider(ProviderDto provider)
+    {
+        chosen = provider;
+        ShowSuggestions = false;
+        SearchText = "";
+        Suggestions = null;
+        Slots = null;
+        SelectedSlot = null;
+    }
+
+    private void ClearProvider()
+    {
+        chosen = null; Slots = null; SelectedSlot = null;
+    }
+
+    private async Task LoadSlotsAsync()
+    {
+        if (!CanLoadSlots || chosen is null) return;
+        LoadingSlots = true;
+        var req = new AvailableSlotsRequest(chosen.Id, DateOnly.FromDateTime(SelectedDay));
+        Slots = await ProviderService.GetAvailableSlotsAsync(req);
+        SelectedSlot = null;
+        LoadingSlots = false;
+    }
+
+    private void PickSlot((DateTimeOffset Start, DateTimeOffset End) s)
+    {
+        SelectedSlot = s;
+    }
+
+    private async Task SubmitAsync()
+    {
+        Error = null;
+        if (!CanSubmit || chosen is null || SelectedSlot is null)
+        {
+            Error = "Choose a doctor and an available slot.";
+            return;
+        }
+
+        var patientId = 12; // replace with actual from auth
+
+        var request = new ScheduleAppointmentRequest(
+            patientId,
+            chosen.Id,
+            Form.Type,
+            SelectedSlot.Value.Start,
+            SelectedSlot.Value.End,
+            Form.Notes
+        );
+
+        try
+        {
+            var created = await AppointmentService.ScheduleAsync(request);
+            Nav.NavigateTo($"/appointments/{created.Id}");
+        }
+        catch (Exception ex) { Error = ex.Message; }
+    }
+}

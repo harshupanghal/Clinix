@@ -1,0 +1,54 @@
+﻿@* Pages/Appointments/PatientAppointments.razor *@
+@page "/appointments/patient/{PatientId:guid}"
+@using Clinix.Application.DTOs
+@using Clinix.Application.Interfaces
+@inject IAppointmentAppService AppointmentService
+
+<h3>Your appointments</h3>
+
+@if (Items is null)
+{
+    <div class="text-muted">Loading…</div>
+}
+else if (Items.Count == 0)
+{
+    <div class="alert alert-info">No appointments found.</div>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th>Start</th>
+                    <th>End</th>
+                    <th>Type</th>
+                    <th>Status</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+            @foreach (var a in Items)
+            {
+                <tr>
+                    <td>@a.Start.LocalDateTime</td>
+                    <td>@a.End.LocalDateTime</td>
+                    <td>@a.Type</td>
+                    <td>@a.Status</td>
+                    <td class="text-end"><a class="btn btn-link btn-sm" href="/appointments/@a.Id">Open</a></td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+}
+
+@code {
+    [Parameter] public long PatientId { get; set; }
+    private List<AppointmentSummaryDto>? Items;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        Items = await AppointmentService.GetByPatientAsync(PatientId);
+    }
+}

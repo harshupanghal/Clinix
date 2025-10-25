@@ -1,11 +1,11 @@
-﻿namespace Clinix.Domain.Enums;
+﻿// Domain/Enums/AppointmentStatus.cs
+namespace Clinix.Domain.Enums;
 
 public enum AppointmentStatus
     {
-    Pending,
-    Approved,
-    Rejected,
-    Cancelled,
-    Completed,
-    Rescheduled
+    Scheduled = 0,
+    Completed = 1,
+    Cancelled = 2,
+    NoShow = 3,
+    Rejected = 4
     }

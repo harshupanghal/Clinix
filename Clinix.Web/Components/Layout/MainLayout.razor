@@ -1,31 +1,26 @@
-﻿@inherits LayoutComponentBase
+﻿@using MudBlazor
+@inherits LayoutComponentBase
 
-<div class="page">
-    <div class="sidebar">
-        <NavMenu />
-    </div>
 
-        @* <div class="top-row px-4">
-            <nav class="flex-column nav-pills p-3 bg-light" style="width:220px;min-height:100vh;">
-                <a class="nav-link" href="/">Home</a>
-                <a class="nav-link" href="/book-appointment">Book Appointment</a>
-                <a class="nav-link" href="/appointments">My Appointments</a>
-                <a class="nav-link" href="/doctor-calendar">Doctor Calendar</a>
-                <a class="nav-link" href="/doctor-delay">Delay Appointments</a>
-                <a class="nav-link" href="/admin/symptom-mapping">Admin: Symptom Mapping</a>
-                <a class="nav-link mt-3 text-danger" href="/logout">Logout</a>
-            </nav>
-        </div> *@
-    <main>
+        <div class="page-wrapper">
 
-        <article class="content px-4">
-            @Body
-        </article>
-    </main>
-</div>
+            <!-- NavMenu includes Topbar + Sidebar -->
+            <NavMenu />
 
-<div id="blazor-error-ui" data-nosnippet>
-    An unhandled error has occurred.
-    <a href="." class="reload">Reload</a>
-    <span class="dismiss">🗙</span>
-</div>
+            <!-- Main Content Area -->
+            <main class="main-content-area">
+                <article class="content">
+                    @Body
+                </article>
+            </main>
+
+        </div>
+
+        <!-- Blazor Error UI -->
+        <div id="blazor-error-ui" data-nosnippet>
+            An unhandled error has occurred.
+            <a href="." class="reload">Reload</a>
+            <span class="dismiss">🗙</span>
+        </div>
+
+    

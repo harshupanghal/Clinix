@@ -1,8 +1,7 @@
-﻿
-namespace Clinix.Application.DTOs;
+﻿// Application/Dtos/CreateDoctorRequest.cs
+namespace Clinix.Application.Dtos;
 
-// for creating doctor
-public record CreateDoctorRequest(
+public sealed record CreateDoctorRequest(
     string FullName,
     string Email,
     string Phone,
@@ -12,11 +11,16 @@ public record CreateDoctorRequest(
     string? LicenseNumber,
     int? ExperienceYears,
     string? RoomNumber,
-    string? WorkHoursJson,
-    string? ExtensionNumber, 
+    string? ExtensionNumber,
     decimal ConsultationFee,
-    string? Notes
+    string? Notes,
+    List<DoctorScheduleDto>? Schedules // NEW: List of weekly schedules
 );
 
-
-       
+// NEW: DTO for individual schedule entries
+public sealed record DoctorScheduleDto(
+    DayOfWeek DayOfWeek,
+    TimeSpan StartTime,
+    TimeSpan EndTime,
+    bool IsAvailable
+);

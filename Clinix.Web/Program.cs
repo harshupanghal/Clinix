@@ -1,13 +1,15 @@
 using Blazored.Toast;
+using Clinix.Application.Interfaces;
 using Clinix.Application.Interfaces.Functionalities;
-using Clinix.Application.Interfaces.Services;
 using Clinix.Application.Interfaces.UserRepo;
+using Clinix.Application.Options;
 using Clinix.Application.Services;
-using Clinix.Application.UseCases;
 using Clinix.Application.Validators;
-using Clinix.Domain.Entities.ApplicationUsers;
-using Clinix.Domain.Entities.Appointments;
+using Clinix.Domain.Interfaces;
+using Clinix.Infrastructure.Background;
+using Clinix.Infrastructure.Contacts;
 using Clinix.Infrastructure.Data;
+using Clinix.Infrastructure.Messaging;
 using Clinix.Infrastructure.Persistence;
 using Clinix.Infrastructure.Repositories;
 using Clinix.Infrastructure.Services;
@@ -18,78 +20,77 @@ using FluentValidation;
 using FluentValidation.AspNetCore;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Components.Server;
-using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using MudBlazor.Services;
 
 var builder = WebApplication.CreateBuilder(args);
-//builder.Services.AddCascadingAuthenticationState();
+
+// Core services
 builder.Services.AddHttpContextAccessor();
+builder.Services.AddRazorComponents()
+    .AddInteractiveServerComponents()
+    .AddCircuitOptions(options =>
+    {
+        options.DetailedErrors = true;
+    });
 
 builder.Services.AddSignalR();
 
+// Database
 var connectionString = builder.Configuration.GetConnectionString("ClinixConnection")
                        ?? "Server=(localdb)\\mssqllocaldb;Database=ClxDb;Trusted_Connection=True;";
 
 builder.Services.AddDbContext<ClinixDbContext>(options =>
     options.UseSqlServer(connectionString));
 
+// Options configuration for appointments/follow-ups
+builder.Services.Configure<NotificationsOptions>(builder.Configuration.GetSection("Notifications"));
+builder.Services.Configure<ReminderOptions>(builder.Configuration.GetSection("Reminders"));
+
+// Domain repositories (existing)
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IPatientRepository, PatientRepository>();
 builder.Services.AddScoped<IDoctorRepository, DoctorRepository>();
 builder.Services.AddScoped<IStaffRepository, StaffRepository>();
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+
+// NEW: Appointment/Follow-up repositories
+builder.Services.AddScoped<IAppointmentRepository, AppointmentRepository>();
+builder.Services.AddScoped<IFollowUpRepository, FollowUpRepository>();
+builder.Services.AddScoped<IProviderRepository, ProviderRepository>();
+
+// Application services (existing)
 builder.Services.AddScoped<IInventoryService, InventoryService>();
 builder.Services.AddScoped<IPatientDashboardService, PatientDashboardService>();
-
 builder.Services.AddScoped<IRegistrationService, RegistrationService>();
-
-
 builder.Services.AddScoped<IAuthenticationService, Clinix.Infrastructure.Services.AuthenticationService>();
 
+// NEW: Appointment/Follow-up application services
+builder.Services.AddScoped<IAppointmentAppService, AppointmentAppService>();
+builder.Services.AddScoped<IFollowUpAppService, FollowUpAppService>();
+builder.Services.AddScoped<IProviderAppService, ProviderAppService>();
+builder.Services.AddScoped<IDoctorActionsAppService, DoctorActionsAppService>();
+
+// UI services (existing)
 builder.Services.AddScoped<IRegistrationUiService, RegistrationUiService>();
 builder.Services.AddScoped<ISafeNavigationService, SafeNavigationService>();
 builder.Services.AddScoped<IPatientDashboardUiService, PatientDashboardUiService>();
 
-// Repositories
-builder.Services.AddScoped<IDoctorRepository, DoctorRepository>();
+// NEW: Notification and background services
+builder.Services.AddSingleton<INotificationSender, RealNotificationSender>();
+builder.Services.AddSingleton<IContactProvider, FakeContactProvider>();
+builder.Services.AddHostedService<FollowUpReminderWorker>();
 
-builder.Services.AddScoped<IAppointmentRepository, EfAppointmentRepository>();
-builder.Services.AddScoped<IDoctorScheduleRepository, EfDoctorScheduleRepository>();
-builder.Services.AddScoped<ISymptomMappingRepository, EfSymptomMappingRepository>();
-builder.Services.AddScoped<INotificationService, NotificationService>();
-builder.Services.AddScoped<BookAppointmentUseCase>();
-builder.Services.AddScoped<ApproveRejectAppointmentUseCase>();
-builder.Services.AddScoped<DelayCascadeUseCase>();
-builder.Services.AddScoped<NotifyAppointmentChangeUseCase>();
-// Infrastructure services
-builder.Services.AddScoped<INotificationDispatcher, InMemoryDispatcher>();
-builder.Services.AddHostedService<FollowUpTaskScheduler>();
-
-// Repositories (already above)
-builder.Services.AddScoped<IFollowUpTaskRepository, FollowUpTaskRepository>();
-builder.Services.AddScoped<IFollowUpService, FollowUpService>();
-
-
+// Toast notifications
 builder.Services.AddBlazoredToast();
-// AutoMapper
-builder.Services.AddAutoMapper(typeof(Clinix.Application.Mappings.FollowUpMappingProfile).Assembly);
 
-// FluentValidation - if using
-builder.Services.AddValidatorsFromAssembly(typeof(CreateFollowUpFromAppointmentRequestValidator).Assembly);
-
-// Application services
-builder.Services.AddScoped<CreateFollowUpFromAppointmentHandler>();
-
-builder.Services.AddScoped<IAppointmentClinicalInfoRepository, AppointmentClinicalInfoRepository>();
-builder.Services.AddScoped<IFollowUpRepository, FollowUpRepository>();
-builder.Services.AddScoped<IFollowUpTaskRepository, FollowUpTaskRepository>();
-
-builder.Services.AddFluentValidationAutoValidation();   
-builder.Services.AddFluentValidationClientsideAdapters(); 
-
+// Validation
+builder.Services.AddValidatorsFromAssemblyContaining<LoginModelValidator>();
+builder.Services.AddFluentValidationAutoValidation();
+builder.Services.AddFluentValidationClientsideAdapters();
 builder.Services.AddValidatorsFromAssemblyContaining<RegisterPatientRequestValidator>();
 
+// Antiforgery
 builder.Services.AddAntiforgery(options =>
 {
     options.HeaderName = "X-CSRF-TOKEN";
@@ -98,10 +99,10 @@ builder.Services.AddAntiforgery(options =>
     options.Cookie.IsEssential = true;
 });
 
+// HTTP client
 builder.Services.AddScoped(sp => new HttpClient
     {
-    BaseAddress = new Uri(builder.Configuration["AppBaseAddress"]
-        ?? "https://localhost:5001/") 
+    BaseAddress = new Uri(builder.Configuration["AppBaseAddress"] ?? "https://localhost:5001/")
     });
 
 // Authentication
@@ -126,17 +127,14 @@ builder.Services.AddAuthentication(AuthScheme)
 builder.Services.AddAuthorization();
 builder.Services.AddScoped<AuthenticationStateProvider, ServerAuthenticationStateProvider>();
 
-builder.Services.AddRazorComponents()
-    .AddInteractiveServerComponents();
-
+// Additional services
 builder.Services.AddRazorPages();
-builder.Services.AddHttpContextAccessor();
 builder.Services.AddMudServices();
-
 builder.Services.AddControllers();
 
 var app = builder.Build();
 
+// Middleware
 if (!app.Environment.IsDevelopment())
     {
     app.UseExceptionHandler("/Error");
@@ -157,19 +155,20 @@ app.MapControllers();
 app.MapRazorComponents<App>()
    .AddInteractiveServerRenderMode();
 
-app.MapHub<NotificationHub>("/notificationhub");
-
-
-// Seed Director
+// Database migration and seeding
+// Database migration and seeding
 using (var scope = app.Services.CreateScope())
     {
     var db = scope.ServiceProvider.GetRequiredService<ClinixDbContext>();
-    db.Database.Migrate();
+
+    // Apply migrations
+    await db.Database.MigrateAsync();
+
+    // Seed core data (Users, Doctors, Patients, Staff, Inventory, Providers)
     await DataSeeder.SeedAsync(scope.ServiceProvider);
     }
 
 app.Run();
-
 
 
 

@@ -1,0 +1,147 @@
+﻿@page "/appointments/provider/{ProviderId:long}"
+@using Clinix.Application.DTOs
+@using Clinix.Application.Interfaces
+@using Microsoft.AspNetCore.Components.Forms
+@inject IAppointmentAppService AppointmentService
+@inject IDoctorActionsAppService DoctorActions
+
+<h3>Doctor schedule</h3>
+
+<EditForm Model="@this" OnValidSubmit="@LoadAsync">
+    <div class="row g-3 mb-3">
+        <div class="col-md-3">
+            <label class="form-label">From</label>
+            <InputDate @bind-Value="From" class="form-control" />
+        </div>
+        <div class="col-md-3">
+            <label class="form-label">To</label>
+            <InputDate @bind-Value="To" class="form-control" />
+        </div>
+        <div class="col-md-6 d-flex align-items-end gap-2">
+            <button class="btn btn-primary" type="submit">Load</button>
+            <button class="btn btn-outline-secondary" type="button" @onclick="Today">Today</button>
+            <button class="btn btn-outline-secondary" type="button" @onclick="Tomorrow">Tomorrow</button>
+            <button class="btn btn-outline-secondary" type="button" @onclick="Next7">Next 7 Days</button>
+        </div>
+    </div>
+</EditForm>
+
+@if (Items is null)
+{
+    <div class="text-muted">Loading...</div>
+}
+else if (Items.Count == 0)
+{
+    <div class="alert alert-info">No appointments in this range.</div>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th>Start</th>
+                    <th>End</th>
+                    <th>Type</th>
+                    <th>Status</th>
+                    <th style="width: 360px;">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+            @foreach (var a in Items)
+            {
+                <tr>
+                    <td>@a.Start.LocalDateTime</td>
+                    <td>@a.End.LocalDateTime</td>
+                    <td>@a.Type</td>
+                    <td>@a.Status</td>
+                    <td>
+                        <div class="d-flex flex-wrap gap-2">
+                            <button class="btn btn-success btn-sm" @onclick="() => ApproveAsync(a.Id)">Approve</button>
+                            <button class="btn btn-danger btn-sm" @onclick="() => RejectAsync(a.Id)">Reject</button>
+                            <button class="btn btn-outline-primary btn-sm" @onclick="() => OpenDelay(a.Id)">Delay…</button>
+                            <a class="btn btn-link btn-sm" href="/appointments/@a.Id">Details</a>
+                        </div>
+                    </td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+}
+
+@if (DelayOpen)
+{
+    <div class="modal fade show d-block" tabindex="-1" style="background: rgba(0,0,0,.5);">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Delay appointment</h5>
+                    <button type="button" class="btn-close" @onclick="CloseDelay"></button>
+                </div>
+                <div class="modal-body">
+                    <label class="form-label">Delay duration</label>
+                    <select class="form-select" @bind="DelayMinutes">
+                        <option value="15">15 minutes</option>
+                        <option value="30">30 minutes</option>
+                        <option value="60">60 minutes</option>
+                    </select>
+                    <div class="form-text">Subsequent appointments will shift forward; overflow moves to the next working day.</div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" @onclick="CloseDelay">Cancel</button>
+                    <button class="btn btn-primary" @onclick="ApplyDelayAsync">Apply</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@if (!string.IsNullOrWhiteSpace(Error))
+{
+    <div class="alert alert-danger mt-3">@Error</div>
+}
+
+@code {
+    [Parameter] public long ProviderId { get; set; }
+    public DateTimeOffset From { get; set; } = DateTimeOffset.Now.Date;
+    public DateTimeOffset To { get; set; } = DateTimeOffset.Now.Date.AddDays(1);
+
+    private List<AppointmentSummaryDto>? Items;
+    private string? Error;
+
+    private bool DelayOpen;
+    private long DelayFor;
+    private int DelayMinutes = 30;
+
+    protected override async Task OnParametersSetAsync() => await LoadAsync();
+
+    private async Task LoadAsync() => Items = await AppointmentService.GetByProviderAsync(ProviderId, From, To);
+
+    private void Today() { From = DateTimeOffset.Now.Date; To = From.AddDays(1); }
+    private void Tomorrow() { From = DateTimeOffset.Now.Date.AddDays(1); To = From.AddDays(1); }
+    private void Next7() { From = DateTimeOffset.Now.Date; To = From.AddDays(7); }
+
+    private async Task ApproveAsync(long id)
+    {
+        try { await DoctorActions.ApproveAsync(id); await LoadAsync(); } catch (Exception ex) { Error = ex.Message; }
+    }
+    private async Task RejectAsync(long id)
+    {
+        try { await DoctorActions.RejectAsync(id, "Rejected by doctor"); await LoadAsync(); } catch (Exception ex) { Error = ex.Message; }
+    }
+
+    private void OpenDelay(long id) { DelayFor = id; DelayOpen = true; }
+    private void CloseDelay() { DelayOpen = false; }
+
+    private async Task ApplyDelayAsync()
+    {
+        try
+        {
+            await DoctorActions.DelayCascadeAsync(DelayFor, TimeSpan.FromMinutes(DelayMinutes));
+            DelayOpen = false;
+            await LoadAsync();
+        }
+        catch (Exception ex) { Error = ex.Message; }
+    }
+}

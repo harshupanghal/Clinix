@@ -1,0 +1,63 @@
+﻿@using Microsoft.AspNetCore.Components.Web
+@* Components/Shared/AutoComplete.razor *@
+@typeparam TItem
+
+<div class="position-relative">
+    <input type="text" class="form-control" @bind="SearchText" @bind:event="oninput" 
+           @onkeydown="OnKeyDown" placeholder="@Placeholder" />
+    @if (Open && Items?.Any() == true)
+    {
+        <ul class="list-group position-absolute shadow" style="z-index: 1000; width: 100%; max-height: 240px; overflow: auto;">
+            @foreach (var item in Items)
+            {
+                <li class="list-group-item list-group-item-action @(Items.IndexOf(item) == ActiveIndex ? "active" : "")" 
+                    @onclick="@(async () => await SelectAsync(item))">
+                    @ItemTemplate(item)
+                </li>
+            }
+        </ul>
+    }
+</div>
+
+@code {
+    [Parameter] public string Placeholder { get; set; } = "Type to search...";
+    [Parameter] public Func<string, Task<List<TItem>>>? Provider { get; set; }
+    [Parameter] public RenderFragment<TItem> ItemTemplate { get; set; } = default!;
+    [Parameter] public EventCallback<TItem> OnSelected { get; set; }
+
+    private string _searchText = "";
+    private string SearchText
+    {
+        get => _searchText;
+        set { _searchText = value; _ = OnInputChangedAsync(value); }
+    }
+
+    private List<TItem>? Items;
+    private bool Open;
+    private int ActiveIndex = -1;
+
+    private async Task OnInputChangedAsync(string text)
+    {
+        if (Provider is null || string.IsNullOrWhiteSpace(text) || text.Length < 2)
+        { Open = false; Items = new(); ActiveIndex = -1; return; }
+        Items = await Provider(text);
+        Open = Items.Count > 0;
+        ActiveIndex = Items.Count > 0 ? 0 : -1;
+        StateHasChanged();
+    }
+
+    private async Task OnKeyDown(KeyboardEventArgs e)
+    {
+        if (!Open || Items is null || Items.Count == 0) return;
+        if (e.Key == "ArrowDown") ActiveIndex = Math.Min(ActiveIndex + 1, Items.Count - 1);
+        else if (e.Key == "ArrowUp") ActiveIndex = Math.Max(ActiveIndex - 1, 0);
+        else if (e.Key == "Enter" && ActiveIndex >= 0 && ActiveIndex < Items.Count) await SelectAsync(Items[ActiveIndex]);
+        else if (e.Key == "Escape") Open = false;
+    }
+
+    private async Task SelectAsync(TItem item)
+    {
+        Open = false; ActiveIndex = -1; Items = new();
+        await OnSelected.InvokeAsync(item);
+    }
+}

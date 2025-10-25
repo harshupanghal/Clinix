@@ -1,4 +1,5 @@
-﻿using Clinix.Application.Dtos.Patient;
+﻿using Clinix.Application.Dtos;
+using Clinix.Application.Dtos.Patient;
 using Clinix.Application.DTOs;
 using Clinix.Application.Interfaces.UserRepo;
 using Clinix.Domain.Common;
@@ -50,5 +51,6 @@ public class RegistrationUiService : IRegistrationUiService
 
     public Task<Result> CompletePatientProfileAsync(CompletePatientProfileRequest request)
         => _registrationService.CompletePatientProfileAsync(request, "self");
+
     }
 

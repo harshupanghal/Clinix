@@ -7,44 +7,59 @@
 @inject Application.Interfaces.Functionalities.IAuthenticationService _authService
 @inject Blazored.Toast.Services.IToastService ToastService
 
-<h3 class="mb-4 text-primary">Login</h3>
-
-<EditForm Model="_model" OnValidSubmit="HandleLogin" class="needs-validation" FormName="Login-Form">
-    <DataAnnotationsValidator />
-    <ValidationSummary />
-
-    <!-- Username/Email -->
-    <div class="form-floating mb-3">
-        <InputText id="phone" class="form-control" placeholder="Phone" @bind-Value="_model.Phone"/>
-        <label for="phone">Phone Number</label>
-    </div>
-
-    <!-- Password -->
-    <div class="form-floating mb-3">
-        <div class="input-group">
-            <InputText id="password" type="@(_showPassword ? "text" : "password")" class="form-control" placeholder="Password" @bind-Value="_model.Password"/>
-            <button type="button" class="btn btn-outline-secondary" @onclick="() => _showPassword = !_showPassword">
-                @(_showPassword ? "Hide" : "Show")
-            </button>
-            <label for="password">Password</label>
+<div class="d-flex justify-content-center align-items-center min-vh-100 bg-light">
+    <div class="card shadow-lg p-4 p-md-5" style="max-width: 400px; width: 100%;">
+        <!-- App Logo / Name -->
+        <div class="text-center mb-4">
+            <h2 class="text-primary fw-bold">Clinix</h2>
+            <p class="text-muted mb-0">Welcome back! Please login to continue.</p>
         </div>
-    </div>
 
-    <!-- Remember Me -->
-    <div class="form-check mb-3">
-        <InputCheckbox id="remember" class="form-check-input" @bind-Value="_model.RememberMe"/>
-        <label class="form-check-label" for="remember">Remember Me</label>
-    </div>
+        <EditForm Model="_model" OnValidSubmit="HandleLogin" class="needs-validation" FormName="Login-Form">
+            <DataAnnotationsValidator />
+            <ValidationSummary class="text-danger mb-3" />
 
-    <!-- Submit Button -->
-    <button type="submit" class="btn btn-primary w-100" disabled="@_isLoading">
-        @_isLoading ? "Logging in..." : "Login"
-        @if (_isLoading)
-        {
-            <span class="spinner-border spinner-border-sm ms-2" role="status"></span>
-        }
-    </button>
-</EditForm>
+            <!-- Phone -->
+            <div class="form-floating mb-3">
+                <InputText id="phone" class="form-control" placeholder="Phone" @bind-Value="_model.Phone" />
+                <label for="phone">Phone Number</label>
+            </div>
+
+            <!-- Password -->
+            <div class="form-floating mb-3 position-relative">
+                <InputText id="password" type="@(_showPassword ? "text" : "password")" class="form-control" placeholder="Password" @bind-Value="_model.Password" />
+                <label for="password">Password</label>
+                <button type="button" class="btn btn-sm btn-outline-secondary position-absolute top-50 end-0 translate-middle-y me-2"
+                        @onclick="() => _showPassword = !_showPassword">
+                    @(_showPassword ? "Hide" : "Show")
+                </button>
+            </div>
+
+            <!-- Remember Me -->
+            <div class="form-check mb-4">
+                <InputCheckbox id="remember" class="form-check-input" @bind-Value="_model.RememberMe" />
+                <label class="form-check-label" for="remember">Remember Me</label>
+            </div>
+
+            <!-- Submit Button -->
+            <button type="submit" class="btn btn-primary w-100 py-2" disabled="@_isLoading">
+                @_isLoading ? "Logging in..." : "Login"
+                @if (_isLoading)
+                {
+                    <span class="spinner-border spinner-border-sm ms-2" role="status"></span>
+                }
+            </button>
+
+            <!-- Register Link -->
+            <div class="text-center mt-3">
+                <small class="text-muted">
+                    Don't have an account? 
+                    <a href="/register" class="text-decoration-none">Register here</a>
+                </small>
+            </div>
+        </EditForm>
+    </div>
+</div>
 
 @code {
     [SupplyParameterFromForm]
@@ -79,7 +94,7 @@
             );
 
             var claims = user.ToClaims();
-            const string AuthScheme = "clx-auth"; 
+            const string AuthScheme = "clx-auth";
 
             var identity = new ClaimsIdentity(claims, AuthScheme);
             var principal = new ClaimsPrincipal(identity);
@@ -93,15 +108,14 @@
             await HttpContext.SignInAsync(AuthScheme, principal, props);
 
             ToastService.ShowSuccess("Login successful! Redirecting...");
-            Logger.LogInformation("Login successful for {User}", _model.Phone,result.Fullname);
+            Logger.LogInformation("Login successful for {User}", _model.Phone);
 
-            // Delay briefly to let user see toast
             await Task.Delay(1000);
             Navigation.NavigateTo("/", true);
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error during login for {User}",_model.Phone);
+            Logger.LogError(ex, "Error during login for {User}", _model.Phone);
             ToastService.ShowError("Unexpected error occurred. Try again.");
         }
         finally

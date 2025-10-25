@@ -1,38 +1,29 @@
-﻿using Clinix.Application.Interfaces.Functionalities;
-using Clinix.Domain.Entities.FollowUps;
+﻿// Infrastructure/Persistence/Repositories/FollowUpRepository.cs
+using Clinix.Domain.Entities;
+using Clinix.Domain.Enums;
+using Clinix.Domain.Interfaces;
 using Clinix.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
 namespace Clinix.Infrastructure.Repositories;
 
-public class FollowUpRepository : IFollowUpRepository, IFollowUpRepositoryExtended
+public sealed class FollowUpRepository : IFollowUpRepository
     {
     private readonly ClinixDbContext _db;
     public FollowUpRepository(ClinixDbContext db) => _db = db;
 
-    public async Task AddAsync(FollowUpRecord followUp)
-        {
-        if (followUp == null) throw new ArgumentNullException(nameof(followUp));
-        // EF will track snapshots via navigation
-        await _db.FollowUpRecords.AddAsync(followUp);
-        await _db.SaveChangesAsync();
-        }
+    public Task<FollowUp?> GetByIdAsync(long id, CancellationToken ct = default) =>
+        _db.FollowUps.FirstOrDefaultAsync(f => f.Id == id, ct);
 
-    public async Task<FollowUpRecord?> GetByIdAsync(long id)
-        {
-        var entity = await _db.FollowUpRecords
-            .Include(x => x.MedicationSnapshots)
-            .AsNoTracking()
-            .FirstOrDefaultAsync(x => x.Id == id);
-        return entity;
-        }
+    public Task<List<FollowUp>> GetByAppointmentAsync(long appointmentId, CancellationToken ct = default) =>
+        _db.FollowUps.Where(f => f.AppointmentId == appointmentId).OrderBy(f => f.DueBy).ToListAsync(ct);
 
-    public async Task UpdateAsync(FollowUpRecord followUp)
-        {
-        _db.FollowUpRecords.Update(followUp);
-        await _db.SaveChangesAsync();
-        }
+    public Task<List<FollowUp>> GetPendingDueAsync(DateTimeOffset upTo, CancellationToken ct = default) =>
+        _db.FollowUps.Where(f => f.Status == FollowUpStatus.Pending && f.DueBy <= upTo).OrderBy(f => f.DueBy).ToListAsync(ct);
 
-    // Additional methods for admin listing/search can be added here
+    public async Task AddAsync(FollowUp f, CancellationToken ct = default)
+        { await _db.FollowUps.AddAsync(f, ct); await _db.SaveChangesAsync(ct); }
+
+    public async Task UpdateAsync(FollowUp f, CancellationToken ct = default)
+        { _db.FollowUps.Update(f); await _db.SaveChangesAsync(ct); }
     }
-

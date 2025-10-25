@@ -1,10 +1,13 @@
-﻿using Clinix.Application.Dtos.Patient;
+﻿using Clinix.Application.Dtos;
+using Clinix.Application.Dtos.Patient;
 using Clinix.Application.DTOs;
 using Clinix.Application.Interfaces.Functionalities;
 using Clinix.Application.Interfaces.UserRepo;
 using Clinix.Application.Mappings;
 using Clinix.Domain.Common;
+using Clinix.Domain.Entities;
 using Clinix.Domain.Entities.ApplicationUsers;
+using Clinix.Domain.Interfaces;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -20,6 +23,7 @@ public class RegistrationService : IRegistrationService
     private readonly IPatientRepository _patientRepo;
     private readonly IDoctorRepository _doctorRepo;
     private readonly IStaffRepository _staffRepo;
+    private readonly IProviderRepository _providerRepo; // NEW
     private readonly IUnitOfWork _uow;
     private readonly PasswordHasher<User> _passwordHasher = new();
     private readonly ILogger<RegistrationService> _logger;
@@ -29,6 +33,7 @@ public class RegistrationService : IRegistrationService
         IPatientRepository patientRepo,
         IDoctorRepository doctorRepo,
         IStaffRepository staffRepo,
+        IProviderRepository providerRepo, // NEW
         IUnitOfWork uow,
         ILogger<RegistrationService> logger)
         {
@@ -36,9 +41,11 @@ public class RegistrationService : IRegistrationService
         _patientRepo = patientRepo;
         _doctorRepo = doctorRepo;
         _staffRepo = staffRepo;
+        _providerRepo = providerRepo; // NEW
         _uow = uow;
         _logger = logger;
         }
+
 
     /// <summary>
     /// Registers a patient (creates User row). Password is hashed server-side.
@@ -89,52 +96,6 @@ public class RegistrationService : IRegistrationService
             {
             _logger.LogError(ex, "Unexpected error while registering patient with phone {Phone}", request.Phone);
             return Result.Failure("An error occurred while registering. Please try again later.");
-            }
-        }
-
-    public async Task<Result> CreateDoctorAsync(CreateDoctorRequest request, string createdBy, CancellationToken ct = default)
-        {
-        if (request is null)
-            return Result.Failure("Invalid request.");
-
-        if (string.IsNullOrWhiteSpace(request.FullName) || string.IsNullOrWhiteSpace(request.Phone) || string.IsNullOrWhiteSpace(request.Password))
-            return Result.Failure("FullName, phone and password are required.");
-
-        var normalizedPhone = NormalizePhone(request.Phone);
-        if (normalizedPhone == null)
-            return Result.Failure("Invalid phone number.");
-
-        try
-            {
-            if (await _userRepo.GetByPhoneAsync(normalizedPhone, ct) != null)
-                return Result.Failure("Phone Number already in use. Try a different one.");
-
-            var user = UserMappers.CreateForRole(request.FullName.Trim(), request.Email?.Trim(), normalizedPhone, role: "Doctor", createdBy);
-            user.PasswordHash = _passwordHasher.HashPassword(user, request.Password);
-            user.CreatedBy = createdBy;
-
-            await _uow.BeginTransactionAsync(ct);
-            try
-                {
-                await _userRepo.AddAsync(user, ct);
-                var doctor = DoctorMappers.CreateFrom(user, request);
-                await _doctorRepo.AddAsync(doctor, ct);
-                await _uow.CommitAsync(ct);
-
-                _logger.LogInformation("New doctor created. UserId: {UserId}", user.Id);
-                return Result.Success("Doctor added successfully.");
-                }
-            catch (DbUpdateException dbEx)
-                {
-                await _uow.RollbackAsync(ct);
-                _logger.LogError(dbEx, "DB error while creating doctor with phone {Phone}", normalizedPhone);
-                return Result.Failure("A database error occurred while creating the doctor.");
-                }
-            }
-        catch (Exception ex)
-            {
-            _logger.LogError(ex, "Unexpected error while creating doctor with phone {Phone}", request.Phone);
-            return Result.Failure("An error occurred. Please try again later.");
             }
         }
 
@@ -261,5 +222,118 @@ public class RegistrationService : IRegistrationService
 
         return keepPlus ? "+" + digitsOnly : digitsOnly;
         }
+
+    // Application/Services/RegistrationService.cs (update CreateDoctorAsync method)
+    public async Task<Result> CreateDoctorAsync(CreateDoctorRequest request, string createdBy, CancellationToken ct = default)
+        {
+        if (request is null)
+            return Result.Failure("Invalid request.");
+
+        if (string.IsNullOrWhiteSpace(request.FullName) || string.IsNullOrWhiteSpace(request.Phone) || string.IsNullOrWhiteSpace(request.Password))
+            return Result.Failure("FullName, phone and password are required.");
+
+        var normalizedPhone = NormalizePhone(request.Phone);
+        if (normalizedPhone == null)
+            return Result.Failure("Invalid phone number.");
+
+        try
+            {
+            if (await _userRepo.GetByPhoneAsync(normalizedPhone, ct) != null)
+                return Result.Failure("Phone Number already in use. Try a different one.");
+
+            var user = UserMappers.CreateForRole(request.FullName.Trim(), request.Email?.Trim(), normalizedPhone, role: "Doctor", createdBy);
+            user.PasswordHash = _passwordHasher.HashPassword(user, request.Password);
+            user.CreatedBy = createdBy;
+
+            await _uow.BeginTransactionAsync(ct);
+            try
+                {
+                await _userRepo.AddAsync(user, ct);
+                var doctor = DoctorMappers.CreateFrom(user, request);
+                await _doctorRepo.AddAsync(doctor, ct);
+
+                // NEW: Auto-create Provider for appointment scheduling
+                var provider = await CreateProviderFromDoctor(doctor, request, ct);
+                doctor.ProviderId = provider.Id;
+                await _doctorRepo.UpdateAsync(doctor, ct);
+
+                await _uow.CommitAsync(ct);
+
+                _logger.LogInformation("New doctor created. UserId: {UserId}, ProviderId: {ProviderId}", user.Id, provider.Id);
+                return Result.Success("Doctor added successfully.");
+                }
+            catch (DbUpdateException dbEx)
+                {
+                await _uow.RollbackAsync(ct);
+                _logger.LogError(dbEx, "DB error while creating doctor with phone {Phone}", normalizedPhone);
+                return Result.Failure("A database error occurred while creating the doctor.");
+                }
+            }
+        catch (Exception ex)
+            {
+            _logger.LogError(ex, "Unexpected error while creating doctor with phone {Phone}", request.Phone);
+            return Result.Failure("An error occurred. Please try again later.");
+            }
+        }
+
+    // NEW: Helper to create Provider from Doctor schedules
+    private async Task<Provider> CreateProviderFromDoctor(Doctor doctor, CreateDoctorRequest request, CancellationToken ct)
+        {
+        // Calculate earliest start and latest end from schedules
+        var schedules = request.Schedules?.Where(s => s.IsAvailable).ToList();
+
+        TimeSpan earliestStart = new TimeSpan(9, 0, 0); // Default 9 AM
+        TimeSpan latestEnd = new TimeSpan(17, 0, 0);   // Default 5 PM
+
+        if (schedules?.Any() == true)
+            {
+            earliestStart = schedules.Min(s => s.StartTime);
+            latestEnd = schedules.Max(s => s.EndTime);
+            }
+
+        var startDateTime = DateTime.Today.Add(earliestStart);
+        var endDateTime = DateTime.Today.Add(latestEnd);
+
+        // Generate symptom tags from specialty
+        var tags = GenerateTagsFromSpecialty(request.Specialty);
+
+        var provider = new Provider(
+            doctor.User.FullName,
+            request.Specialty ?? "General",
+            tags,
+            startDateTime,
+            endDateTime
+        );
+
+        await _providerRepo.AddAsync(provider, ct);
+        return provider;
+        }
+
+    private string GenerateTagsFromSpecialty(string? specialty)
+        {
+        if (string.IsNullOrWhiteSpace(specialty)) return "";
+
+        return specialty.ToLowerInvariant() switch
+            {
+                "cardiology" => "chest pain,heart attack,palpitations,angina,hypertension,heart disease",
+                "orthopedics" => "bone pain,fracture,joint pain,arthritis,back pain,knee pain,sprain",
+                "gynecology" => "pregnancy,menstrual problems,pcos,periods,infertility,prenatal care",
+                "dermatology" => "skin rash,acne,eczema,psoriasis,itching,allergy,skin infection",
+                "neurology" => "headache,migraine,seizure,stroke,paralysis,tremor,nerve pain",
+                "gastroenterology" => "stomach pain,acidity,ulcer,diarrhea,constipation,liver disease",
+                "pediatrics" => "child fever,vaccination,newborn,baby cold,infant care,growth issues",
+                "ent" => "ear pain,sinus,throat infection,tonsillitis,hearing loss,vertigo",
+                "ophthalmology" => "eye pain,blurred vision,cataract,glaucoma,conjunctivitis",
+                "pulmonology" => "cough,asthma,breathlessness,pneumonia,lung infection,bronchitis",
+                "endocrinology" => "diabetes,thyroid,hormonal imbalance,pcos,weight gain,obesity",
+                "urology" => "kidney stone,uti,urinary infection,prostate,bladder pain",
+                "psychiatry" => "depression,anxiety,stress,panic attack,bipolar,ocd,insomnia",
+                "general medicine" => "fever,fatigue,weakness,cold,flu,body pain,general checkup",
+                "rheumatology" => "rheumatoid arthritis,lupus,autoimmune disease,joint inflammation",
+                _ => specialty.ToLowerInvariant()
+                };
+        }
+
+
     }
 

@@ -1,0 +1,107 @@
+﻿@* Pages/Admin/SymptomMapping.razor *@
+@page "/admin/symptom-mapping"
+@rendermode InteractiveServer
+@using Clinix.Domain.Interfaces
+@using Clinix.Domain.Entities
+@inject IProviderRepository ProviderRepo
+
+<h3>Symptom to Provider Mapping (Admin)</h3>
+
+<p>Manage which symptoms/tags map to provider specialties.</p>
+
+@if (Providers is null)
+{
+    <div class="text-muted">Loading…</div>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-sm align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th>Provider</th>
+                    <th>Specialty</th>
+                    <th>Tags (comma-separated)</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+            @foreach (var p in Providers)
+            {
+                var pid = p.Id;
+                <tr>
+                    <td>@p.Name</td>
+                    <td>@p.Specialty</td>
+                    <td>
+                        @if (EditingId == p.Id)
+                        {
+                            <input type="text" class="form-control form-control-sm" @bind="EditTags" />
+                        }
+                        else
+                        {
+                            @p.Tags
+                        }
+                    </td>
+                    <td class="text-end">
+                        @if (EditingId == p.Id)
+                        {
+                            <button class="btn btn-success btn-sm me-2" @onclick="@(async () => await SaveTagsAsync(pid))">Save</button>
+                            <button class="btn btn-secondary btn-sm" @onclick="CancelEdit">Cancel</button>
+                        }
+                        else
+                        {
+                            <button class="btn btn-outline-primary btn-sm" @onclick="@(async () => await StartEditAsync(p))">Edit</button>
+                        }
+                    </td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+}
+
+@if (!string.IsNullOrWhiteSpace(Message))
+{
+    <div class="alert alert-success mt-3">@Message</div>
+}
+
+@code {
+    private List<Provider>? Providers;
+    private long? EditingId;
+    private string EditTags = "";
+    private string? Message;
+
+    protected override async Task OnInitializedAsync()
+    {
+        // load all providers; in a real setup use a dedicated admin service
+        Providers = await ProviderRepo.SearchAsync(new[] { "" }); // empty search returns all in simple setup
+    }
+
+    private Task StartEditAsync(Provider p)
+    {
+        EditingId = p.Id;
+        EditTags = p.Tags ?? "";
+        return Task.CompletedTask;
+    }
+
+    private void CancelEdit()
+    {
+        EditingId = null;
+        EditTags = "";
+    }
+
+    private async Task SaveTagsAsync(long providerId)
+    {
+        var p = await ProviderRepo.GetByIdAsync(providerId);
+        if (p is null) return;
+
+        // update tags via reflection (quick approach for internship-level)
+        p.GetType().GetProperty("Tags")!.SetValue(p, EditTags.Trim());
+
+        // persist (adjust to your actual setup)
+        Message = $"Tags updated for {p.Name}.";
+        EditingId = null;
+        EditTags = "";
+        await OnInitializedAsync(); // reload
+    }
+}

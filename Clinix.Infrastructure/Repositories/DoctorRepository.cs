@@ -3,7 +3,6 @@ using Clinix.Domain.Entities.ApplicationUsers;
 using Clinix.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using System.Linq.Expressions; // Required for the predicate overload
 
 namespace Clinix.Infrastructure.Repositories;
 
@@ -28,15 +27,6 @@ public class DoctorRepository : IDoctorRepository
         return await _db.Doctors.CountAsync(ct);
         }
 
-    public async Task<int> CountAsync(Expression<Func<Doctor, bool>> predicate, CancellationToken ct = default)
-        {
-        _logger.LogTrace("Counting Doctor records with predicate.");
-        return await _db.Doctors.CountAsync(predicate, ct);
-        }
-
-    // ----------------------------------------------------
-    // END: Implementation of IRepository<Doctor>.CountAsync
-    // ----------------------------------------------------
 
     public async Task AddAsync(Doctor doctor, CancellationToken ct = default)
         {
@@ -51,19 +41,7 @@ public class DoctorRepository : IDoctorRepository
         _db.Doctors.Remove(doc);
         }
 
-    public async Task<IEnumerable<Doctor>> GetBySpecialtyAsync(string specialty, CancellationToken ct = default)
-        {
-        if (string.IsNullOrWhiteSpace(specialty))
-            return Enumerable.Empty<Doctor>();
-
-        // match case-insensitively; include User navigation for display
-        return await _db.Doctors
-            .Include(d => d.User)
-            .Where(d => !string.IsNullOrEmpty(d.Specialty) &&
-                        d.Specialty.ToLower() == specialty.Trim().ToLower())
-            .AsNoTracking()
-            .ToListAsync(ct);
-        }
+   
 
     public async Task<Doctor?> GetByUserIdAsync(long userId, CancellationToken ct = default)
         {
@@ -87,4 +65,10 @@ public class DoctorRepository : IDoctorRepository
         _db.Doctors.Update(doctor);
         return Task.CompletedTask;
         }
+
+   
+
+   
+
+   
     }

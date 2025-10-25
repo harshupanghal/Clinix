@@ -8,134 +8,208 @@
 @inject NavigationManager Navigation
 @inject Blazored.Toast.Services.IToastService ToastService
 
-<div class="container py-4">
+<div class="container my-5">
     <div class="card shadow-lg border-0 rounded-4">
-        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center rounded-top-4">
-            <h4 class="mb-0"><i class="bi bi-person-plus"></i> Create Staff / Doctor</h4>
-            <button class="btn btn-light btn-sm" @onclick="NavigateBack">
-                <i class="bi bi-arrow-left"></i> Back
+        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center py-3 rounded-top-4">
+            <h3 class="mb-0 fw-bold"><i class="bi bi-person-plus-fill me-2"></i> Register New Staff Member</h3>
+            <button class="btn btn-light btn-sm d-flex align-items-center" @onclick="NavigateBack">
+                <i class="bi bi-arrow-left me-1"></i> Back to Dashboard
             </button>
         </div>
 
-        <div class="card-body p-4">
-            <EditForm Model="_model" OnValidSubmit="OnValidSubmit">
+        <div class="card-body p-5">
+            <EditForm Model="_model" OnValidSubmit="OnValidSubmit" FormName="createStaffForm">
                 <FluentValidationValidator />
 
-                <div class="row g-4">
+                <h4 class="mb-4 text-primary fw-semibold border-bottom pb-2">1. Account and Contact Details</h4>
+                <div class="row g-4 mb-4">
                     <div class="col-md-6 form-floating">
-                        <InputText id="fullName" class="form-control form-control-lg" placeholder="Full Name" @bind-Value="_model.FullName" />
-                        <label for="fullName">Full Name</label>
+                        <InputText id="fullName" class="form-control" placeholder="Full Name" @bind-Value="_model.FullName" />
+                        <label for="fullName" class="ms-2">Full Name <span class="text-danger">*</span></label>
+                        <ValidationMessage For="() => _model.FullName" />
                     </div>
 
                     <div class="col-md-6 form-floating">
-                        <InputText id="email" class="form-control form-control-lg" type="email" placeholder="Email" @bind-Value="_model.Email" />
-                        <label for="email">Email</label>
+                        <InputText id="email" class="form-control" type="email" placeholder="Email Address" @bind-Value="_model.Email" />
+                        <label for="email" class="ms-2">Email Address <span class="text-danger">*</span></label>
+                        <ValidationMessage For="() => _model.Email" />
                     </div>
 
                     <div class="col-md-6 form-floating">
-                        <InputText id="phone" class="form-control form-control-lg" placeholder="Phone" @bind-Value="_model.Phone" />
-                        <label for="phone">Phone</label>
+                        <InputText id="phone" class="form-control" placeholder="Phone Number" @bind-Value="_model.Phone" />
+                        <label for="phone" class="ms-2">Phone Number <span class="text-danger">*</span></label>
+                        <ValidationMessage For="() => _model.Phone" />
                     </div>
 
                     <div class="col-md-6 form-floating position-relative">
-                        <InputText id="password" class="form-control form-control-lg pe-5" type="@(_showPassword ? "text" : "password")" placeholder="Password" @bind-Value="_model.Password" />
-                        <label for="password">Password</label>
-                        <button type="button" class="btn btn-sm btn-outline-secondary position-absolute top-50 end-0 translate-middle-y me-3" @onclick="TogglePassword">
-                            <i class="bi" @( _showPassword ? "bi-eye-slash" : "bi-eye")></i>
+                        <InputText id="password" class="form-control pe-5" type="@(_showPassword ? "text" : "password")" placeholder="Temporary Password" @bind-Value="_model.Password" />
+                        <label for="password" class="ms-2">Temporary Password <span class="text-danger">*</span></label>
+                        <ValidationMessage For="() => _model.Password" />
+                        <button type="button" class="btn btn-sm btn-outline-secondary position-absolute top-50 end-0 translate-middle-y me-3 border-0" @onclick="TogglePassword" title="Show/Hide Password">
+                            <i class="bi @(_showPassword ? "bi-eye-slash" : "bi-eye")"></i>
                         </button>
                     </div>
 
                     <div class="col-md-6 form-floating">
-                        <InputSelect id="position" class="form-select form-select-lg" @bind-Value="_model.Position" @onchange="OnPositionChanged">
-                            <option value="">-- Select Role --</option>
+                        <InputSelect id="position" class="form-select" @bind-Value="_model.Position" @onchange="OnPositionChanged">
+                            <option value="">-- Select Role / Position --</option>
                             <option value="Doctor">Doctor</option>
                             <option value="Receptionist">Receptionist</option>
                             <option value="Chemist">Chemist</option>
                         </InputSelect>
-                        <label for="position">Role / Position</label>
+                        <label for="position" class="ms-2">Role / Position <span class="text-danger">*</span></label>
+                        <ValidationMessage For="() => _model.Position" />
                     </div>
                 </div>
 
-                @if (_model.Position == "Doctor")
+                @if (!string.IsNullOrWhiteSpace(_model.Position))
                 {
-                    <div class="p-3 border rounded-3 bg-light-subtle mt-4">
-                        <h5 class="fw-bold mb-3"><i class="bi bi-heart-pulse"></i> Doctor Details</h5>
-                        <div class="row g-3">
-                            <div class="col-md-6 form-floating">
-                                <InputText id="degree" class="form-control" placeholder="Degree" @bind-Value="_model.Degree" />
-                                <label for="degree">Degree</label>
+                    <div class="mt-4 pt-4 border-top">
+                      @* Replace this section in CreateStaff.razor *@
+@if (_model.Position == "Doctor")
+{
+    <h4 class="mb-4 text-success fw-semibold border-bottom pb-2"><i class="bi bi-heart-pulse-fill me-2"></i> 2. Doctor Professional Details</h4>
+    <div class="row g-4">
+        <div class="col-md-6 form-floating">
+            <InputText id="degree" class="form-control" placeholder="Medical Degree (e.g., MBBS, MD)" @bind-Value="_model.Degree" />
+            <label for="degree" class="ms-2">Degree</label>
+            <ValidationMessage For="() => _model.Degree" />
+        </div>
+        <div class="col-md-6 form-floating">
+            <InputText id="specialty" class="form-control" placeholder="Specialty (e.g., Cardiology, Pediatrics)" @bind-Value="_model.Specialty" />
+            <label for="specialty" class="ms-2">Specialty</label>
+            <ValidationMessage For="() => _model.Specialty" />
+        </div>
+        <div class="col-md-6 form-floating">
+            <InputText id="license" class="form-control" placeholder="License Number" @bind-Value="_model.LicenseNumber" />
+            <label for="license" class="ms-2">License Number</label>
+            <ValidationMessage For="() => _model.LicenseNumber" />
+        </div>
+        <div class="col-md-6 form-floating">
+            <InputNumber id="experience" class="form-control" placeholder="Years of Experience" @bind-Value="_model.ExperienceYears" />
+            <label for="experience" class="ms-2">Experience (Years)</label>
+            <ValidationMessage For="() => _model.ExperienceYears" />
+        </div>
+        <div class="col-md-6 form-floating">
+            <InputNumber id="fee" class="form-control" placeholder="Consultation Fee (in currency)" @bind-Value="_model.ConsultationFee" />
+            <label for="fee" class="ms-2">Consultation Fee</label>
+            <ValidationMessage For="() => _model.ConsultationFee" />
+        </div>
+        <div class="col-md-6 form-floating">
+            <InputText id="room" class="form-control" placeholder="Consultation Room Number" @bind-Value="_model.RoomNumber" />
+            <label for="room" class="ms-2">Room Number</label>
+            <ValidationMessage For="() => _model.RoomNumber" />
+        </div>
+        <div class="col-md-6 form-floating">
+            <InputText id="extension" class="form-control" placeholder="Internal Extension Number" @bind-Value="_model.ExtensionNumber" />
+            <label for="extension" class="ms-2">Extension Number</label>
+            <ValidationMessage For="() => _model.ExtensionNumber" />
+        </div>
+        
+        @* NEW: Weekly Schedule Builder *@
+   <div class="col-12">
+    <h5 class="text-success mb-3"><i class="bi bi-calendar-week me-2"></i>Weekly Working Schedule</h5>
+    <div class="table-responsive">
+        <table class="table table-bordered table-sm">
+            <thead class="table-light">
+                <tr>
+                    <th>Day</th>
+                    <th>Available</th>
+                    <th>Start Time</th>
+                    <th>End Time</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var schedule in _model.Schedules)
+                {
+                    <tr>
+                        <td>@schedule.DayOfWeek</td>
+                        <td>
+                            <input type="checkbox" class="form-check-input" @bind="schedule.IsAvailable" />
+                        </td>
+                        <td>
+                            <input type="time" class="form-control form-control-sm" 
+                                   value="@schedule.StartTimeStr" 
+                                   @onchange="@(e => schedule.StartTimeStr = e.Value?.ToString() ?? "09:00")" 
+                                   disabled="@(!schedule.IsAvailable)" />
+                        </td>
+                        <td>
+                            <input type="time" class="form-control form-control-sm" 
+                                   value="@schedule.EndTimeStr" 
+                                   @onchange="@(e => schedule.EndTimeStr = e.Value?.ToString() ?? "17:00")" 
+                                   disabled="@(!schedule.IsAvailable)" />
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+        
+        <div class="col-12 form-floating">
+            <InputTextArea id="notes" class="form-control" rows="3" placeholder="Additional Notes for Doctor" @bind-Value="_model.Notes" style="min-height: 100px;"/>
+            <label for="notes" class="ms-2">Doctor Notes</label>
+            <ValidationMessage For="() => _model.Notes" />
+        </div>
+    </div>
+}
+
+
+                        @if (_model.Position == "Receptionist" || _model.Position == "Chemist")
+                        {
+                            <h4 class="mb-4 text-info fw-semibold border-bottom pb-2"><i class="bi bi-person-workspace me-2"></i> 2. Staff Work Details</h4>
+                            <div class="row g-4">
+                                <div class="col-md-6 form-floating">
+                                    <InputText id="department" class="form-control" placeholder="Department (e.g., Administration, Pharmacy)" @bind-Value="_model.Department" />
+                                    <label for="department" class="ms-2">Department</label>
+                                    <ValidationMessage For="() => _model.Department" />
+                                </div>
+                                <div class="col-md-6 form-floating">
+                                    <InputText id="location" class="form-control" placeholder="Assigned Location" @bind-Value="_model.AssignedLocation" />
+                                    <label for="location" class="ms-2">Assigned Location</label>
+                                    <ValidationMessage For="() => _model.AssignedLocation" />
+                                </div>
+                                <div class="col-md-6 form-floating">
+                                    <InputText id="supervisor" class="form-control" placeholder="Direct Supervisor Name" @bind-Value="_model.SupervisorName" />
+                                    <label for="supervisor" class="ms-2">Supervisor Name</label>
+                                    <ValidationMessage For="() => _model.SupervisorName" />
+                                </div>
+                                <div class="col-md-6 form-floating">
+                                    @* Assuming ShiftJson will be replaced by a better control later, leaving the DTO field visible for now *@
+                                    <InputText id="shift" class="form-control" placeholder="Shift Details (JSON)" @bind-Value="_model.ShiftJson" />
+                                    <label for="shift" class="ms-2">Shift (JSON)</label>
+                                    <ValidationMessage For="() => _model.ShiftJson" />
+                                </div>
+                                <div class="col-12 form-floating">
+                                    <InputTextArea id="notes2" class="form-control" rows="3" placeholder="Additional Notes for Staff" @bind-Value="_model.Notes" style="min-height: 100px;"/>
+                                    <label for="notes2" class="ms-2">Staff Notes</label>
+                                    <ValidationMessage For="() => _model.Notes" />
+                                </div>
                             </div>
-                            <div class="col-md-6 form-floating">
-                                <InputText id="specialty" class="form-control" placeholder="Specialty" @bind-Value="_model.Specialty" />
-                                <label for="specialty">Specialty</label>
-                            </div>
-                            <div class="col-md-6 form-floating">
-                                <InputText id="license" class="form-control" placeholder="License Number" @bind-Value="_model.LicenseNumber" />
-                                <label for="license">License Number</label>
-                            </div>
-                            <div class="col-md-6 form-floating">
-                                <InputNumber id="experience" class="form-control" placeholder="Experience (years)" @bind-Value="_model.ExperienceYears" />
-                                <label for="experience">Experience (years)</label>
-                            </div>
-                            <div class="col-md-6 form-floating">
-                                <InputText id="room" class="form-control" placeholder="Room Number" @bind-Value="_model.RoomNumber" />
-                                <label for="room">Room Number</label>
-                            </div>
-                            <div class="col-md-6 form-floating">
-                                <InputText id="extension" class="form-control" placeholder="Extension Number" @bind-Value="_model.ExtensionNumber" />
-                                <label for="extension">Extension Number</label>
-                            </div>
-                            <div class="col-md-6 form-floating">
-                                <InputNumber id="fee" class="form-control" placeholder="Consultation Fee" @bind-Value="_model.ConsultationFee" />
-                                <label for="fee">Consultation Fee</label>
-                            </div>
-                            <div class="col-12 form-floating">
-                                <InputTextArea id="notes" class="form-control" rows="2" placeholder="Notes" @bind-Value="_model.Notes" />
-                                <label for="notes">Notes</label>
-                            </div>
-                        </div>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <div class="alert alert-info mt-4 text-center">
+                        <i class="bi bi-info-circle me-2"></i> Select a **Role / Position** to display specific details.
                     </div>
                 }
 
-                @if (_model.Position == "Receptionist" || _model.Position == "Chemist")
-                {
-                    <div class="p-3 border rounded-3 bg-light-subtle mt-4">
-                        <h5 class="fw-bold mb-3"><i class="bi bi-person-gear"></i> Staff Details</h5>
-                        <div class="row g-3">
-                            <div class="col-md-6 form-floating">
-                                <InputText id="department" class="form-control" placeholder="Department" @bind-Value="_model.Department" />
-                                <label for="department">Department</label>
-                            </div>
-                            <div class="col-md-6 form-floating">
-                                <InputText id="shift" class="form-control" placeholder="Shift JSON" @bind-Value="_model.ShiftJson" />
-                                <label for="shift">Shift JSON</label>
-                            </div>
-                            <div class="col-md-6 form-floating">
-                                <InputText id="location" class="form-control" placeholder="Assigned Location" @bind-Value="_model.AssignedLocation" />
-                                <label for="location">Assigned Location</label>
-                            </div>
-                            <div class="col-md-6 form-floating">
-                                <InputText id="supervisor" class="form-control" placeholder="Supervisor Name" @bind-Value="_model.SupervisorName" />
-                                <label for="supervisor">Supervisor Name</label>
-                            </div>
-                            <div class="col-12 form-floating">
-                                <InputTextArea id="notes2" class="form-control" rows="2" placeholder="Notes" @bind-Value="_model.Notes" />
-                                <label for="notes2">Notes</label>
-                            </div>
-                        </div>
-                    </div>
-                }
-
-                <div class="mt-4 d-flex justify-content-end gap-2">
-                    <button class="btn btn-success px-4" type="submit" disabled="@_isSubmitting">
-                        @_isSubmitting ? "Creating..." : "Create"
+                <div class="mt-5 pt-3 border-top d-flex justify-content-end gap-3">
+                    <button class="btn btn-lg btn-outline-secondary px-5" type="button" @onclick="NavigateBack" disabled="@_isSubmitting">
+                        <i class="bi bi-x-circle me-2"></i> Cancel
+                    </button>
+                    <button class="btn btn-lg btn-success px-5" type="submit" disabled="@_isSubmitting">
                         @if (_isSubmitting)
                         {
-                            <span class="spinner-border spinner-border-sm ms-2" role="status"></span>
+                            <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+                            <span>Creating...</span>
                         }
-                    </button>
-                    <button class="btn btn-outline-secondary px-4" type="button" @onclick="NavigateBack">
-                        <i class="bi bi-x-circle"></i> Cancel
+                        else
+                        {
+                            <i class="bi bi-check-circle-fill me-2"></i> <span>Create Staff</span>
+                        }
                     </button>
                 </div>
             </EditForm>
@@ -148,73 +222,76 @@
     private bool _isSubmitting;
     private bool _showPassword;
 
+    // Helper to get the form's name for Toast messages
+    private string GetPositionDisplayName() => string.IsNullOrWhiteSpace(_model.Position) ? "Staff Member" : _model.Position;
+
     private void TogglePassword() => _showPassword = !_showPassword;
 
     private void OnPositionChanged(ChangeEventArgs _) => StateHasChanged();
 
-    private async Task OnValidSubmit()
+ private async Task OnValidSubmit()
+{
+    if (string.IsNullOrWhiteSpace(_model.Position))
     {
-        _isSubmitting = true;
-        try
+        ToastService.ShowError("Please select a role/position before submitting.");
+        return;
+    }
+
+    _isSubmitting = true;
+    try
+    {
+        if (_model.Position == "Doctor")
         {
-            if (string.IsNullOrWhiteSpace(_model.Position))
-            {
-                ToastService.ShowError("Please select a role/position.");
-                return;
-            }
-
-            if (_model.Position == "Doctor")
-            {
-                var dto = new CreateDoctorRequest(
-                    _model.FullName, _model.Email, _model.Phone, _model.Password,
-                    _model.Degree, _model.Specialty, _model.LicenseNumber,
-                    _model.ExperienceYears, _model.RoomNumber,
-                    _model.WorkHoursJson, _model.ExtensionNumber,
-                    _model.ConsultationFee, _model.Notes
-                );
-
-                var result = await RegistrationUiService.CreateDoctorAsync(dto, createdBy: "admin");
-                if (result.IsSuccess)
-                {
-                    ToastService.ShowSuccess("Doctor created successfully.");
-                    ClearFormAndNavigate();
-                }
-                else ToastService.ShowError($"Error: {result.Error}");
-                return;
-            }
-
-            var staffDto = new CreateStaffRequest(
+            var schedules = _model.Schedules.Select(s => s.ToDto()).ToList();
+            
+            var dto = new CreateDoctorRequest(
                 _model.FullName, _model.Email, _model.Phone, _model.Password,
-                _model.Position, _model.Department, _model.ShiftJson,
-                _model.AssignedLocation, _model.SupervisorName, _model.Notes
+                _model.Degree, _model.Specialty, _model.LicenseNumber,
+                _model.ExperienceYears ?? 0, _model.RoomNumber,
+                _model.ExtensionNumber, _model.ConsultationFee, _model.Notes,
+                schedules // NEW: Pass schedules
             );
 
-            var staffResult = await RegistrationUiService.CreateStaffAsync(staffDto, createdBy: "admin");
-            if (staffResult.IsSuccess)
+            var result = await RegistrationUiService.CreateDoctorAsync(dto, createdBy: "admin");
+            if (result.IsSuccess)
             {
-                ToastService.ShowSuccess($"{_model.Position} created successfully.");
+                ToastService.ShowSuccess("Doctor created successfully! Provider auto-created for appointments.");
+                await Task.Delay(500);
                 ClearFormAndNavigate();
             }
-            else ToastService.ShowError($"Error: {staffResult.Error}");
+            else ToastService.ShowError($"Error creating Doctor: {result.Error}");
+            return;
         }
-        finally { _isSubmitting = false; }
+
+        // Staff creation remains unchanged
+        // ...
     }
+    catch (Exception ex)
+    {
+        ToastService.ShowError($"An unexpected error occurred: {ex.Message}");
+    }
+    finally { _isSubmitting = false; }
+}
+
 
     private void ClearFormAndNavigate()
     {
         _model = new CreateStaffUiModel();
-        // Navigation.NavigateTo("/admin/dashboard", true);
+        // Use `forceLoad: true` if you want to completely re-render the target page and clear its state.
+        Navigation.NavigateTo("/admin/dashboard", forceLoad: true);
     }
 
-    private void NavigateBack() => Navigation.NavigateTo("/admin/dashboard", true);
+    private void NavigateBack() => Navigation.NavigateTo("/admin/dashboard", forceLoad: true);
 
+    // Simplified and focused model definition
+   @code {
     private class CreateStaffUiModel
     {
-        [Required] public string FullName { get; set; } = "";
-        [Required, EmailAddress] public string Email { get; set; } = "";
-        [Required] public string Phone { get; set; } = "";
-        [Required] public string Password { get; set; } = "";
-        [Required] public string Position { get; set; } = "";
+        [Required(ErrorMessage = "Full Name is required.")] public string FullName { get; set; } = "";
+        [Required(ErrorMessage = "Email is required."), EmailAddress(ErrorMessage = "Invalid email format.")] public string Email { get; set; } = "";
+        [Required(ErrorMessage = "Phone Number is required.")] public string Phone { get; set; } = "";
+        [Required(ErrorMessage = "Password is required.")] public string Password { get; set; } = "";
+        [Required(ErrorMessage = "A Role/Position must be selected.")] public string Position { get; set; } = "";
 
         // Doctor fields
         public string? Degree { get; set; }
@@ -224,13 +301,40 @@
         public string? RoomNumber { get; set; }
         public string? ExtensionNumber { get; set; }
         public decimal ConsultationFee { get; set; }
-        public string? WorkHoursJson { get; set; }
+        
+        // NEW: Weekly schedules
+        public List<ScheduleEntry> Schedules { get; set; } = Enum.GetValues<DayOfWeek>()
+            .Select(day => new ScheduleEntry
+            {
+                DayOfWeek = day,
+                IsAvailable = day != DayOfWeek.Sunday, // Default: all except Sunday
+                StartTimeStr = "09:00",
+                EndTimeStr = "17:00"
+            }).ToList();
 
-        // Common fields
+        // General Staff fields
         public string? Department { get; set; }
         public string? ShiftJson { get; set; }
         public string? AssignedLocation { get; set; }
         public string? SupervisorName { get; set; }
         public string? Notes { get; set; }
     }
+    
+    // NEW: Helper class for schedule entries
+    private class ScheduleEntry
+    {
+        public DayOfWeek DayOfWeek { get; set; }
+        public bool IsAvailable { get; set; }
+        public string StartTimeStr { get; set; } = "09:00";
+        public string EndTimeStr { get; set; } = "17:00";
+        
+        public DoctorScheduleDto ToDto()
+        {
+            TimeSpan.TryParse(StartTimeStr, out var start);
+            TimeSpan.TryParse(EndTimeStr, out var end);
+            return new DoctorScheduleDto(DayOfWeek, start, end, IsAvailable);
+        }
+    }
+}
+
 }

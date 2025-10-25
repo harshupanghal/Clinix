@@ -17,17 +17,35 @@
 }
 else
 {
-    <div class="mb-3 d-flex gap-2">
-        <input class="form-control" placeholder="Search by name..." @bind="_searchTerm" @bind:event="oninput" />
-        <select class="form-select" @bind="_filterType">
-            <option value="">All Types</option>
-            <option>Medicine</option>
-            <option>Equipment</option>
-            <option>Consumable</option>
-        </select>
-        <button class="btn btn-primary" @onclick="LoadInventory">Search / Filter</button>
-        <button class="btn btn-success" @onclick="AddNewItem">+ Add Item</button>
+    <div class="card p-3 mb-4 shadow-sm inventory-search-card">
+    <div class="row g-2 align-items-center">
+        <div class="col-md-4 col-12">
+            <div class="input-group">
+                <span class="input-group-text"><i class="bi bi-search"></i></span>
+                <input class="form-control" placeholder="Search by name..." @bind="_searchTerm" @bind:event="oninput" />
+            </div>
+        </div>
+
+        <div class="col-md-3 col-6">
+            <select class="form-select" @bind="_filterType">
+                <option value="">All Types</option>
+                <option>Medicine</option>
+                <option>Equipment</option>
+                <option>Consumable</option>
+            </select>
+        </div>
+
+        <div class="col-md-5 col-6 d-flex gap-2">
+            <button class="btn btn-primary flex-fill d-flex align-items-center justify-content-center" @onclick="LoadInventory">
+                <i class="bi bi-funnel me-1"></i> Filter
+            </button>
+            <button class="btn btn-success flex-fill d-flex align-items-center justify-content-center" @onclick="AddNewItem">
+                <i class="bi bi-plus-lg me-1"></i> Add Item
+            </button>
+        </div>
     </div>
+</div>
+
 
     <table class="table table-striped table-hover">
         <thead class="table-dark">

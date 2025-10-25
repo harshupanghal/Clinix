@@ -1,0 +1,60 @@
+﻿@* Pages/Appointments/ProviderSettings.razor *@
+@page "/provider/settings/{ProviderId:guid}"
+@using Clinix.Application.DTOs
+@using Clinix.Application.Interfaces
+@inject IProviderAppService ProviderService
+
+<h3>Doctor working hours</h3>
+
+@if (Model is null)
+{
+    <div class="text-muted">Loading…</div>
+}
+else
+{
+    <div class="row g-3 mb-3">
+        <div class="col-md-6">
+            <label class="form-label">Start time</label>
+            <InputDate Type="InputDateType.Time" @bind-Value="StartTime" class="form-control" />
+        </div>
+        <div class="col-md-6">
+            <label class="form-label">End time</label>
+            <InputDate Type="InputDateType.Time" @bind-Value="EndTime" class="form-control" />
+        </div>
+    </div>
+    <button class="btn btn-primary" @onclick="SaveAsync">Save</button>
+}
+
+@if (!string.IsNullOrWhiteSpace(Message))
+{
+    <div class="alert alert-success mt-3">@Message</div>
+}
+
+@code {
+    [Parameter] public long ProviderId { get; set; }
+
+    private ProviderDto? Model;
+    private DateTime StartTime = DateTime.Today.AddHours(9);
+    private DateTime EndTime = DateTime.Today.AddHours(17);
+    private string? Message;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        Model = await ProviderService.GetByIdAsync(ProviderId);
+        if (Model is not null)
+        {
+            StartTime = Model.WorkStart;
+            EndTime = Model.WorkEnd;
+        }
+    }
+
+    private async Task SaveAsync()
+    {
+        if (Model is null) return;
+        
+        var request = new UpdateProviderWorkingHoursRequest(ProviderId, StartTime, EndTime);
+        var success = await ProviderService.UpdateWorkingHoursAsync(request);
+        
+        Message = success ? "Working hours saved successfully." : "Failed to save.";
+    }
+}

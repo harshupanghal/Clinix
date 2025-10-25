@@ -1,276 +1,218 @@
 ﻿using Clinix.Domain.Entities;
 using Clinix.Domain.Entities.ApplicationUsers;
-using Clinix.Domain.Entities.Appointments;
-using Clinix.Domain.Entities.FollowUps;
 using Clinix.Domain.Entities.Inventory;
 using Microsoft.EntityFrameworkCore;
 
-namespace Clinix.Infrastructure.Persistence
+namespace Clinix.Infrastructure.Persistence;
+
+public class ClinixDbContext : DbContext
     {
-    public class ClinixDbContext : DbContext
+    public ClinixDbContext(DbContextOptions<ClinixDbContext> options) : base(options) { }
+
+    // ---------------------------
+    // Users & roles
+    public DbSet<User> Users => Set<User>();
+    public DbSet<Patient> Patients => Set<Patient>();
+    public DbSet<Doctor> Doctors => Set<Doctor>();
+    public DbSet<Staff> Staffs => Set<Staff>();
+
+    // ---------------------------
+    // Inventory
+    public DbSet<InventoryItem> InventoryItems => Set<InventoryItem>();
+    public DbSet<InventoryTransaction> InventoryTransactions => Set<InventoryTransaction>();
+
+    // ---------------------------
+    // Core Domain
+    public DbSet<Appointment> Appointments => Set<Appointment>();
+    public DbSet<DoctorSchedule> DoctorSchedules => Set<DoctorSchedule>();
+    public DbSet<SymptomKeyword> SymptomKeywords => Set<SymptomKeyword>();
+    public DbSet<FollowUp> FollowUps => Set<FollowUp>();
+    public DbSet<Provider> Providers => Set<Provider>();
+
+    public DbSet<OutboxMessage> OutboxMessages => Set<OutboxMessage>();
+
+
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-        public ClinixDbContext(DbContextOptions<ClinixDbContext> options) : base(options) { }
+        base.OnModelCreating(modelBuilder);
 
-        public DbSet<User> Users => Set<User>();
-        public DbSet<Patient> Patients => Set<Patient>();
-        public DbSet<Doctor> Doctors => Set<Doctor>();
-        public DbSet<Staff> Staffs => Set<Staff>();
-        public DbSet<InventoryItem> InventoryItems => Set<InventoryItem>();
-        public DbSet<InventoryTransaction> InventoryTransactions => Set<InventoryTransaction>();
-        public DbSet<Appointment> Appointments => Set<Appointment>();
-        public DbSet<AppointmentClinicalInfo> AppointmentClinicalInfos => Set<AppointmentClinicalInfo>();
+        // ---------------------------
+        // Users
+        modelBuilder.Entity<User>(b =>
+        {
+            b.ToTable("Users");
+            b.HasKey(x => x.Id);
+            b.Property(x => x.Email).HasMaxLength(320);
+            b.Property(x => x.Phone).IsRequired().HasMaxLength(20);
+            b.Property(x => x.FullName).IsRequired().HasMaxLength(100);
+            b.Property(x => x.PasswordHash).IsRequired().HasMaxLength(500);
+            b.Property(x => x.Role).IsRequired().HasMaxLength(50);
+            b.Property(x => x.IsDeleted).HasDefaultValue(false);
+            b.Property(x => x.IsProfileCompleted).HasDefaultValue(false);
+            b.HasIndex(x => x.Phone).IsUnique();
+        });
 
-        // Follow-up
-        public DbSet<FollowUpRecord> FollowUpRecords => Set<FollowUpRecord>();
-        public DbSet<FollowUpPrescriptionSnapshot> FollowUpPrescriptionSnapshots => Set<FollowUpPrescriptionSnapshot>();
-        public DbSet<FollowUpTask> FollowUpTasks => Set<FollowUpTask>();
+        // ---------------------------
+        // Patients
+        modelBuilder.Entity<Patient>(b =>
+        {
+            b.ToTable("Patients");
+            b.HasKey(x => x.PatientId);
 
-        public DbSet<SymptomMapping> SymptomMappings => Set<SymptomMapping>();
-        public DbSet<DoctorWorkingHours> DoctorWorkingHours => Set<DoctorWorkingHours>();
-        public DbSet<ScheduleLock> ScheduleLocks => Set<ScheduleLock>();
+            b.HasOne(p => p.User)
+                .WithOne()
+                .HasForeignKey<Patient>(p => p.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
 
-        protected override void OnModelCreating(ModelBuilder modelBuilder)
+            b.Property(x => x.MedicalRecordNumber).HasMaxLength(50);
+            b.Property(x => x.BloodGroup).HasMaxLength(5);
+            b.Property(x => x.Gender).HasMaxLength(20);
+            b.Property(x => x.EmergencyContactNumber).HasMaxLength(30);
+        });
+
+        // ---------------------------
+        // Doctors
+        modelBuilder.Entity<Doctor>(b =>
+        {
+            b.ToTable("Doctors");
+            b.HasKey(x => x.DoctorId);
+
+            b.HasOne(d => d.User)
+                .WithOne()
+                .HasForeignKey<Doctor>(d => d.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // NEW: ProviderId configuration
+            //b.Property(d => d.ProviderId).IsRequired(true); // Nullable Guid
+            b.HasIndex(d => d.ProviderId); // Index for faster lookups
+
+            b.Property(d => d.Specialty).HasMaxLength(100);
+            b.HasIndex(d => d.Specialty);
+            b.Property(x => x.RowVersion).IsRowVersion();
+        });
+
+        // ---------------------------
+        // Staff
+        modelBuilder.Entity<Staff>(b =>
+        {
+            b.ToTable("Staff");
+            b.HasKey(x => x.UserId);
+            b.HasOne(s => s.User)
+                .WithOne()
+                .HasForeignKey<Staff>(s => s.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+            b.Property(s => s.Position).IsRequired().HasMaxLength(100);
+        });
+
+        // ---------------------------
+        // DoctorSchedule
+        modelBuilder.Entity<DoctorSchedule>(b =>
+        {
+            b.ToTable("DoctorSchedules");
+            b.HasKey(x => x.Id);
+            b.HasOne(s => s.Doctor)
+                .WithMany(d => d.Schedules)
+                .HasForeignKey(s => s.DoctorId)
+                .OnDelete(DeleteBehavior.Cascade);
+            b.Property(s => s.DayOfWeek).IsRequired();
+            b.Property(s => s.StartTime).IsRequired();
+            b.Property(s => s.EndTime).IsRequired();
+            b.Property(s => s.IsAvailable).HasDefaultValue(true);
+        });
+
+        // ---------------------------
+        // Provider
+        modelBuilder.Entity<Provider>(b =>
+        {
+            b.ToTable("Providers");
+            b.HasKey(p => p.Id);
+            b.Property(p => p.Name).IsRequired().HasMaxLength(200);
+            b.Property(p => p.Specialty).IsRequired().HasMaxLength(100);
+            b.Property(p => p.Tags).HasMaxLength(1000);
+            b.Property(p => p.WorkStartTime).HasColumnType("datetime2");
+            b.Property(p => p.WorkEndTime).HasColumnType("datetime2");
+            b.HasIndex(p => p.Specialty);
+        });
+
+        // ---------------------------
+        // Appointment
+        modelBuilder.Entity<Appointment>(b =>
+        {
+            b.ToTable("Appointments");
+            b.HasKey(a => a.Id);
+            b.Property(a => a.PatientId).IsRequired();
+            b.Property(a => a.ProviderId).IsRequired();
+            b.Property(a => a.Type).IsRequired();
+            b.Property(a => a.Status).IsRequired();
+            b.Property(a => a.CreatedAt).IsRequired();
+            b.OwnsOne(a => a.When, when =>
             {
-            base.OnModelCreating(modelBuilder);
-
-            // ---------------------------
-            // Users
-            // ---------------------------
-            modelBuilder.Entity<User>(b =>
-            {
-                b.ToTable("Users");
-                b.HasKey(x => x.Id);
-                b.Property(x => x.Email).HasMaxLength(320);
-                b.Property(x => x.Phone).IsRequired().HasMaxLength(20);
-                b.Property(x => x.FullName).IsRequired().HasMaxLength(100);
-                b.Property(x => x.PasswordHash).IsRequired().HasMaxLength(500);
-                b.Property(x => x.Role).IsRequired().HasMaxLength(50);
-                b.Property(x => x.IsDeleted).HasDefaultValue(false);
-                b.Property(x => x.IsProfileCompleted).HasDefaultValue(false);
-                b.HasIndex(x => x.Phone).IsUnique();
-                b.HasIndex(x => x.Email).IsUnique(false);
+                when.Property(p => p.Start).HasColumnName("Start").HasColumnType("datetimeoffset");
+                when.Property(p => p.End).HasColumnName("End").HasColumnType("datetimeoffset");
             });
+            b.HasMany(a => a.FollowUps)
+             .WithOne()
+             .HasForeignKey(f => f.AppointmentId)
+             .OnDelete(DeleteBehavior.Cascade);
+            b.HasIndex(a => a.ProviderId);
+            b.HasIndex(a => a.PatientId);
+            b.HasIndex(a => new { a.ProviderId, a.Status });
+        });
 
-            // ---------------------------
-            // Patient
-            // ---------------------------
-            modelBuilder.Entity<Patient>(b =>
-            {
-                b.ToTable("Patients");
-                b.HasKey(x => x.PatientId);
-                b.HasOne(p => p.User)
-                 .WithOne()
-                 .HasForeignKey<Patient>(p => p.UserId)
-                 .OnDelete(DeleteBehavior.Cascade);
-            });
+        // ---------------------------
+        // FollowUp
+        modelBuilder.Entity<FollowUp>(b =>
+        {
+            b.ToTable("FollowUps");
+            b.HasKey(f => f.Id);
+            b.Property(f => f.AppointmentId).IsRequired();
+            b.Property(f => f.DueBy).HasColumnType("datetimeoffset");
+            b.Property(f => f.LastRemindedAt).HasColumnType("datetimeoffset");
+            b.Property(f => f.Status).IsRequired();
+            b.Property(f => f.CreatedAt).IsRequired();
+            b.HasIndex(f => f.AppointmentId);
+            b.HasIndex(f => new { f.Status, f.DueBy });
+        });
 
-            // ---------------------------
-            // Doctor
-            // ---------------------------
-            modelBuilder.Entity<Doctor>(b =>
-            {
-                b.ToTable("Doctors");
-                b.HasKey(x => x.DoctorId);
-                b.HasOne(d => d.User)
-                 .WithOne()
-                 .HasForeignKey<Doctor>(d => d.UserId)
-                 .OnDelete(DeleteBehavior.Cascade);
-                b.Property(d => d.Specialty).HasMaxLength(100);
-                b.HasIndex(d => d.Specialty);
-                b.Property(x => x.RowVersion).IsRowVersion();
-            });
+        // ---------------------------
+        // SymptomKeyword
+        modelBuilder.Entity<SymptomKeyword>(b =>
+        {
+            b.ToTable("SymptomKeywords");
+            b.HasKey(x => x.Id);
+            b.Property(x => x.Keyword).IsRequired().HasMaxLength(100);
+            b.Property(x => x.Specialty).IsRequired().HasMaxLength(100);
+            b.HasIndex(x => x.Keyword);
+        });
 
-            // ---------------------------
-            // Staff
-            // ---------------------------
-            modelBuilder.Entity<Staff>(b =>
-            {
-                b.ToTable("Staff");
-                b.HasKey(x => x.UserId);
-                b.HasOne(s => s.User)
-                 .WithOne()
-                 .HasForeignKey<Staff>(s => s.UserId)
-                 .OnDelete(DeleteBehavior.Cascade);
-                b.Property(s => s.Position).IsRequired().HasMaxLength(100);
-            });
+        // ---------------------------
+        // OutboxMessage
+        modelBuilder.Entity<OutboxMessage>(b =>
+        {
+            b.ToTable("OutboxMessages");
+            b.HasKey(x => x.Id);
+            b.Property(x => x.Type).IsRequired().HasMaxLength(100);
+            b.Property(x => x.PayloadJson).IsRequired();
+            b.HasIndex(x => new { x.Processed, x.OccurredAtUtc });
+        });
 
-            // ---------------------------
-            // Inventory
-            // ---------------------------
-            modelBuilder.Entity<InventoryItem>(b =>
-            {
-                b.HasKey(x => x.Id);
-                b.HasMany(i => i.Transactions)
-                 .WithOne(t => t.InventoryItem)
-                 .HasForeignKey(t => t.InventoryItemId)
-                 .OnDelete(DeleteBehavior.Restrict);
-            });
+        // ---------------------------
+        // Inventory
+        modelBuilder.Entity<InventoryItem>(b =>
+        {
+            b.ToTable("InventoryItems");
+            b.HasKey(x => x.Id);
+            b.HasMany(i => i.Transactions)
+                .WithOne(t => t.InventoryItem)
+                .HasForeignKey(t => t.InventoryItemId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
 
-            modelBuilder.Entity<InventoryTransaction>(b =>
-            {
-                b.HasKey(x => x.Id);
-                b.Property(x => x.Quantity).IsRequired();
-            });
-
-            // ---------------------------
-            // Appointment
-            // ---------------------------
-            modelBuilder.Entity<Appointment>(b =>
-            {
-                b.ToTable("Appointments");
-                b.HasKey(x => x.Id);
-                b.Property(x => x.StartAt).IsRequired();
-                b.Property(x => x.EndAt).IsRequired();
-                b.Property(x => x.Status).HasConversion<string>().IsRequired();
-                b.Property(x => x.Reason).HasMaxLength(1000);
-                b.Property(x => x.Notes).HasMaxLength(2000);
-                b.Property(x => x.CreatedAt).IsRequired();
-                b.Property(x => x.UpdatedAt);
-                b.Property(x => x.RowVersion).IsRowVersion();
-
-                b.HasOne(a => a.Patient)
-                 .WithMany(p => p.Appointments)
-                 .HasForeignKey(a => a.PatientId)
-                 .OnDelete(DeleteBehavior.Restrict);
-            });
-
-            // ---------------------------
-            // AppointmentClinicalInfo (new)
-            // ---------------------------
-            modelBuilder.Entity<AppointmentClinicalInfo>(b =>
-            {
-                b.ToTable("AppointmentClinicalInfos");
-                b.HasKey(x => x.Id);
-                b.Property(x => x.AppointmentId).IsRequired();
-                b.HasIndex(x => x.AppointmentId).IsUnique();
-                b.Property(x => x.DiagnosisSummary).HasColumnType("nvarchar(max)");
-                b.Property(x => x.IllnessDescription).HasColumnType("nvarchar(max)");
-                // Persist medications as JSON in nvarchar(max)
-                b.Property(x => x.MedicationsJson)
-                 .HasColumnName("Medications")
-                 .HasColumnType("nvarchar(max)");
-                b.Property(x => x.DoctorNotes).HasColumnType("nvarchar(max)");
-                b.Property(x => x.NextFollowUpDate);
-                b.Property(x => x.CreatedAt).IsRequired();
-                b.Property(x => x.UpdatedAt);
-                b.HasOne(x => x.Appointment)
-                 .WithOne(a => a.ClinicalInfo)
-                 .HasForeignKey<AppointmentClinicalInfo>(x => x.AppointmentId)
-                 .OnDelete(DeleteBehavior.Cascade);
-            });
-
-            // ---------------------------
-            // FollowUpRecord
-            // ---------------------------
-            modelBuilder.Entity<FollowUpRecord>(b =>
-            {
-                b.ToTable("FollowUpRecords");
-                b.HasKey(x => x.Id);
-                b.Property(x => x.PatientId).IsRequired();
-                b.Property(x => x.AppointmentId);
-                b.Property(x => x.DoctorId);
-                b.Property(x => x.DiagnosisSummary).HasColumnType("nvarchar(max)");
-                b.Property(x => x.Notes).HasColumnType("nvarchar(max)");
-                b.Property(x => x.PrescriptionId);
-                b.Property(x => x.Status).HasConversion<int>().IsRequired();
-                b.Property(x => x.CreatedAt).IsRequired();
-                b.Property(x => x.UpdatedAt);
-                b.Property(x => x.RowVersion).IsRowVersion();
-
-                b.HasIndex(x => x.PatientId);
-                b.HasIndex(x => x.AppointmentId);
-                // Optional navigation to Appointment
-                b.HasOne(x => x.Appointment)
-                 .WithMany()
-                 .HasForeignKey(x => x.AppointmentId)
-                 .OnDelete(DeleteBehavior.Restrict);
-            });
-
-            // ---------------------------
-            // FollowUpPrescriptionSnapshot
-            // ---------------------------
-            modelBuilder.Entity<FollowUpPrescriptionSnapshot>(b =>
-            {
-                b.ToTable("FollowUpPrescriptionSnapshots");
-                b.HasKey(x => x.Id);
-                b.Property(x => x.FollowUpRecordId).IsRequired();
-                b.Property(x => x.MedicineName).IsRequired().HasMaxLength(500);
-                b.Property(x => x.Dosage).HasMaxLength(200);
-                b.Property(x => x.Frequency).HasMaxLength(200);
-                b.Property(x => x.Duration).HasMaxLength(200);
-                b.Property(x => x.Notes).HasColumnType("nvarchar(max)");
-                b.Property(x => x.CreatedAt).IsRequired();
-
-                b.HasOne(x => x.FollowUpRecord)
-                 .WithMany(r => r.MedicationSnapshots)
-                 .HasForeignKey(x => x.FollowUpRecordId)
-                 .OnDelete(DeleteBehavior.Cascade);
-            });
-
-            // ---------------------------
-            // FollowUpTask
-            // ---------------------------
-            modelBuilder.Entity<FollowUpTask>(b =>
-            {
-                b.ToTable("FollowUpTasks");
-                b.HasKey(x => x.Id);
-                b.Property(x => x.FollowUpRecordId).IsRequired();
-                b.Property(x => x.TaskType).IsRequired().HasConversion<int>();
-                b.Property(x => x.Payload).HasColumnType("nvarchar(max)").IsRequired();
-                b.Property(x => x.ScheduledAt).IsRequired();
-                b.Property(x => x.AttemptCount).HasDefaultValue(0);
-                b.Property(x => x.MaxAttempts).HasDefaultValue(3);
-                b.Property(x => x.Status).HasConversion<int>().IsRequired();
-                b.Property(x => x.LastAttemptAt);
-                b.Property(x => x.ResultMetadata).HasColumnType("nvarchar(max)");
-                b.Property(x => x.CreatedAt).IsRequired();
-                b.Property(x => x.UpdatedAt);
-                b.Property(x => x.RowVersion).IsRowVersion();
-
-                b.HasIndex(x => new { x.ScheduledAt, x.Status });
-                b.HasOne(x => x.FollowUpRecord)
-                 .WithMany()
-                 .HasForeignKey(x => x.FollowUpRecordId)
-                 .OnDelete(DeleteBehavior.Cascade);
-            });
-
-            // ---------------------------
-            // SymptomMapping
-            // ---------------------------
-            modelBuilder.Entity<SymptomMapping>(b =>
-            {
-                b.HasKey(x => x.Id);
-                b.Property(x => x.Keyword).IsRequired().HasMaxLength(200);
-                b.Property(x => x.SuggestedSpecialty).HasMaxLength(200);
-                b.Property(x => x.Weight);
-                b.Property(x => x.SuggestedDoctorIds).HasConversion(
-                    v => string.Join(',', v),
-                    v => string.IsNullOrWhiteSpace(v) ? new List<long>() : v.Split(',', StringSplitOptions.RemoveEmptyEntries).Select(long.Parse).ToList()
-                );
-            });
-
-            // ---------------------------
-            // DoctorWorkingHours
-            // ---------------------------
-            modelBuilder.Entity<DoctorWorkingHours>(b =>
-            {
-                b.HasKey(x => x.Id);
-                b.Property(x => x.WeeklyHours).HasConversion(
-                    v => System.Text.Json.JsonSerializer.Serialize(v, (System.Text.Json.JsonSerializerOptions?)null),
-                    v => System.Text.Json.JsonSerializer.Deserialize<Dictionary<DayOfWeek, List<(TimeSpan Start, TimeSpan End)>>>(v, (System.Text.Json.JsonSerializerOptions?)null) ?? new Dictionary<DayOfWeek, List<(TimeSpan, TimeSpan)>>()
-                );
-            });
-
-            // ---------------------------
-            // ScheduleLock
-            // ---------------------------
-            modelBuilder.Entity<ScheduleLock>(b =>
-            {
-                b.HasKey(x => x.DoctorId);
-                b.Property(x => x.LockedUntil).IsRequired(false);
-            });
-
-            // Add default schema-wide settings if needed (e.g. set delete behavior defaults) - omitted for brevity
-            }
+        modelBuilder.Entity<InventoryTransaction>(b =>
+        {
+            b.ToTable("InventoryTransactions");
+            b.HasKey(x => x.Id);
+            b.Property(x => x.Quantity).IsRequired();
+        });
         }
     }

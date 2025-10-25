@@ -1,0 +1,245 @@
+﻿@* Pages/Appointments/Details.razor *@
+@page "/appointments/{Id:guid}"
+@using Clinix.Application.DTOs
+@using Clinix.Application.Interfaces
+@using Microsoft.AspNetCore.Components.Forms
+@inject IAppointmentAppService AppointmentService
+@inject IFollowUpAppService FollowUpService
+
+<h3>Appointment details</h3>
+
+@if (Item is null)
+{
+    <div class="text-muted">Loading…</div>
+}
+else
+{
+    <div class="card mb-3">
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-6"><strong>Id:</strong> @Item.Id</div>
+                <div class="col-md-6"><strong>Status:</strong> @Item.Status</div>
+                <div class="col-md-6"><strong>Patient:</strong> @Item.PatientId</div>
+                <div class="col-md-6"><strong>Provider:</strong> @Item.ProviderId</div>
+                <div class="col-md-6"><strong>Start:</strong> @Item.Start.LocalDateTime</div>
+                <div class="col-md-6"><strong>End:</strong> @Item.End.LocalDateTime</div>
+                <div class="col-12"><strong>Notes:</strong><pre class="mb-0">@Item.Notes</pre></div>
+            </div>
+        </div>
+        <div class="card-footer d-flex flex-wrap gap-2">
+            <button class="btn btn-outline-primary" @onclick="ToggleReschedule">Reschedule</button>
+            <button class="btn btn-outline-success" @onclick="CompleteAsync">Complete</button>
+            <button class="btn btn-outline-danger" @onclick="ToggleCancel">Cancel</button>
+        </div>
+    </div>
+
+    @if (showReschedule)
+    {
+        <div class="row g-3 align-items-end mb-3">
+            <div class="col-md-5">
+                <label class="form-label">New start</label>
+                <InputDate Type="InputDateType.DateTimeLocal" @bind-Value="RescheduleForm.Start" class="form-control" />
+            </div>
+            <div class="col-md-5">
+                <label class="form-label">New end</label>
+                <InputDate Type="InputDateType.DateTimeLocal" @bind-Value="RescheduleForm.End" class="form-control" />
+            </div>
+            <div class="col-md-2">
+                <button class="btn btn-primary" @onclick="DoRescheduleAsync">Save</button>
+            </div>
+        </div>
+    }
+
+    @if (showCancel)
+    {
+        <div class="row g-3 align-items-end mb-3">
+            <div class="col-md-9">
+                <label class="form-label">Reason</label>
+                <input type="text" class="form-control" @bind="CancelForm.Reason" />
+            </div>
+            <div class="col-md-3">
+                <button class="btn btn-danger" @onclick="DoCancelAsync">Confirm cancel</button>
+            </div>
+        </div>
+    }
+
+    <h5 class="mt-4">Follow-ups</h5>
+
+    <div class="row g-3 align-items-end mb-3">
+        <div class="col-md-5">
+            <label class="form-label">Due by</label>
+            <InputDate Type="InputDateType.DateTimeLocal" @bind-Value="FollowUpForm.Due" class="form-control" />
+        </div>
+        <div class="col-md-5">
+            <label class="form-label">Reason</label>
+            <input type="text" class="form-control" @bind="FollowUpForm.Reason" />
+        </div>
+        <div class="col-md-2">
+            <button class="btn btn-primary" @onclick="CreateFollowUpAsync">Add</button>
+        </div>
+    </div>
+
+    @if (Fus is null)
+    {
+        <div class="text-muted">Loading follow-ups…</div>
+    }
+    else if (Fus.Count == 0)
+    {
+        <div class="alert alert-info">No follow-ups yet.</div>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table table-sm align-middle">
+                <thead>
+                    <tr>
+                        <th>Due</th>
+                        <th>Status</th>
+                        <th>Reason</th>
+                        <th>Notes</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                @foreach (var f in Fus)
+                {
+                    var fId = f.Id;
+                    <tr>
+                        <td>@f.DueBy.LocalDateTime</td>
+                        <td>@f.Status</td>
+                        <td>@f.Reason</td>
+                        <td>@f.Notes</td>
+                        <td class="text-end">
+                            <button class="btn btn-outline-success btn-sm me-2" @onclick="@(async () => await CompleteFollowUpAsync(fId))">Complete</button>
+                            <button class="btn btn-outline-danger btn-sm" @onclick="@(async () => await CancelFollowUpAsync(fId))">Cancel</button>
+                        </td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    }
+
+    @if (!string.IsNullOrWhiteSpace(Error))
+    {
+        <div class="alert alert-danger mt-3">@Error</div>
+    }
+}
+
+@code {
+    [Parameter] public long Id { get; set; }
+
+    private class RescheduleFormModel 
+    { 
+        public DateTime Start = DateTime.Now.AddHours(1);
+        public DateTime End = DateTime.Now.AddHours(2);
+    }
+    
+    private class CancelFormModel { public string? Reason; }
+    
+    private class FollowUpFormModel 
+    { 
+        public DateTime Due = DateTime.Now.AddDays(1);
+        public string? Reason; 
+    }
+
+    private AppointmentDto? Item;
+    private List<FollowUpDto>? Fus;
+    private bool showReschedule, showCancel;
+
+    private RescheduleFormModel RescheduleForm = new();
+    private CancelFormModel CancelForm = new();
+    private FollowUpFormModel FollowUpForm = new();
+
+    private string? Error;
+
+    protected override async Task OnParametersSetAsync() => await ReloadAsync();
+
+    private async Task ReloadAsync()
+    {
+        Item = await AppointmentService.GetByIdAsync(Id);
+        if (Item is not null)
+        {
+            RescheduleForm.Start = Item.Start.LocalDateTime;
+            RescheduleForm.End = Item.End.LocalDateTime;
+            FollowUpForm.Due = DateTime.Now.AddDays(1);
+            Fus = await FollowUpService.GetByAppointmentAsync(Item.Id);
+        }
+    }
+
+    private void ToggleReschedule() => showReschedule = !showReschedule;
+    private void ToggleCancel() => showCancel = !showCancel;
+
+    private async Task DoRescheduleAsync()
+    {
+        try
+        {
+            var req = new RescheduleAppointmentRequest(
+                Id, 
+                new DateTimeOffset(RescheduleForm.Start, DateTimeOffset.Now.Offset), 
+                new DateTimeOffset(RescheduleForm.End, DateTimeOffset.Now.Offset)
+            );
+            await AppointmentService.RescheduleAsync(req);
+            await ReloadAsync();
+            showReschedule = false;
+        }
+        catch (Exception ex) { Error = ex.Message; }
+    }
+
+    private async Task DoCancelAsync()
+    {
+        try
+        {
+            var req = new CancelAppointmentRequest(Id, CancelForm.Reason);
+            await AppointmentService.CancelAsync(req);
+            await ReloadAsync();
+            showCancel = false;
+        }
+        catch (Exception ex) { Error = ex.Message; }
+    }
+
+    private async Task CompleteAsync()
+    {
+        try 
+        { 
+            await AppointmentService.CompleteAsync(new CompleteAppointmentRequest(Id)); 
+            await ReloadAsync(); 
+        } 
+        catch (Exception ex) { Error = ex.Message; }
+    }
+
+    private async Task CreateFollowUpAsync()
+    {
+        try
+        {
+            var req = new CreateFollowUpRequest(
+                Id, 
+                new DateTimeOffset(FollowUpForm.Due, DateTimeOffset.Now.Offset), 
+                FollowUpForm.Reason
+            );
+            await FollowUpService.CreateAsync(req);
+            await ReloadAsync();
+        }
+        catch (Exception ex) { Error = ex.Message; }
+    }
+
+    private async Task CompleteFollowUpAsync(long id)
+    {
+        try 
+        { 
+            await FollowUpService.CompleteAsync(new CompleteFollowUpRequest(id, null)); 
+            await ReloadAsync(); 
+        } 
+        catch (Exception ex) { Error = ex.Message; }
+    }
+
+    private async Task CancelFollowUpAsync(long id)
+    {
+        try 
+        { 
+            await FollowUpService.CancelAsync(new CancelFollowUpRequest(id, null)); 
+            await ReloadAsync(); 
+        } 
+        catch (Exception ex) { Error = ex.Message; }
+    }
+}
