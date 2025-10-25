@@ -1,12 +1,12 @@
 ﻿/* ============================================
    CLINIX HMS - DESIGN SYSTEM
-   Clean UI Principles Applied
    ============================================ */
 
-/* ============================================
-   CSS VARIABLES - COLOR PALETTE
-   ============================================ */
 :root {
+    /* Sidebar & Layout Dimensions */
+    --clinix-sidebar-width: 260px;
+    --clinix-sidebar-collapsed-width: 80px;
+    --clinix-topbar-height: 68px;
     /* Primary Brand Colors */
     --clx-primary: #1b6ec2;
     --clx-primary-hover: #155a9d;
@@ -33,7 +33,7 @@
     --clx-gray-700: #495057;
     --clx-gray-800: #343a40;
     --clx-gray-900: #212529;
-    /* Medical Context Colors (Subtle backgrounds) */
+    /* Medical Context Colors */
     --clx-critical: #fef2f2;
     --clx-critical-border: #fee2e2;
     --clx-stable: #f0fdf4;
@@ -46,12 +46,12 @@
     --clx-font-family: 'Inter', 'Segoe UI', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif;
     --clx-font-family-mono: 'SF Mono', 'Monaco', 'Consolas', monospace;
     /* Spacing */
-    --clx-spacing-xs: 0.25rem; /* 4px */
-    --clx-spacing-sm: 0.5rem; /* 8px */
-    --clx-spacing-md: 1rem; /* 16px */
-    --clx-spacing-lg: 1.5rem; /* 24px */
-    --clx-spacing-xl: 2rem; /* 32px */
-    --clx-spacing-2xl: 3rem; /* 48px */
+    --clx-spacing-xs: 0.25rem;
+    --clx-spacing-sm: 0.5rem;
+    --clx-spacing-md: 1rem;
+    --clx-spacing-lg: 1.5rem;
+    --clx-spacing-xl: 2rem;
+    --clx-spacing-2xl: 3rem;
     /* Border Radius */
     --clx-radius-sm: 4px;
     --clx-radius-md: 8px;
@@ -99,27 +99,26 @@ h1, h2, h3, h4, h5, h6 {
 h1 {
     font-size: 2rem;
 }
-/* 32px */
+
 h2 {
     font-size: 1.5rem;
 }
-/* 24px */
+
 h3 {
     font-size: 1.25rem;
 }
-/* 20px */
+
 h4 {
     font-size: 1.125rem;
 }
-/* 18px */
+
 h5 {
     font-size: 1rem;
 }
-/* 16px */
+
 h6 {
     font-size: 0.875rem;
 }
-/* 14px */
 
 h1:focus {
     outline: none;
@@ -180,7 +179,6 @@ a, .btn-link {
         cursor: not-allowed;
     }
 
-/* Primary Button */
 .btn-primary {
     color: var(--clx-white);
     background-color: var(--clx-primary);
@@ -199,7 +197,6 @@ a, .btn-link {
         box-shadow: var(--clx-shadow-sm);
     }
 
-/* Secondary Button */
 .btn-secondary {
     color: var(--clx-gray-700);
     background-color: var(--clx-white);
@@ -211,7 +208,6 @@ a, .btn-link {
         border-color: var(--clx-gray-400);
     }
 
-/* Success Button */
 .btn-success {
     color: var(--clx-white);
     background-color: var(--clx-success);
@@ -223,7 +219,6 @@ a, .btn-link {
         box-shadow: var(--clx-shadow-md);
     }
 
-/* Danger Button */
 .btn-danger {
     color: var(--clx-white);
     background-color: var(--clx-danger);
@@ -235,7 +230,6 @@ a, .btn-link {
         box-shadow: var(--clx-shadow-md);
     }
 
-/* Button Sizes */
 .btn-sm {
     padding: 0.375rem 0.75rem;
     font-size: 0.8125rem;
@@ -286,7 +280,6 @@ a, .btn-link {
         cursor: not-allowed;
     }
 
-/* Input Groups */
 .input-group {
     position: relative;
     display: flex;
@@ -310,7 +303,6 @@ a, .btn-link {
         border-color: var(--clx-primary);
     }
 
-/* Checkbox & Radio */
 .form-check-input {
     width: 1rem;
     height: 1rem;
@@ -377,8 +369,7 @@ a, .btn-link {
     border-radius: var(--clx-radius-lg);
     box-shadow: var(--clx-shadow-sm);
     overflow: hidden;
-    transition: box-shadow var(--clx-transition-normal), transform var(--clx-transition-normal);
-
+    transition: box-shadow var(--clx-transition-normal);
 }
 
     .card:hover {
@@ -403,7 +394,7 @@ a, .btn-link {
 }
 
 /* ============================================
-   STATUS BADGES
+   BADGES
    ============================================ */
 .badge {
     display: inline-flex;
@@ -521,7 +512,7 @@ a, .btn-link {
 }
 
 /* ============================================
-   LAYOUT & UTILITIES
+   UTILITIES
    ============================================ */
 .content {
     padding-top: var(--clx-spacing-lg);
@@ -580,29 +571,203 @@ a, .btn-link {
     }
 
 /* ============================================
-   GLOBAL LAYOUT FIX - TOP SPACING
-   ============================================ */
-main.main-content-area,
-main {
-    padding-top: 4rem !important; /* Account for fixed topbar */
-}
-
-    main.main-content-area article.content,
-    main article.content {
-        padding: var(--clx-spacing-xl) var(--clx-spacing-lg);
-    }
-
-@media (max-width: 768px) {
-    main.main-content-area article.content,
-    main article.content {
-        padding: var(--clx-spacing-md);
-    }
-}
-
-
-/* ============================================
    LOADING SPINNER
    ============================================ */
+.spinner-border {
+    display: inline-block;
+    width: 1rem;
+    height: 1rem;
+    border: 2px solid currentColor;
+    border-right-color: transparent;
+    border-radius: 50%;
+    animation: spinner-border 0.75s linear infinite;
+}
+
+.spinner-border-sm {
+    width: 0.875rem;
+    height: 0.875rem;
+    border-width: 2px;
+}
+
+@keyframes spinner-border {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* ============================================
+   PAGE LAYOUT
+   ============================================ */
+.page-wrapper {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+/* ============================================
+   MAIN CONTENT AREA - RESPONSIVE TO SIDEBAR
+   ============================================ */
+.main-content-area {
+    flex: 1;
+    padding-top: var(--clinix-topbar-height);
+    background-color: var(--clx-gray-50);
+    transition: margin-left var(--clx-transition-normal);
+}
+
+/* Desktop: account for sidebar */
+@media (min-width: 768px) {
+    .main-content-area {
+        margin-left: var(--clinix-sidebar-width);
+    }
+
+    /* Collapsed sidebar state */
+    body.sidebar-collapsed .main-content-area {
+        margin-left: var(--clinix-sidebar-collapsed-width);
+    }
+}
+
+/* Mobile: no sidebar margin */
+@media (max-width: 767.98px) {
+    .main-content-area {
+        margin-left: 0 !important;
+        padding-top: var(--clinix-topbar-height);
+    }
+}
+
+/* ============================================
+   ERROR UI
+   ============================================ */
+#blazor-error-ui {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 9999;
+    background: linear-gradient(135deg, #c82333 0%, #dc3545 100%);
+    box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.15);
+    display: none;
+}
+
+.error-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: var(--clx-spacing-lg);
+    display: flex;
+    align-items: center;
+    gap: var(--clx-spacing-md);
+}
+
+.error-icon {
+    flex-shrink: 0;
+    font-size: 2rem;
+    color: var(--clx-white);
+}
+
+.error-content {
+    flex: 1;
+}
+
+.error-title {
+    color: var(--clx-white);
+    font-size: 1rem;
+    font-weight: 600;
+    margin: 0 0 var(--clx-spacing-xs) 0;
+}
+
+.error-message {
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 0.875rem;
+    margin: 0 0 var(--clx-spacing-md) 0;
+}
+
+.error-actions {
+    display: flex;
+    gap: var(--clx-spacing-sm);
+}
+
+    .error-actions .btn {
+        font-size: 0.875rem;
+    }
+
+/* ============================================
+   RESPONSIVE UTILITIES
+   ============================================ */
+@media (max-width: 768px) {
+    html, body {
+        font-size: 13px;
+    }
+
+    .card-body {
+        padding: var(--clx-spacing-md);
+    }
+
+    .btn {
+        padding: 0.5rem 0.875rem;
+    }
+
+    h1 {
+        font-size: 1.75rem;
+    }
+
+    h2 {
+        font-size: 1.375rem;
+    }
+
+    h3 {
+        font-size: 1.125rem;
+    }
+
+    .error-container {
+        flex-direction: column;
+        text-align: center;
+        padding: var(--clx-spacing-md);
+    }
+
+    .error-actions {
+        width: 100%;
+        flex-direction: column;
+    }
+
+        .error-actions .btn {
+            width: 100%;
+        }
+}
+
+/* ============================================
+   ACCESSIBILITY
+   ============================================ */
+:focus-visible {
+    outline: 2px solid var(--clx-primary);
+    outline-offset: 2px;
+}
+
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border-width: 0;
+}
+
+/* ============================================
+   PRINT STYLES
+   ============================================ */
+@media print {
+    body {
+        background-color: white;
+    }
+
+    .btn, .card {
+        box-shadow: none;
+    }
+}
+
+
+
 .spinner-border {
     display: inline-block;
     width: 1rem;
@@ -657,10 +822,10 @@ main {
 /* ============================================
    ACCESSIBILITY
    ============================================ */
-:focus-visible {
+/*:focus-visible {
     outline: 2px solid var(--clx-primary);
     outline-offset: 2px;
-}
+}*/
 
 .sr-only {
     position: absolute;

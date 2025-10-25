@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Clinix.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(ClinixDbContext))]
-    [Migration("20251025063852_Testing")]
+    [Migration("20251025200703_Testing")]
     partial class Testing
     {
         /// <inheritdoc />
@@ -600,6 +600,50 @@ namespace Clinix.Infrastructure.Persistence.Migrations
                     b.HasIndex("Keyword");
 
                     b.ToTable("SymptomKeywords", (string)null);
+                });
+
+            modelBuilder.Entity("Clinix.Domain.Entities.System.SeedStatus", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("ErrorMessage")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<DateTime>("ExecutedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("ExecutedBy")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<bool>("IsCompleted")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("RetryCount")
+                        .HasColumnType("int");
+
+                    b.Property<string>("SeedName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("Version")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SeedName", "Version")
+                        .IsUnique();
+
+                    b.ToTable("SeedStatuses");
                 });
 
             modelBuilder.Entity("Clinix.Domain.Entities.ApplicationUsers.Doctor", b =>

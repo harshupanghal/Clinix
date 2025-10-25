@@ -10,6 +10,8 @@ public interface IDoctorRepository
     Task<int> CountAsync(CancellationToken ct = default);
     Task DeleteAsync(long userId, CancellationToken ct = default);
     Task<List<Doctor>> GetAllAsync(CancellationToken ct = default);
-    
+    Task<List<Doctor>> GetByProviderIdAsync(long providerId, CancellationToken ct = default);
     }
+    
+    
 

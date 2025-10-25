@@ -19,7 +19,7 @@
 
     /* Content padding */
     .main-content-area .content {
-        padding: var(--clx-spacing-xl) var(--clx-spacing-lg);
+/*        padding: var(--clx-spacing-xl) var(--clx-spacing-lg);*/
         max-width: 100%;
     }
 

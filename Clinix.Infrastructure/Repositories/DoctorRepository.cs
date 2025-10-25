@@ -40,8 +40,14 @@ public class DoctorRepository : IDoctorRepository
         if (doc == null) throw new KeyNotFoundException($"Doctor for userId {userId} not found.");
         _db.Doctors.Remove(doc);
         }
-
-   
+    public async Task<List<Doctor>> GetByProviderIdAsync(long providerId, CancellationToken ct = default)
+        {
+        return await _db.Doctors
+            .Include(d => d.User)
+            .AsNoTracking()
+            .Where(d => d.ProviderId == providerId)
+            .ToListAsync(ct);
+        }
 
     public async Task<Doctor?> GetByUserIdAsync(long userId, CancellationToken ct = default)
         {

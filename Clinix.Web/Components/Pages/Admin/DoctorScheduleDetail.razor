@@ -1,0 +1,253 @@
+﻿@* Web/Components/Pages/Admin/DoctorScheduleDetail.razor *@
+@page "/admin/doctor-schedule/{ProviderId:long}"
+@attribute [Authorize(Roles = "Admin")]
+@rendermode InteractiveServer
+@using Clinix.Application.DTOs
+@using Clinix.Application.Interfaces
+@using Clinix.Domain.Enums
+@inject IAdminScheduleAppService AdminScheduleService
+@inject IProviderAppService ProviderService
+@inject NavigationManager Navigation
+
+<PageTitle>Doctor Schedule - @doctorName</PageTitle>
+
+<div class="container-fluid">
+    <div class="row mb-3">
+        <div class="col">
+            <button class="btn btn-outline-secondary mb-2" @onclick="GoBack">
+                <i class="bi bi-arrow-left"></i> Back to Master Schedule
+            </button>
+            <h3>@doctorName Schedule</h3>
+            <p class="text-muted">@specialty</p>
+        </div>
+    </div>
+
+    @if (isLoading)
+    {
+        <div class="text-center py-5">
+            <div class="spinner-border text-primary"></div>
+        </div>
+    }
+    else
+    {
+        <div class="row mb-4">
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-body">
+                        <h6>Total Appointments</h6>
+                        <h3>@totalAppointments</h3>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-body">
+                        <h6>This Week</h6>
+                        <h3>@weekAppointments</h3>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-body">
+                        <h6>Avg Utilization</h6>
+                        <h3>@avgUtilization.ToString("F0")%</h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mb-3">
+            <div class="card-header">
+                <h5 class="mb-0">Filter by Date</h5>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <label class="form-label">Start Date</label>
+                        <InputDate class="form-control" @bind-Value="startDate" />
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">End Date</label>
+                        <InputDate class="form-control" @bind-Value="endDate" />
+                    </div>
+                    <div class="col-md-4 d-flex align-items-end">
+                        <button class="btn btn-primary w-100" @onclick="LoadSchedule">
+                            Apply Filter
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        @if (scheduleData.Count == 0)
+        {
+            <div class="alert alert-info">No appointments found for this period.</div>
+        }
+        else
+        {
+            @foreach (var dayData in scheduleData.Where(d => d.IsWorkingDay))
+            {
+                <div class="card mb-3">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            @dayData.Date.ToString("dddd, MMMM dd, yyyy")
+                            <span class="badge bg-primary ms-2">@dayData.BookedSlots / @dayData.TotalSlots slots</span>
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-2">
+                            @foreach (var slot in dayData.Slots)
+                            {
+                                <div class="col-md-3">
+                                    <div class="card @GetSlotCardClass(slot.Status)" 
+                                         style="cursor: @(slot.Status == SlotStatus.Booked ? "pointer" : "default");"
+                                         @onclick="() => NavigateToAppointment(slot)">
+                                        <div class="card-body p-2">
+                                            <div class="d-flex justify-content-between align-items-start">
+                                                <div>
+                                                    <strong>@slot.Start.ToString("h:mm tt")</strong>
+                                                    <br />
+                                                    <small class="text-muted">@slot.End.ToString("h:mm tt")</small>
+                                                </div>
+                                                <span class="badge @GetStatusBadge(slot.Status)">
+                                                    @slot.Status
+                                                </span>
+                                            </div>
+                                            @if (slot.Status == SlotStatus.Booked)
+                                            {
+                                                <div class="mt-2">
+                                                    <small>
+                                                        <i class="bi bi-person"></i> @slot.PatientName
+                                                        <br />
+                                                        <i class="bi bi-clipboard-pulse"></i> @slot.Type
+                                                    </small>
+                                                </div>
+                                            }
+                                            else
+                                            {
+                                                <div class="mt-2">
+                                                    <small class="text-muted">Available</small>
+                                                </div>
+                                            }
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+            }
+        }
+    }
+</div>
+
+@code {
+    [Parameter]
+    public long ProviderId { get; set; }
+
+    private List<DoctorDayViewDto> scheduleData = new();
+    private string doctorName = "";
+    private string specialty = "";
+    private bool isLoading = true;
+
+    private DateTime startDate = DateTime.Today;
+    private DateTime endDate = DateTime.Today.AddDays(7);
+
+    private int totalAppointments = 0;
+    private int weekAppointments = 0;
+    private decimal avgUtilization = 0;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadDoctorInfo();
+        await LoadSchedule();
+    }
+
+    private async Task LoadDoctorInfo()
+    {
+        try
+        {
+            var provider = await ProviderService.GetByIdAsync(ProviderId);
+            if (provider != null)
+            {
+                doctorName = provider.Name;
+                specialty = provider.Specialty;
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading doctor info: {ex.Message}");
+        }
+    }
+
+    private async Task LoadSchedule()
+    {
+        isLoading = true;
+
+        try
+        {
+            var start = DateOnly.FromDateTime(startDate);
+            var end = DateOnly.FromDateTime(endDate);
+
+            var request = new AdminScheduleRequest(
+                start,
+                end,
+                ProviderId: ProviderId
+            );
+
+            scheduleData = await AdminScheduleService.GetMasterScheduleAsync(request);
+
+            // Calculate stats
+            totalAppointments = scheduleData.Sum(d => d.BookedSlots);
+            weekAppointments = scheduleData
+                .Where(d => d.Date >= DateOnly.FromDateTime(DateTime.Today) && 
+                           d.Date < DateOnly.FromDateTime(DateTime.Today.AddDays(7)))
+                .Sum(d => d.BookedSlots);
+            
+            var workingDays = scheduleData.Where(d => d.IsWorkingDay).ToList();
+            avgUtilization = workingDays.Any() ? workingDays.Average(d => d.UtilizationPercent) : 0;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading schedule: {ex.Message}");
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private void NavigateToAppointment(DoctorScheduleSlotDto slot)
+    {
+        if (slot.Status == SlotStatus.Booked && slot.AppointmentId.HasValue)
+        {
+            Navigation.NavigateTo($"/appointments/{slot.AppointmentId.Value}");
+        }
+    }
+
+    private void GoBack()
+    {
+        Navigation.NavigateTo("/admin/master-schedule");
+    }
+
+    private string GetSlotCardClass(SlotStatus status)
+    {
+        return status switch
+        {
+            SlotStatus.Booked => "border-primary",
+            SlotStatus.Available => "border-success",
+            _ => "border-secondary"
+        };
+    }
+
+    private string GetStatusBadge(SlotStatus status)
+    {
+        return status switch
+        {
+            SlotStatus.Booked => "bg-primary",
+            SlotStatus.Available => "bg-success",
+            _ => "bg-secondary"
+        };
+    }
+}

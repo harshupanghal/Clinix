@@ -10,6 +10,6 @@
     protected override async Task OnInitializedAsync()
     {
         await HttpContext.SignOutAsync(AuthScheme);
-        NavigationManager.NavigateTo("/login", replace: true);
+        HttpContext.Response.Redirect("/login", false);
     }
 }

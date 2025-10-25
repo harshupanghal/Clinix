@@ -1,5 +1,4 @@
-﻿
-@* Layout/NavBar.razor *@
+﻿@* Layout/NavBar.razor *@
 @using Microsoft.AspNetCore.Components.Authorization
 @using System.Security.Claims
 @inject AuthenticationStateProvider AuthStateProvider
@@ -12,69 +11,48 @@
     <header class="clinix-topbar">
         <div class="clinix-topbar-left">
             <button class="icon-btn d-md-none" @onclick="ToggleMobileSidebar" aria-label="Toggle menu">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="3" y1="12" x2="21" y2="12"></line>
+                    <line x1="3" y1="6" x2="21" y2="6"></line>
+                    <line x1="3" y1="18" x2="21" y2="18"></line>
+                </svg>
             </button>
 
-            <a class="navbar-brand" href="/">
-               <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-  <!-- Hospital building -->
-  <rect x="4" y="8" width="16" height="14" rx="1" stroke="currentColor" stroke-width="2" fill="none"/>
-  
-  <!-- Medical cross -->
-  <path d="M10 4 L10 8 L8 8 L8 12 L10 12 L10 16 L14 16 L14 12 L16 12 L16 8 L14 8 L14 4 Z" fill="currentColor" stroke="none"/>
-  
-  <!-- Windows -->
-  <rect x="7" y="11" width="2" height="2" fill="currentColor" stroke="none" opacity="0.6"/>
-  <rect x="11" y="11" width="2" height="2" fill="currentColor" stroke="none" opacity="0.6"/>
-  <rect x="15" y="11" width="2" height="2" fill="currentColor" stroke="none" opacity="0.6"/>
-  
-  <rect x="7" y="15" width="2" height="2" fill="currentColor" stroke="none" opacity="0.6"/>
-  <rect x="11" y="15" width="2" height="2" fill="currentColor" stroke="none" opacity="0.6"/>
-  <rect x="15" y="15" width="2" height="2" fill="currentColor" stroke="none" opacity="0.6"/>
-  
-  <rect x="7" y="19" width="2" height="2" fill="currentColor" stroke="none" opacity="0.6"/>
-  <rect x="15" y="19" width="2" height="2" fill="currentColor" stroke="none" opacity="0.6"/>
-  
-  <!-- Door -->
-  <rect x="11" y="19" width="2" height="3" fill="currentColor" stroke="none" opacity="0.8"/>
-</svg>
+            <a class="navbar-brand d-md-none" href="/">
+                <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"/>
+                    <path d="M12 8v4"/>
+                    <path d="M12 16h.01"/>
+                    <path d="M12 6v.01"/>
+                    <line x1="9" y1="12" x2="15" y2="12"/>
+                    <line x1="12" y1="9" x2="12" y2="15"/>
+                </svg>
                 <span class="brand-text">Clinix</span>
             </a>
 
-            <button class="icon-btn collapse-btn" @onclick="ToggleCollapse" aria-label="Toggle sidebar">
-                 @if (_isCollapsed)
-                {
-                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
-                }
-                else
-                {
-                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
-                }
-            </button>
         </div>
 
         <div class="clinix-topbar-right">
             @if (_isAuthenticated)
             {
-                <div class="user-info-dropdown">
-                    <button class="user-info-chip" @onclick="ToggleUserDropdown">
-                        <div class="user-avatar">
-                            <span>@(_userName.Length > 0 ? _userName.ToUpper()[0].ToString() : "U")</span>
-                        </div>
-                        <div class="user-info-text">
-                            <div class="user-name">@_userName</div>
-                            <div class="user-role">@_userRole</div>
-                        </div>
-                        @* <svg class="chevron" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg> *@
-                    </button>
-                    
-                    
+                <div class="user-info-card">
+                    <div class="user-avatar">
+                        <span>@(_userName.Length > 0 ? _userName.ToUpper()[0].ToString() : "U")</span>
+                    </div>
+                    <div class="user-info-text">
+                        <div class="user-name">@_userName</div>
+                        <div class="user-role">@_userRole</div>
+                    </div>
                 </div>
             }
             else
             {
-                <NavLink class="btn btn-primary btn-sm" href="login">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="me-1" viewBox="0 0 24 24"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path><polyline points="10 17 15 12 10 7"></polyline><line x1="15" y1="12" x2="3" y2="12"></line></svg>
+                <NavLink class="btn btn-primary btn-sm px-4" href="login">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="me-2" viewBox="0 0 24 24">
+                        <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path>
+                        <polyline points="10 17 15 12 10 7"></polyline>
+                        <line x1="15" y1="12" x2="3" y2="12"></line>
+                    </svg>
                     Login
                 </NavLink>
             }
@@ -83,15 +61,25 @@
 
     <!-- Sidebar -->
     <aside class="clinix-sidebar @(_mobileSidebarOpen ? "open-mobile" : "")" data-collapsed="@_isCollapsed.ToString().ToLower()">
+        <div class="sidebar-header">
+            <a class="sidebar-brand" href="/">
+                <!-- Improved Medical Logo -->
+                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
+                </svg>
+                <span class="brand-text">Clinix</span>
+            </a>
+        </div>
+
         <div class="sidebar-content">
             <nav class="sidebar-nav">
                 <ul class="nav-list">
-                    @* <li class="nav-item-header">
-                        <span class="link-text">Main Menu</span>
-                    </li> *@
                     <li class="nav-item">
                         <NavLink class="nav-link" href="" Match="NavLinkMatch.All" @onclick="CloseMobileSidebar">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                                <polyline points="9 22 9 12 15 12 15 22"></polyline>
+                            </svg>
                             <span class="link-text">Home</span>
                         </NavLink>
                     </li>
@@ -100,19 +88,25 @@
                     {
                         <li class="nav-item">
                             <NavLink class="nav-link" href="/patient/dashboard" @onclick="CloseMobileSidebar">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9"></rect><rect x="14" y="3" width="7" height="5"></rect><rect x="14" y="12" width="7" height="9"></rect><rect x="3" y="16" width="7" height="5"></rect></svg>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <rect x="3" y="3" width="7" height="9"></rect><rect x="14" y="3" width="7" height="5"></rect><rect x="14" y="12" width="7" height="9"></rect><rect x="3" y="16" width="7" height="5"></rect>
+                                </svg>
                                 <span class="link-text">Dashboard</span>
                             </NavLink>
                         </li>
                         <li class="nav-item">
                             <NavLink class="nav-link" href="/appointments/patient" @onclick="CloseMobileSidebar">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line><path d="m9 16 2 2 4-4"></path></svg>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line><path d="m9 16 2 2 4-4"></path>
+                                </svg>
                                 <span class="link-text">Appointments</span>
                             </NavLink>
                         </li>
                         <li class="nav-item">
                             <NavLink class="nav-link" href="/appointments/schedule" @onclick="CloseMobileSidebar">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2v4"></path><path d="M16 2v4"></path><rect x="3" y="4" width="18" height="18" rx="2"></rect><path d="M3 10h18"></path><path d="M10 16h4"></path><path d="M12 14v4"></path></svg>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M8 2v4"></path><path d="M16 2v4"></path><rect x="3" y="4" width="18" height="18" rx="2"></rect><path d="M3 10h18"></path><path d="M10 16h4"></path><path d="M12 14v4"></path>
+                                </svg>
                                 <span class="link-text">Book New</span>
                             </NavLink>
                         </li>
@@ -122,13 +116,17 @@
                     {
                         <li class="nav-item">
                             <NavLink class="nav-link" href="/appointments/provider" @onclick="CloseMobileSidebar">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2v4"></path><path d="M16 2v4"></path><rect x="3" y="4" width="18" height="18" rx="2"></rect><path d="M3 10h18"></path></svg>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M8 2v4"></path><path d="M16 2v4"></path><rect x="3" y="4" width="18" height="18" rx="2"></rect><path d="M3 10h18"></path>
+                                </svg>
                                 <span class="link-text">Schedule</span>
                             </NavLink>
                         </li>
                         <li class="nav-item">
                             <NavLink class="nav-link" href="/provider/settings" @onclick="CloseMobileSidebar">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"></path><path d="M12 6v6l4 2"></path></svg>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"></path><path d="M12 6v6l4 2"></path>
+                                </svg>
                                 <span class="link-text">Availability</span>
                             </NavLink>
                         </li>
@@ -136,33 +134,41 @@
 
                     @if (_isAuthenticated && _userRole == "Admin")
                     {
-                         
                         <li class="nav-item">
                             <NavLink class="nav-link" href="/admin/symptom-mapping" @onclick="CloseMobileSidebar">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z"></path></svg>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z"></path>
+                                </svg>
                                 <span class="link-text">Symptoms Mapping</span>
                             </NavLink>
                         </li>
                         <li class="nav-item">
                             <NavLink class="nav-link" href="/inventory" @onclick="CloseMobileSidebar">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line>
+                                </svg>
                                 <span class="link-text">Inventory</span>
                             </NavLink>
                         </li>
-
                         <li class="nav-item">
                             <NavLink class="nav-link" href="create-staff" @onclick="CloseMobileSidebar">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                                </svg>
                                 <span class="link-text">Create Staff</span>
                             </NavLink>
                         </li>
-
-                        @* <li class="nav-item">
-                            <NavLink class="nav-link" href="users" @onclick="CloseMobileSidebar">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
-                                <span class="link-text">Users</span>
+                        <li class="nav-item">
+                            <NavLink class="nav-link" href="admin/master-schedule" @onclick="CloseMobileSidebar">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                                    <line x1="3" y1="9" x2="21" y2="9"></line>
+                                    <line x1="9" y1="4" x2="9" y2="9"></line>
+                                    <line x1="15" y1="4" x2="15" y2="9"></line>
+                                </svg>
+                                <span class="link-text">Master Schedule</span>
                             </NavLink>
-                        </li> *@
+                        </li>
                     }
                 </ul>
             </nav>
@@ -171,18 +177,24 @@
                 @if (_isAuthenticated)
                 {
                     <div class="sidebar-user-card" data-collapsed="@_isCollapsed.ToString().ToLower()">
-                         <div class="role-icon">
+                        <div class="role-icon">
                             @if (_userRole == "Admin")
                             {
-                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                                </svg>
                             }
                             else if (_userRole == "Doctor")
                             {
-                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"></path></svg>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M22 12h-4l-3 9L9 3l-3 9H2"></path>
+                                </svg>
                             }
                             else
                             {
-                               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                                </svg>
                             }
                         </div>
                         <div class="role-text">
@@ -190,12 +202,39 @@
                             <span class="role-subtitle">Access Level</span>
                         </div>
                     </div>
-                    
+
                     <button class="sidebar-logout-btn" @onclick="Logout" data-collapsed="@_isCollapsed.ToString().ToLower()">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                            <polyline points="16 17 21 12 16 7"></polyline>
+                            <line x1="21" y1="12" x2="9" y2="12"></line>
+                        </svg>
                         <span class="link-text">Logout</span>
                     </button>
                 }
+
+                <!-- Fixed Collapse Button with Dynamic SVG -->
+                <button class="sidebar-collapse-btn d-none d-md-flex" @onclick="ToggleCollapse" aria-label="Toggle sidebar">
+                    @if (_isCollapsed)
+                    {
+                        <!-- Collapsed: Show expand (chevrons pointing right) -->
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="13 17 18 12 13 7"></polyline>
+                            <polyline points="6 17 11 12 6 7"></polyline>
+                        </svg>
+                        <span class="link-text">Expand Menu</span>
+                    }
+                    else
+                    {
+                        <!-- Expanded: Show collapse (chevrons pointing left) -->
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="11 17 6 12 11 7"></polyline>
+                            <polyline points="18 17 13 12 18 7"></polyline>
+                        </svg>
+                        <span class="link-text">Collapse Menu</span>
+                    }
+                </button>
+
                 <div class="version-text">
                     <span class="link-text">Clinix v1.0.0</span>
                 </div>
@@ -209,13 +248,14 @@
     }
 </div>
 
+@inject IJSRuntime JS
+
 @code {
     private bool _isAuthenticated;
     private string _userName = "User";
     private string _userRole = "User";
     private bool _isCollapsed = false;
     private bool _mobileSidebarOpen = false;
-    private bool _userDropdownOpen = false;
 
     protected override async Task OnInitializedAsync()
     {
@@ -229,37 +269,43 @@
         }
     }
 
-    private void ToggleCollapse() => _isCollapsed = !_isCollapsed;
+    private async Task ToggleCollapse()
+    {
+        _isCollapsed = !_isCollapsed;
+        
+        // Toggle body class for main content adjustment
+        await JS.InvokeVoidAsync("eval", 
+            _isCollapsed 
+                ? "document.body.classList.add('sidebar-collapsed')" 
+                : "document.body.classList.remove('sidebar-collapsed')");
+    }
+
     private void ToggleMobileSidebar() => _mobileSidebarOpen = !_mobileSidebarOpen;
     private void CloseMobileSidebar() => _mobileSidebarOpen = false;
-    private void ToggleUserDropdown() => _userDropdownOpen = !_userDropdownOpen;
-    private void CloseUserDropdown() => _userDropdownOpen = false;
-    
-    private void Logout() 
+
+    private void Logout()
     {
-        _userDropdownOpen = false;
         Navigation.NavigateTo("logout", forceLoad: true);
     }
 }
+
 
 <style>
     :root {
         --sidebar-width: 260px;
         --sidebar-width-collapsed: 80px;
-        --topbar-height: 64px;
-        
-        /* New Hospital Theme Colors */
+        --topbar-height: 68px;
+
         --c-primary: #007a99;
         --c-primary-light: #e0f7ff;
         --c-primary-dark: #005b73;
         --c-accent: #29b6f6;
         --c-danger: #e53935;
-        --c-danger-light: #ffebee;
 
-        --c-bg: #f4f7f9;
+        --c-bg: #f8f9fa;
         --c-surface: #ffffff;
         --c-border: #e1e8ed;
-        
+
         --c-text-primary: #1d2c38;
         --c-text-secondary: #5a6e7e;
         --c-text-on-dark: #ffffff;
@@ -268,53 +314,62 @@
         --c-sidebar-bg: linear-gradient(180deg, #005b73 0%, #004d61 100%);
         --c-sidebar-bg-hover: rgba(255, 255, 255, 0.05);
         --c-sidebar-bg-active: rgba(255, 255, 255, 0.1);
-        
-        --shadow-sm: 0 2px 4px rgba(29, 44, 56, 0.05);
-        --shadow-md: 0 4px 12px rgba(29, 44, 56, 0.08);
-        --shadow-lg: 0 10px 30px rgba(29, 44, 56, 0.1);
-        
-        --radius-sm: 4px;
-        --radius-md: 8px;
-        --radius-lg: 12px;
-        
-        --transition-fast: 200ms ease;
+
+        --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08);
+        --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.07);
+        --shadow-lg: 0 10px 20px rgba(0, 0, 0, 0.08);
+
+        --radius-sm: 6px;
+        --radius-md: 10px;
+        --radius-lg: 14px;
+
+        --transition-fast: 180ms ease;
         --transition-normal: 300ms cubic-bezier(0.4, 0, 0.2, 1);
     }
-    
+
     .clinix-nav-container {
         position: relative;
     }
 
     /* ============================================
-       TOPBAR STYLES
+       TOPBAR
        ============================================ */
     .clinix-topbar {
         position: fixed;
-        top: 0; left: var(--sidebar-width); right: 0;
+        top: 0;
+        left: var(--sidebar-width);
+        right: 0;
         height: var(--topbar-height);
         background-color: var(--c-surface);
-        /* border-bottom: 1px solid var(--c-border); */
+        border-bottom: 1px solid var(--c-border);
         display: flex;
         align-items: center;
         justify-content: space-between;
-        padding: 0 24px;
+        padding: 0 32px;
         z-index: 1001;
         transition: left var(--transition-normal);
+        box-shadow: var(--shadow-sm);
     }
+
     body:has(.clinix-sidebar[data-collapsed="true"]) .clinix-topbar,
-.clinix-sidebar[data-collapsed="true"] ~ .clinix-topbar {
-    left: var(--sidebar-width-collapsed);
-}
+    .clinix-sidebar[data-collapsed="true"] ~ .clinix-topbar {
+        left: var(--sidebar-width-collapsed);
+    }
+
     .clinix-topbar-left,
     .clinix-topbar-right {
         display: flex;
         align-items: center;
-        gap: 16px;
+        gap: 20px;
     }
 
-    /* ============================================
-       BRAND & COLLAPSE BUTTON
-       ============================================ */
+    .page-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: var(--c-text-primary);
+        margin: 0;
+    }
+
     .navbar-brand {
         display: flex;
         align-items: center;
@@ -323,15 +378,14 @@
         font-weight: 600;
         font-size: 1.25rem;
         text-decoration: none;
-        margin-right: 16px;
     }
-    .brand-text { transition: opacity var(--transition-normal); }
 
     .icon-btn {
         display: flex;
         align-items: center;
         justify-content: center;
-        width: 40px; height: 40px;
+        width: 40px;
+        height: 40px;
         background-color: transparent;
         border: none;
         border-radius: var(--radius-md);
@@ -339,80 +393,67 @@
         cursor: pointer;
         transition: all var(--transition-fast);
     }
-    /* .icon-btn:hover {
-        background-color: var(--c-primary-light);
+
+    .icon-btn:hover {
+        background-color: var(--c-bg);
         color: var(--c-primary);
-    } */
-    .collapse-btn { display: none; }
+    }
 
-    /* ============================================
-       USER INFO DROPDOWN
-       ============================================ */
-    .user-info-dropdown { position: relative; }
-
-    .user-info-chip {
+    .user-info-card {
         display: flex;
         align-items: center;
         gap: 12px;
-        padding: 6px;
-        background-color: transparent;
-        border: none;
+        padding: 8px 16px;
+        background-color: var(--c-bg);
         border-radius: var(--radius-lg);
-        cursor: pointer;
-        transition: background-color var(--transition-fast);
+        border: 1px solid var(--c-border);
+        transition: all var(--transition-fast);
     }
-    .user-info-chip:hover { background-color: var(--c-bg); }
+
+    .user-info-card:hover {
+        border-color: var(--c-primary);
+        box-shadow: 0 0 0 3px var(--c-primary-light);
+    }
 
     .user-avatar {
-        width: 40px; height: 40px;
+        width: 40px;
+        height: 40px;
         border-radius: 50%;
-        background: var(--c-primary);
+        background: linear-gradient(135deg, var(--c-primary), var(--c-accent));
         display: flex;
         align-items: center;
         justify-content: center;
         color: var(--c-text-on-dark);
         font-weight: 600;
         font-size: 1rem;
+        flex-shrink: 0;
     }
 
-    .user-info-text { display: none; text-align: left; }
-    .user-name { font-weight: 600; color: var(--c-text-primary); line-height: 1.2; }
-    .user-role { font-size: 0.8rem; color: var(--c-text-secondary); line-height: 1.2; }
-    .chevron { color: var(--c-text-secondary); transition: transform var(--transition-fast); }
-    .user-info-chip[aria-expanded="true"] .chevron { transform: rotate(180deg); }
-
-    .dropdown-menu-custom {
-        position: absolute;
-        top: calc(100% + 8px); right: 0;
-        min-width: 220px;
-        background-color: var(--c-surface);
-        border: 1px solid var(--c-border);
-        border-radius: var(--radius-md);
-        box-shadow: var(--shadow-lg);
-        padding: 8px;
-        z-index: 1002;
-        animation: dropdownFadeIn 150ms ease forwards;
+    .user-info-text {
+        display: none;
+        text-align: left;
     }
-    @@keyframes dropdownFadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
 
-    .dropdown-item-custom {
-        display: flex; align-items: center; gap: 12px;
-        padding: 10px 12px; font-size: 0.9rem; color: var(--c-text-secondary);
-        text-decoration: none; border-radius: var(--radius-sm); cursor: pointer;
-        transition: all var(--transition-fast); background: none; border: none;
-        width: 100%; text-align: left;
+    .user-name {
+        font-weight: 600;
+        color: var(--c-text-primary);
+        line-height: 1.3;
+        font-size: 0.95rem;
     }
-    .dropdown-item-custom:hover { background-color: var(--c-bg); color: var(--c-text-primary); }
-    .dropdown-item-custom.danger { color: var(--c-danger); }
-    .dropdown-item-custom.danger:hover { background-color: var(--c-danger-light); }
-    .dropdown-divider-custom { height: 1px; background-color: var(--c-border); margin: 8px 0; }
+
+    .user-role {
+        font-size: 0.8rem;
+        color: var(--c-text-secondary);
+        line-height: 1.2;
+    }
 
     /* ============================================
-       SIDEBAR STYLES
+       SIDEBAR
        ============================================ */
     .clinix-sidebar {
         position: fixed;
-        top: 0; left: 0;
+        top: 0;
+        left: 0;
         width: var(--sidebar-width);
         height: 100vh;
         background: var(--c-sidebar-bg);
@@ -420,65 +461,100 @@
         display: flex;
         flex-direction: column;
         transition: width var(--transition-normal), transform var(--transition-normal);
-        z-index: 1000;
+        z-index: 1002;
         box-shadow: var(--shadow-md);
     }
-    
-    .clinix-sidebar[data-collapsed="true"] { width: var(--sidebar-width-collapsed); }
-    
+
+    .clinix-sidebar[data-collapsed="true"] {
+        width: var(--sidebar-width-collapsed);
+    }
+
+    .sidebar-header {
+        height: var(--topbar-height);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        flex-shrink: 0;
+        padding: 0 20px;
+    }
+
+    .sidebar-brand {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        color: var(--c-text-on-dark);
+        font-weight: 700;
+        font-size: 1.35rem;
+        text-decoration: none;
+        letter-spacing: -0.5px;
+    }
+
+    .clinix-sidebar[data-collapsed="true"] .sidebar-brand .brand-text {
+        display: none;
+    }
+
     .sidebar-content {
         display: flex;
         flex-direction: column;
-        height: 100%;
+        height: calc(100% - var(--topbar-height));
         overflow-y: auto;
         overflow-x: hidden;
     }
-    
-    .sidebar-content::-webkit-scrollbar { width: 6px; }
-    .sidebar-content::-webkit-scrollbar-track { background: transparent; }
-    .sidebar-content::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 3px; }
-    .sidebar-content::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.3); }
+
+    .sidebar-content::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .sidebar-content::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    .sidebar-content::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 3px;
+    }
+
+    .sidebar-content::-webkit-scrollbar-thumb:hover {
+        background: rgba(255, 255, 255, 0.3);
+    }
 
     .sidebar-nav {
         flex-grow: 1;
-        padding: 16px 12px;
+        padding: 20px 12px;
     }
-    
-    /* ============================================
-       NAV LIST
-       ============================================ */
-    .nav-list { list-style: none; padding: 0; margin: 0; }
-    .nav-item { margin-bottom: 4px; }
-    
-    .nav-item-header {
-        padding: 16px 16px 8px;
-        font-size: 0.7rem;
-        font-weight: 600;
-        text-transform: uppercase;
-        color: var(--c-text-on-dark-secondary);
-        opacity: 0.7;
-        letter-spacing: 0.5px;
-        transition: opacity var(--transition-normal);
+
+    .nav-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    .nav-item {
+        margin-bottom: 4px;
     }
 
     .nav-link {
-        display: flex; align-items: center;
-        height: 44px;
+        display: flex;
+        align-items: center;
+        height: 46px;
         padding: 0 16px;
-        gap: 16px;
+        gap: 14px;
         color: var(--c-text-on-dark-secondary);
         text-decoration: none;
         border-radius: var(--radius-md);
-        font-size: 0.9rem;
+        font-size: 0.95rem;
         font-weight: 500;
         transition: all var(--transition-fast);
         white-space: nowrap;
         position: relative;
     }
+
     .nav-link::before {
         content: '';
         position: absolute;
-        left: 0; top: 50%;
+        left: 0;
+        top: 50%;
         transform: translateY(-50%);
         height: 0;
         width: 4px;
@@ -486,44 +562,60 @@
         border-radius: 0 4px 4px 0;
         transition: height var(--transition-fast);
     }
-    .nav-link:hover { background-color: var(--c-sidebar-bg-hover); color: var(--c-text-on-dark); }
-    .nav-link.active { background-color: var(--c-sidebar-bg-active); color: var(--c-text-on-dark); font-weight: 600; }
-    .nav-link.active::before { height: 60%; }
-    .nav-link svg { flex-shrink: 0; transition: transform var(--transition-fast); }
-    .nav-link:hover svg { transform: scale(1.1); }
 
-    .link-text { 
+    .nav-link:hover {
+        background-color: var(--c-sidebar-bg-hover);
+        color: var(--c-text-on-dark);
+    }
+
+    .nav-link.active {
+        background-color: var(--c-sidebar-bg-active);
+        color: var(--c-text-on-dark);
+        font-weight: 600;
+    }
+
+    .nav-link.active::before {
+        height: 60%;
+    }
+
+    .nav-link svg {
+        flex-shrink: 0;
+        transition: transform var(--transition-fast);
+    }
+
+    .nav-link:hover svg {
+        transform: scale(1.08);
+    }
+
+    .link-text {
         transition: opacity 150ms linear, transform 150ms linear;
     }
-    
-    .clinix-sidebar[data-collapsed="true"] .link-text,
-    .clinix-sidebar[data-collapsed="true"] .nav-item-header .link-text {
+
+    .clinix-sidebar[data-collapsed="true"] .link-text {
         opacity: 0;
         transform: translateX(-10px);
         pointer-events: none;
         position: absolute;
         left: 80px;
         background: var(--c-primary-dark);
-        padding: 5px 10px;
+        padding: 6px 12px;
         border-radius: var(--radius-sm);
-        box-shadow: var(--shadow-sm);
-        font-size: 0.8rem;
+        box-shadow: var(--shadow-md);
+        font-size: 0.85rem;
         white-space: nowrap;
+        z-index: 10;
     }
+
     .clinix-sidebar[data-collapsed="true"] .nav-link:hover .link-text {
         opacity: 1;
         transform: translateX(0);
-        transition-delay: 100ms;
+        transition-delay: 200ms;
     }
-    .clinix-sidebar[data-collapsed="true"] .nav-link { justify-content: center; padding: 0; }
-    .clinix-sidebar[data-collapsed="true"] .nav-item-header { padding: 16px 0; text-align: center; }
-    .clinix-sidebar[data-collapsed="true"] .nav-item-header::after {
-        content: '...';
-        font-size: 1rem;
-        line-height: 1;
-    }
-    .clinix-sidebar[data-collapsed="true"] .nav-item-header .link-text { display: none; }
 
+    .clinix-sidebar[data-collapsed="true"] .nav-link {
+        justify-content: center;
+        padding: 0;
+    }
 
     /* ============================================
        SIDEBAR FOOTER
@@ -538,63 +630,53 @@
         display: flex;
         align-items: center;
         gap: 12px;
-        background: rgba(0,0,0,0.2);
+        background: rgba(0, 0, 0, 0.2);
         padding: 12px;
         border-radius: var(--radius-md);
         margin-bottom: 12px;
         transition: all var(--transition-normal);
         overflow: hidden;
-        max-height:72px;
+        max-height: 72px;
     }
-    .role-icon { 
-        color: var(--c-accent); 
+
+    .role-icon {
+        color: var(--c-accent);
         flex-shrink: 0;
-        width: 24px;
-        height: 24px;
+        width: 20px;
+        height: 20px;
         display: flex;
         align-items: center;
         justify-content: center;
-        transition: opacity var(--transition-normal), width var(--transition-normal);
     }
-    .role-icon svg {
-        width: 24px;
-        height: 24px;
-    }
-    .role-text { 
-        white-space: nowrap; 
-        transition: opacity var(--transition-normal), width var(--transition-normal);
+
+    .role-text {
+        white-space: nowrap;
         overflow: hidden;
         display: flex;
         flex-direction: column;
     }
-    .role-title { 
-        font-weight: 600; 
-        font-size: 0.9rem; 
+
+    .role-title {
+        font-weight: 600;
+        font-size: 0.9rem;
         color: var(--c-text-on-dark);
-        display: block;
-    }
-    .role-subtitle { 
-        font-size: 0.75rem; 
-        color: var(--c-text-on-dark-secondary);
-        display: block;
     }
 
-    .sidebar-user-card[data-collapsed="true"] { 
-        display:none;
+    .role-subtitle {
+        font-size: 0.75rem;
+        color: var(--c-text-on-dark-secondary);
     }
-    .sidebar-user-card[data-collapsed="true"] .role-icon { 
-         display:none;
+
+    .sidebar-user-card[data-collapsed="true"] {
+        display: none;
     }
-    .sidebar-user-card[data-collapsed="true"] .role-text { 
-      display:none;
-    }
-    
+
     .sidebar-logout-btn {
         display: flex;
         align-items: center;
         gap: 12px;
         width: 100%;
-        padding: 10px 16px;
+        padding: 12px 16px;
         background: rgba(229, 57, 53, 0.15);
         border: 1px solid rgba(229, 57, 53, 0.3);
         border-radius: var(--radius-md);
@@ -606,91 +688,142 @@
         margin-bottom: 12px;
         white-space: nowrap;
     }
+
     .sidebar-logout-btn:hover {
         background: rgba(229, 57, 53, 0.25);
         border-color: rgba(229, 57, 53, 0.5);
     }
+
     .sidebar-logout-btn svg {
         flex-shrink: 0;
     }
+
     .sidebar-logout-btn[data-collapsed="true"] {
         justify-content: center;
-        padding: 10px;
+        padding: 12px;
     }
+
     .sidebar-logout-btn[data-collapsed="true"] .link-text {
+        display: none;
+    }
+
+    .sidebar-collapse-btn {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        width: 100%;
+        padding: 12px 16px;
+        background: rgba(255, 255, 255, 0.08);
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        border-radius: var(--radius-md);
+        color: var(--c-text-on-dark-secondary);
+        font-size: 0.9rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all var(--transition-fast);
+        margin-bottom: 12px;
+    }
+
+    .sidebar-collapse-btn:hover {
+        background: rgba(255, 255, 255, 0.12);
+        border-color: rgba(255, 255, 255, 0.25);
+        color: var(--c-text-on-dark);
+    }
+
+    .sidebar-collapse-btn svg {
+        flex-shrink: 0;
+    }
+
+    .sidebar-collapse-btn[data-collapsed="true"] {
+        justify-content: center;
+        padding: 12px;
+    }
+
+    .sidebar-collapse-btn .link-text {
+        transition: opacity 150ms linear, width 150ms linear;
+    }
+
+    .clinix-sidebar[data-collapsed="true"] .sidebar-collapse-btn .link-text {
         opacity: 0;
         width: 0;
-        overflow: hidden;
         position: absolute;
+        left: 80px;
+        background: var(--c-primary-dark);
+        padding: 6px 12px;
+        border-radius: var(--radius-sm);
+        box-shadow: var(--shadow-md);
+        font-size: 0.85rem;
+        white-space: nowrap;
     }
-    
+
+    .clinix-sidebar[data-collapsed="true"] .sidebar-collapse-btn:hover .link-text {
+        opacity: 1;
+        transition-delay: 200ms;
+    }
+
     .version-text {
         text-align: center;
         font-size: 0.7rem;
-        color: rgba(255, 255, 255, 0.4);
-        transition: opacity var(--transition-normal);
-    }
-    .clinix-sidebar[data-collapsed="true"] .version-text .link-text {
-        opacity: 0;
+        color: rgba(255, 255, 255, 0.35);
     }
 
+    .clinix-sidebar[data-collapsed="true"] .version-text .link-text {
+        display: none;
+    }
 
     /* ============================================
-       RESPONSIVE DESIGN
+       RESPONSIVE
        ============================================ */
     .mobile-overlay {
-        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-        background-color: rgba(29, 44, 56, 0.5);
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
         z-index: 999;
         display: none;
         animation: fadeIn 200ms ease;
     }
-    @@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+    @@keyframes fadeIn {
+        from {
+            opacity: 0;
+        }
+        to {
+            opacity: 1;
+        }
+    }
 
     @@media (max-width: 767.98px) {
-        .clinix-sidebar { 
-            transform: translateX(-100%); 
+        .clinix-sidebar {
+            transform: translateX(-100%);
             width: 280px;
         }
-        .clinix-sidebar.open-mobile { transform: translateX(0); }
-        .mobile-overlay { display: block; }
-        .clinix-topbar { left: 0; }
+
+        .clinix-sidebar.open-mobile {
+            transform: translateX(0);
+        }
+
+        .mobile-overlay {
+            display: block;
+        }
+
+        .clinix-topbar {
+            left: 0;
+        }
     }
 
     @@media (min-width: 768px) {
-        .brand-text { display: inline; }
-        .collapse-btn { display: flex; }
-        .user-info-text { display: block; }
-    }
+        .user-info-text {
+            display: block;
+        }
+    
 
     @@media (prefers-reduced-motion: reduce) {
-        * { animation: none !important; transition: none !important; }
-    }
-    
-    /* ============================================
-       MAIN CONTENT AREA ADJUSTMENTS
-       ============================================ */
-    .main-content-area {
-        transition: margin-left var(--transition-normal);
-    }
-    
-    /* Desktop: account for expanded sidebar */
-    @@media (min-width: 768px) {
-        .main-content-area {
-            margin-left: var(--sidebar-width);
-        }
-        
-        /* Collapsed sidebar state */
-        .clinix-sidebar[data-collapsed="true"] ~ * .main-content-area,
-        body:has(.clinix-sidebar[data-collapsed="true"]) .main-content-area {
-            margin-left: var(--sidebar-width-collapsed);
-        }
-    }
-    
-    /* Mobile: no sidebar margin */
-    @@media (max-width: 767.98px) {
-        .main-content-area {
-            margin-left: 0 !important;
+        * {
+            animation: none !important;
+            transition: none !important;
         }
     }
 </style>

@@ -69,6 +69,25 @@ namespace Clinix.Infrastructure.Persistence.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "SeedStatuses",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    SeedName = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
+                    Version = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
+                    ExecutedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    IsCompleted = table.Column<bool>(type: "bit", nullable: false),
+                    ExecutedBy = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
+                    ErrorMessage = table.Column<string>(type: "nvarchar(1000)", maxLength: 1000, nullable: true),
+                    RetryCount = table.Column<int>(type: "int", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_SeedStatuses", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "SymptomKeywords",
                 columns: table => new
                 {
@@ -391,6 +410,12 @@ namespace Clinix.Infrastructure.Persistence.Migrations
                 column: "Specialty");
 
             migrationBuilder.CreateIndex(
+                name: "IX_SeedStatuses_SeedName_Version",
+                table: "SeedStatuses",
+                columns: new[] { "SeedName", "Version" },
+                unique: true);
+
+            migrationBuilder.CreateIndex(
                 name: "IX_SymptomKeywords_Keyword",
                 table: "SymptomKeywords",
                 column: "Keyword");
@@ -419,6 +444,9 @@ namespace Clinix.Infrastructure.Persistence.Migrations
 
             migrationBuilder.DropTable(
                 name: "Providers");
+
+            migrationBuilder.DropTable(
+                name: "SeedStatuses");
 
             migrationBuilder.DropTable(
                 name: "Staff");

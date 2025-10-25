@@ -2,6 +2,7 @@
 namespace Clinix.Domain.Interfaces;
 
 using Clinix.Domain.Entities;
+using Clinix.Domain.Entities.ApplicationUsers;
 
 public interface IAppointmentRepository
     {
@@ -27,5 +28,14 @@ public interface IProviderRepository
     Task<List<Provider>> SearchAsync(string[] keywords, CancellationToken ct = default);
     Task AddAsync(Provider provider, CancellationToken ct = default);
     Task UpdateAsync(Provider provider, CancellationToken ct = default);
+    }
+
+public interface IDoctorScheduleRepository
+    {
+    Task<List<DoctorSchedule>> GetByDoctorAsync(long doctorId, CancellationToken ct = default);
+    Task<DoctorSchedule?> GetByDoctorAndDayAsync(long doctorId, DayOfWeek day, CancellationToken ct = default);
+    Task<List<DoctorSchedule>> GetByProviderAndDayAsync(long providerId, DayOfWeek day, CancellationToken ct = default);
+    Task AddRangeAsync(List<DoctorSchedule> schedules, CancellationToken ct = default);
+    Task UpdateAsync(DoctorSchedule schedule, CancellationToken ct = default);
     }
 

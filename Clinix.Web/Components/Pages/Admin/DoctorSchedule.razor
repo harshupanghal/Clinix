@@ -1,0 +1,362 @@
+﻿@page "/admin/master-schedule"
+@attribute [Authorize(Roles = "Admin")]
+@rendermode InteractiveServer
+@using Clinix.Application.DTOs
+@using Clinix.Application.Interfaces
+@using Clinix.Domain.Enums
+@inject IAdminScheduleAppService AdminScheduleService
+@inject NavigationManager Navigation
+
+<PageTitle>Master Schedule</PageTitle>
+
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h3 class="mb-0">Master Schedule Dashboard</h3>
+    </div>
+
+    @if (isLoading)
+    {
+        <div class="text-center py-5">
+            <div class="spinner-border text-primary"></div>
+            <p class="mt-2 text-muted">Loading schedule...</p>
+        </div>
+    }
+    else if (errorMessage != null)
+    {
+        <div class="alert alert-danger">
+            <i class="bi bi-exclamation-triangle"></i> <strong>Error:</strong> @errorMessage
+        </div>
+    }
+    else
+    {
+        <!-- Stats Cards -->
+        <div class="row g-3 mb-4">
+            <div class="col-md-3">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body text-center">
+                        <h4 class="mb-1">@stats.TotalAppointments</h4>
+                        <p class="text-muted mb-0 small">Total Appointments</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body text-center">
+                        <h4 class="mb-1">@stats.PendingApprovals</h4>
+                        <p class="text-muted mb-0 small">Pending Approvals</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body text-center">
+                        <h4 class="mb-1">@stats.AvailableSlots</h4>
+                        <p class="text-muted mb-0 small">Available Slots</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body text-center">
+                        <h4 class="mb-1">@stats.AvgUtilizationPercent.ToString("F1")%</h4>
+                        <p class="text-muted mb-0 small">Avg Utilization</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filters -->
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-3">
+                        <label class="form-label small text-muted">Start Date</label>
+                        <InputDate class="form-control" @bind-Value="startDate" />
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label small text-muted">End Date</label>
+                        <InputDate class="form-control" @bind-Value="endDate" />
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label small text-muted">Specialty</label>
+                        <InputSelect class="form-select" @bind-Value="selectedSpecialty">
+                            <option value="">All</option>
+                            @foreach (var spec in specialties)
+                            {
+                                <option value="@spec">@spec</option>
+                            }
+                        </InputSelect>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label small text-muted">Show</label>
+                        <InputSelect class="form-select" @bind-Value="viewFilter">
+                            <option value="all">All Days</option>
+                            <option value="working">Working Only</option>
+                        </InputSelect>
+                    </div>
+                    <div class="col-md-2 d-flex align-items-end">
+                        <button class="btn btn-primary w-100" @onclick="LoadSchedule">
+                            <i class="bi bi-search"></i> Apply
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Date-Partitioned Schedule -->
+        @if (scheduleData.Count == 0)
+        {
+            <div class="alert alert-light border">
+                <i class="bi bi-info-circle"></i> No schedule data found for selected filters.
+            </div>
+        }
+        else
+        {
+            var dateGroups = scheduleData
+                .GroupBy(d => d.Date)
+                .OrderBy(g => g.Key)
+                .ToList();
+
+            @foreach (var dateGroup in dateGroups)
+            {
+                var date = dateGroup.Key;
+                var daySchedules = dateGroup.ToList();
+                var workingDoctors = daySchedules.Where(d => d.IsWorkingDay).ToList();
+                var offDoctors = daySchedules.Where(d => !d.IsWorkingDay).ToList();
+
+                <!-- Increased spacing: mb-4 instead of mb-3 -->
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-header bg-white border-bottom py-3">
+                        <div class="row align-items-center">
+                            <div class="col-md-6">
+                                <h6 class="mb-0">
+                                    <i class="bi bi-calendar3 text-primary"></i>
+                                    <strong class="ms-2">@date.DayOfWeek, @date.ToString("MMMM dd, yyyy")</strong>
+                                </h6>
+                            </div>
+                            <div class="col-md-6 text-end">
+                                @if (workingDoctors.Any())
+                                {
+                                    var totalSlots = workingDoctors.Sum(d => d.TotalSlots);
+                                    var bookedSlots = workingDoctors.Sum(d => d.BookedSlots);
+                                    var avgUtil = workingDoctors.Average(d => d.UtilizationPercent);
+                                    
+                                    <span class="badge bg-light text-dark border me-2">
+                                        <i class="bi bi-people"></i> @workingDoctors.Count Doctors
+                                    </span>
+                                    <span class="badge bg-light text-dark border me-2">
+                                        <i class="bi bi-calendar-check"></i> @bookedSlots / @totalSlots Slots
+                                    </span>
+                                    <span class="badge bg-primary">
+                                        @avgUtil.ToString("F0")% Utilization
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-light text-muted border">
+                                        <i class="bi bi-moon"></i> No Doctors Working
+                                    </span>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-body p-0">
+                        @if (workingDoctors.Any())
+                        {
+                            <div class="table-responsive">
+                                <table class="table table-hover align-middle mb-0">
+                                    <thead class="bg-light">
+                                        <tr>
+                                            <th class="border-0 py-3" style="width: 30%;">Doctor</th>
+                                            <th class="border-0 py-3" style="width: 20%;">Status</th>
+                                            <th class="border-0 py-3" style="width: 20%;">Slots</th>
+                                            <th class="border-0 py-3" style="width: 20%;">Utilization</th>
+                                            <th class="border-0 py-3 text-center" style="width: 10%;">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var doctor in workingDoctors.OrderBy(d => d.DoctorName))
+                                        {
+                                            <tr>
+                                                <td class="py-3">
+                                                    <div>
+                                                        <strong>@doctor.DoctorName</strong>
+                                                        <br />
+                                                        <small class="text-muted">@doctor.Specialty</small>
+                                                    </div>
+                                                </td>
+                                                <td class="py-3">
+                                                    @if (doctor.BookedSlots == 0)
+                                                    {
+                                                        <span class="badge bg-light text-success border border-success">
+                                                            Available
+                                                        </span>
+                                                    }
+                                                    else if (doctor.BookedSlots == doctor.TotalSlots)
+                                                    {
+                                                        <span class="badge bg-light text-danger border border-danger">
+                                                            Fully Booked
+                                                        </span>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="badge bg-light text-primary border border-primary">
+                                                            Partially Booked
+                                                        </span>
+                                                    }
+                                                </td>
+                                                <td class="py-3">
+                                                    <strong>@doctor.BookedSlots</strong> / @doctor.TotalSlots
+                                                    <br />
+                                                    <small class="text-muted">
+                                                        @doctor.Slots.Count(s => s.Status == SlotStatus.Available) available
+                                                    </small>
+                                                </td>
+                                                <td class="py-3">
+                                                    <div class="d-flex align-items-center">
+                                                        <div class="progress flex-grow-1" style="height: 8px;">
+                                                            <div class="progress-bar bg-primary" 
+                                                                 style="width: @doctor.UtilizationPercent%">
+                                                            </div>
+                                                        </div>
+                                                        <span class="ms-2 small">@doctor.UtilizationPercent.ToString("F0")%</span>
+                                                    </div>
+                                                </td>
+                                                <td class="py-3 text-center">
+                                                    <button class="btn btn-sm btn-outline-primary" 
+                                                            @onclick="() => ViewDetails(doctor.ProviderId, date)">
+                                                        <i class="bi bi-eye"></i> View
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="p-4 text-center text-muted">
+                                <i class="bi bi-moon-stars fs-2 mb-2 d-block"></i>
+                                <p class="mb-0">No doctors working on this day</p>
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+
+            <!-- Summary Footer -->
+            <div class="card border-0 shadow-sm mt-5">
+                <div class="card-body py-4">
+                    <h6 class="text-muted mb-3 text-center">Summary Statistics</h6>
+                    <div class="row text-center g-4">
+                        <div class="col-md-3">
+                            <h5 class="mb-1">@dateGroups.Count</h5>
+                            <p class="text-muted small mb-0">Total Days</p>
+                        </div>
+                        <div class="col-md-3">
+                            <h5 class="mb-1">@scheduleData.Count(d => d.IsWorkingDay)</h5>
+                            <p class="text-muted small mb-0">Working Doctor-Days</p>
+                        </div>
+                        <div class="col-md-3">
+                            <h5 class="mb-1">@scheduleData.Where(d => d.IsWorkingDay).Sum(d => d.TotalSlots)</h5>
+                            <p class="text-muted small mb-0">Total Slots</p>
+                        </div>
+                        <div class="col-md-3">
+                            <h5 class="mb-1">@scheduleData.Where(d => d.IsWorkingDay).Sum(d => d.BookedSlots)</h5>
+                            <p class="text-muted small mb-0">Booked Slots</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    }
+</div>
+
+@code {
+    private List<DoctorDayViewDto> scheduleData = new();
+    private AdminScheduleStatsDto stats = new(0, 0, 0, 0, 0, 0);
+    private List<string> specialties = new();
+    private bool isLoading = true;
+    private string? errorMessage = null;
+
+    private DateTime startDate = DateTime.Today;
+    private DateTime endDate = DateTime.Today.AddDays(7);
+    private string selectedSpecialty = "";
+    private string viewFilter = "working";
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadInitialData();
+    }
+
+    private async Task LoadInitialData()
+    {
+        isLoading = true;
+        errorMessage = null;
+
+        try
+        {
+            specialties = await AdminScheduleService.GetAllSpecialtiesAsync();
+            await LoadStats();
+            await LoadSchedule();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Failed to load data: {ex.Message}";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private async Task LoadSchedule()
+    {
+        try
+        {
+            var start = DateOnly.FromDateTime(startDate);
+            var end = DateOnly.FromDateTime(endDate);
+
+            var request = new AdminScheduleRequest(
+                start,
+                end,
+                Specialty: string.IsNullOrEmpty(selectedSpecialty) ? null : selectedSpecialty,
+                Statuses: null,
+                ShowOnlyAvailable: false,
+                MinUtilizationPercent: null,
+                MaxUtilizationPercent: null
+            );
+
+            scheduleData = await AdminScheduleService.GetMasterScheduleAsync(request);
+
+            if (viewFilter == "working")
+            {
+                scheduleData = scheduleData.Where(d => d.IsWorkingDay).ToList();
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Failed to load schedule: {ex.Message}";
+            scheduleData = new();
+        }
+    }
+
+    private async Task LoadStats()
+    {
+        try
+        {
+            stats = await AdminScheduleService.GetDashboardStatsAsync(
+                DateOnly.FromDateTime(DateTime.Today));
+        }
+        catch (Exception ex)
+        {
+            stats = new(0, 0, 0, 0, 0, 0);
+        }
+    }
+
+    private void ViewDetails(long providerId, DateOnly date)
+    {
+        Navigation.NavigateTo($"/admin/doctor-schedule/{providerId}?date={date}");
+    }
+}

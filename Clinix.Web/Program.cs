@@ -43,6 +43,8 @@ var connectionString = builder.Configuration.GetConnectionString("ClinixConnecti
 builder.Services.AddDbContext<ClinixDbContext>(options =>
     options.UseSqlServer(connectionString));
 
+builder.Services.AddScoped<ISeedStatusRepository, SeedStatusRepository>();
+
 // Options configuration for appointments/follow-ups
 builder.Services.Configure<NotificationsOptions>(builder.Configuration.GetSection("Notifications"));
 builder.Services.Configure<ReminderOptions>(builder.Configuration.GetSection("Reminders"));
@@ -58,6 +60,7 @@ builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<IAppointmentRepository, AppointmentRepository>();
 builder.Services.AddScoped<IFollowUpRepository, FollowUpRepository>();
 builder.Services.AddScoped<IProviderRepository, ProviderRepository>();
+builder.Services.AddScoped<IDoctorScheduleRepository, DoctorScheduleRepository>();
 
 // Application services (existing)
 builder.Services.AddScoped<IInventoryService, InventoryService>();
@@ -70,6 +73,8 @@ builder.Services.AddScoped<IAppointmentAppService, AppointmentAppService>();
 builder.Services.AddScoped<IFollowUpAppService, FollowUpAppService>();
 builder.Services.AddScoped<IProviderAppService, ProviderAppService>();
 builder.Services.AddScoped<IDoctorActionsAppService, DoctorActionsAppService>();
+builder.Services.AddScoped<IAdminScheduleAppService, AdminScheduleAppService>();
+
 
 // UI services (existing)
 builder.Services.AddScoped<IRegistrationUiService, RegistrationUiService>();
@@ -157,17 +162,18 @@ app.MapControllers();
 app.MapRazorComponents<App>()
    .AddInteractiveServerRenderMode();
 
-// Database migration and seeding
-// Database migration and seeding
 using (var scope = app.Services.CreateScope())
     {
-    var db = scope.ServiceProvider.GetRequiredService<ClinixDbContext>();
-
-    // Apply migrations
-    await db.Database.MigrateAsync();
-
-    // Seed core data (Users, Doctors, Patients, Staff, Inventory, Providers)
-    await DataSeeder.SeedAsync(scope.ServiceProvider);
+    try
+        {
+        await DataSeeder.SeedAsync(scope.ServiceProvider);
+        }
+    catch (Exception ex)
+        {
+        var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+        logger.LogCritical(ex, "Fatal error during database seeding.");
+        // Don't crash the app, just log
+        }
     }
 
 app.Run();

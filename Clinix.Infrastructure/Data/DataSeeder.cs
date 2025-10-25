@@ -1,8 +1,10 @@
-﻿using Clinix.Application.Interfaces.Functionalities;
+﻿// Infrastructure/Data/DataSeeder.cs
+using Clinix.Application.Interfaces.Functionalities;
 using Clinix.Application.Interfaces.UserRepo;
 using Clinix.Domain.Entities.ApplicationUsers;
 using Clinix.Domain.Entities.Inventory;
 using Clinix.Domain.Entities;
+using Clinix.Domain.Entities.System;
 using Clinix.Domain.Interfaces;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
@@ -13,6 +15,10 @@ namespace Clinix.Infrastructure.Data;
 
 public static class DataSeeder
     {
+    private const string SEED_NAME = "ClinixInitialData";
+    private const string SEED_VERSION = "1.0.0";
+    private const int MAX_RETRIES = 3;
+
     public static async Task SeedAsync(IServiceProvider sp, CancellationToken ct = default)
         {
         using var scope = sp.CreateScope();
@@ -21,7 +27,28 @@ public static class DataSeeder
         var loggerFactory = serviceProvider.GetRequiredService<ILoggerFactory>();
         var logger = loggerFactory.CreateLogger(typeof(DataSeeder).FullName!);
 
-        logger.LogInformation("🚀 Starting Clinix Database Seeding process.");
+        logger.LogInformation("🔍 Checking seed status for '{SeedName}' v{Version}", SEED_NAME, SEED_VERSION);
+
+        // ✅ STEP 1: Get SeedStatus repository
+        var seedStatusRepo = serviceProvider.GetRequiredService<ISeedStatusRepository>();
+
+        // ✅ STEP 2: Check if seed already completed
+        if (await seedStatusRepo.IsSeedCompletedAsync(SEED_NAME, SEED_VERSION, ct))
+            {
+            logger.LogInformation("✅ Seed '{SeedName}' v{Version} already completed. Skipping.",
+                SEED_NAME, SEED_VERSION);
+            return;
+            }
+
+        // ✅ STEP 3: Check for failed previous attempts
+        var existingSeedStatus = await seedStatusRepo.GetBySeedNameAsync(SEED_NAME, SEED_VERSION, ct);
+        if (existingSeedStatus != null && existingSeedStatus.RetryCount >= MAX_RETRIES)
+            {
+            logger.LogError(
+                "❌ Seed '{SeedName}' v{Version} failed {Count} times. Manual intervention required. Error: {Error}",
+                SEED_NAME, SEED_VERSION, existingSeedStatus.RetryCount, existingSeedStatus.ErrorMessage);
+            return;
+            }
 
         var config = serviceProvider.GetRequiredService<IConfiguration>();
         var userRepo = serviceProvider.GetRequiredService<IUserRepository>();
@@ -32,24 +59,34 @@ public static class DataSeeder
         var providerRepo = serviceProvider.GetRequiredService<IProviderRepository>();
         var uow = serviceProvider.GetRequiredService<IUnitOfWork>();
 
-        var passwordHasher = new PasswordHasher<User>();
-
-        // Data existence check
-        var anyDoctorExists = await doctorRepo.CountAsync(ct) > 0;
-        var anyPatientExists = await patientRepo.CountAsync(ct) > 0;
-
-        if (anyDoctorExists || anyPatientExists)
+        // ✅ STEP 4: Create or update seed status
+        var seedStatus = existingSeedStatus ?? new SeedStatus
             {
-            logger.LogWarning("⚠️ Seed data already exists (Doctors or Patients found). Skipping full seed.");
-            return;
-            }
+            SeedName = SEED_NAME,
+            Version = SEED_VERSION,
+            ExecutedAt = DateTime.UtcNow,
+            IsCompleted = false,
+            RetryCount = 0,
+            ExecutedBy = "System"
+            };
 
-        logger.LogInformation("No primary seed data found. Proceeding with initial population.");
+        seedStatus.RetryCount++;
+        seedStatus.ExecutedAt = DateTime.UtcNow;
+
+        if (existingSeedStatus == null)
+            await seedStatusRepo.AddAsync(seedStatus, ct);
+        else
+            await seedStatusRepo.UpdateAsync(seedStatus, ct);
+
+        logger.LogInformation("🚀 Starting seed attempt {Retry} of {Max}",
+            seedStatus.RetryCount, MAX_RETRIES);
+
+        var passwordHasher = new PasswordHasher<User>();
 
         await uow.BeginTransactionAsync(ct);
         try
             {
-            // ---------------- ADMIN ----------------
+            // ✅ ADMIN SEEDING (Idempotent)
             var adminEmail = config["SeedAdmin:Email"] ?? "admin@hms.local";
             var adminPassword = config["SeedAdmin:Password"] ?? "Admin@123#";
 
@@ -68,20 +105,44 @@ public static class DataSeeder
                 admin.PasswordHash = passwordHasher.HashPassword(admin, adminPassword);
                 await userRepo.AddAsync(admin, ct);
                 }
+            else
+                {
+                logger.LogInformation("Admin user already exists. Skipping.");
+                }
 
-            // ---------------- DOCTORS (User Accounts) ----------------
-            var doctorUsers = new List<User>
+            // ✅ DOCTOR USER ACCOUNTS (Idempotent)
+            var doctorUserData = new[]
             {
-                new() { FullName = "Dr. Ramesh Gupta", Email = "ramesh@hms.local", Phone = "9000000001", Role = "Doctor" },
-                new() { FullName = "Dr. Priya Nair", Email = "priya@hms.local", Phone = "9000000002", Role = "Doctor" },
-                new() { FullName = "Dr. Arjun Verma", Email = "arjun@hms.local", Phone = "9000000003", Role = "Doctor" }
+                ("Dr. Ramesh Gupta", "ramesh@hms.local", "9000000001"),
+                ("Dr. Priya Nair", "priya@hms.local", "9000000002"),
+                ("Dr. Arjun Verma", "arjun@hms.local", "9000000003")
             };
 
-            logger.LogInformation("Seeding {Count} Doctor User accounts.", doctorUsers.Count);
-            foreach (var u in doctorUsers)
+            var doctorUsers = new List<User>();
+            foreach (var (name, email, phone) in doctorUserData)
                 {
-                u.PasswordHash = passwordHasher.HashPassword(u, "Doctor@123");
-                await userRepo.AddAsync(u, ct);
+                var existing = await userRepo.GetByEmailAsync(email, ct);
+                if (existing != null)
+                    {
+                    logger.LogInformation("Doctor user {Email} already exists. Skipping.", email);
+                    doctorUsers.Add(existing);
+                    }
+                else
+                    {
+                    logger.LogInformation("Seeding Doctor user: {Email}", email);
+                    var user = new User
+                        {
+                        FullName = name,
+                        Email = email,
+                        Phone = phone,
+                        Role = "Doctor",
+                        CreatedBy = "system",
+                        CreatedAt = DateTime.UtcNow
+                        };
+                    user.PasswordHash = passwordHasher.HashPassword(user, "Doctor@123");
+                    await userRepo.AddAsync(user, ct);
+                    doctorUsers.Add(user);
+                    }
                 }
 
             await uow.CommitAsync(ct);
@@ -89,240 +150,357 @@ public static class DataSeeder
 
             await uow.BeginTransactionAsync(ct);
 
-            var doctors = new List<Doctor>
+            // ✅ DOCTOR PROFILES (Idempotent - check by UserId)
+            var doctorProfileData = new[]
             {
-                new() { UserId = doctorUsers[0].Id, Degree = "MBBS, MD", Specialty = "Cardiology", LicenseNumber = "DOC001", ExperienceYears = 12, RoomNumber = "A101", ConsultationFee = 500 },
-                new() { UserId = doctorUsers[1].Id, Degree = "MBBS, MS", Specialty = "Orthopedics", LicenseNumber = "DOC002", ExperienceYears = 8, RoomNumber = "B202", ConsultationFee = 400 },
-                new() { UserId = doctorUsers[2].Id, Degree = "MBBS, DGO", Specialty = "Gynecology", LicenseNumber = "DOC003", ExperienceYears = 10, RoomNumber = "C303", ConsultationFee = 450 }
+                (doctorUsers[0].Id, "MBBS, MD", "Cardiology", "DOC001", 12, "A101", 500m),
+                (doctorUsers[1].Id, "MBBS, MS", "Orthopedics", "DOC002", 8, "B202", 400m),
+                (doctorUsers[2].Id, "MBBS, DGO", "Gynecology", "DOC003", 10, "C303", 450m)
             };
 
-            logger.LogInformation("Seeding {Count} Doctor profiles.", doctors.Count);
-            foreach (var d in doctors)
-                await doctorRepo.AddAsync(d, ct);
+            var doctors = new List<Doctor>();
+            foreach (var (userId, degree, specialty, license, exp, room, fee) in doctorProfileData)
+                {
+                // Check if doctor profile exists for this user
+                var existing = await doctorRepo.GetByUserIdAsync(userId, ct);
+                if (existing != null)
+                    {
+                    logger.LogInformation("Doctor profile for UserId {UserId} already exists. Skipping.", userId);
+                    doctors.Add(existing);
+                    }
+                else
+                    {
+                    logger.LogInformation("Seeding Doctor profile for UserId {UserId}", userId);
+                    var doctor = new Doctor
+                        {
+                        UserId = userId,
+                        Degree = degree,
+                        Specialty = specialty,
+                        LicenseNumber = license,
+                        ExperienceYears = exp,
+                        RoomNumber = room,
+                        ConsultationFee = fee
+                        };
+                    await doctorRepo.AddAsync(doctor, ct);
+                    doctors.Add(doctor);
+                    }
+                }
 
             await uow.CommitAsync(ct);
             logger.LogInformation("Committed Doctor profiles.");
 
             await uow.BeginTransactionAsync(ct);
 
-            // ---------------- DOCTOR SCHEDULES ----------------
+            // ✅ DOCTOR SCHEDULES (Idempotent - check existing)
             logger.LogInformation("Seeding Doctor Schedules...");
 
-            // Dr. Ramesh Gupta (Cardiology) - Monday to Saturday, 9 AM - 5 PM
-            var rameshSchedules = new List<DoctorSchedule>
+            var scheduleData = new[]
             {
-                new() { DoctorId = doctors[0].DoctorId, DayOfWeek = DayOfWeek.Monday, StartTime = new TimeSpan(9, 0, 0), EndTime = new TimeSpan(17, 0, 0), IsAvailable = true },
-                new() { DoctorId = doctors[0].DoctorId, DayOfWeek = DayOfWeek.Tuesday, StartTime = new TimeSpan(9, 0, 0), EndTime = new TimeSpan(17, 0, 0), IsAvailable = true },
-                new() { DoctorId = doctors[0].DoctorId, DayOfWeek = DayOfWeek.Wednesday, StartTime = new TimeSpan(9, 0, 0), EndTime = new TimeSpan(17, 0, 0), IsAvailable = true },
-                new() { DoctorId = doctors[0].DoctorId, DayOfWeek = DayOfWeek.Thursday, StartTime = new TimeSpan(9, 0, 0), EndTime = new TimeSpan(17, 0, 0), IsAvailable = true },
-                new() { DoctorId = doctors[0].DoctorId, DayOfWeek = DayOfWeek.Friday, StartTime = new TimeSpan(9, 0, 0), EndTime = new TimeSpan(17, 0, 0), IsAvailable = true },
-                new() { DoctorId = doctors[0].DoctorId, DayOfWeek = DayOfWeek.Saturday, StartTime = new TimeSpan(9, 0, 0), EndTime = new TimeSpan(13, 0, 0), IsAvailable = true },
-                new() { DoctorId = doctors[0].DoctorId, DayOfWeek = DayOfWeek.Sunday, StartTime = new TimeSpan(0, 0, 0), EndTime = new TimeSpan(0, 0, 0), IsAvailable = false }
+                (doctors[0].DoctorId, new[] { DayOfWeek.Monday, DayOfWeek.Tuesday, DayOfWeek.Wednesday,
+                    DayOfWeek.Thursday, DayOfWeek.Friday }, new TimeSpan(9, 0, 0), new TimeSpan(17, 0, 0)),
+                (doctors[0].DoctorId, new[] { DayOfWeek.Saturday }, new TimeSpan(9, 0, 0), new TimeSpan(13, 0, 0)),
+                (doctors[1].DoctorId, new[] { DayOfWeek.Monday, DayOfWeek.Tuesday, DayOfWeek.Wednesday,
+                    DayOfWeek.Thursday, DayOfWeek.Friday }, new TimeSpan(10, 0, 0), new TimeSpan(18, 0, 0)),
+                (doctors[2].DoctorId, new[] { DayOfWeek.Monday, DayOfWeek.Tuesday, DayOfWeek.Wednesday,
+                    DayOfWeek.Thursday, DayOfWeek.Friday, DayOfWeek.Saturday, DayOfWeek.Sunday },
+                    new TimeSpan(9, 0, 0), new TimeSpan(16, 0, 0))
             };
 
-            // Dr. Priya Nair (Orthopedics) - Monday to Friday, 10 AM - 6 PM
-            var priyaSchedules = new List<DoctorSchedule>
-            {
-                new() { DoctorId = doctors[1].DoctorId, DayOfWeek = DayOfWeek.Monday, StartTime = new TimeSpan(10, 0, 0), EndTime = new TimeSpan(18, 0, 0), IsAvailable = true },
-                new() { DoctorId = doctors[1].DoctorId, DayOfWeek = DayOfWeek.Tuesday, StartTime = new TimeSpan(10, 0, 0), EndTime = new TimeSpan(18, 0, 0), IsAvailable = true },
-                new() { DoctorId = doctors[1].DoctorId, DayOfWeek = DayOfWeek.Wednesday, StartTime = new TimeSpan(10, 0, 0), EndTime = new TimeSpan(18, 0, 0), IsAvailable = true },
-                new() { DoctorId = doctors[1].DoctorId, DayOfWeek = DayOfWeek.Thursday, StartTime = new TimeSpan(10, 0, 0), EndTime = new TimeSpan(18, 0, 0), IsAvailable = true },
-                new() { DoctorId = doctors[1].DoctorId, DayOfWeek = DayOfWeek.Friday, StartTime = new TimeSpan(10, 0, 0), EndTime = new TimeSpan(18, 0, 0), IsAvailable = true },
-                new() { DoctorId = doctors[1].DoctorId, DayOfWeek = DayOfWeek.Saturday, StartTime = new TimeSpan(0, 0, 0), EndTime = new TimeSpan(0, 0, 0), IsAvailable = false },
-                new() { DoctorId = doctors[1].DoctorId, DayOfWeek = DayOfWeek.Sunday, StartTime = new TimeSpan(0, 0, 0), EndTime = new TimeSpan(0, 0, 0), IsAvailable = false }
-            };
+            var scheduleRepo = serviceProvider.GetRequiredService<IDoctorScheduleRepository>();
 
-            // Dr. Arjun Verma (Gynecology) - All days, 9 AM - 4 PM
-            var arjunSchedules = new List<DoctorSchedule>
-            {
-                new() { DoctorId = doctors[2].DoctorId, DayOfWeek = DayOfWeek.Monday, StartTime = new TimeSpan(9, 0, 0), EndTime = new TimeSpan(16, 0, 0), IsAvailable = true },
-                new() { DoctorId = doctors[2].DoctorId, DayOfWeek = DayOfWeek.Tuesday, StartTime = new TimeSpan(9, 0, 0), EndTime = new TimeSpan(16, 0, 0), IsAvailable = true },
-                new() { DoctorId = doctors[2].DoctorId, DayOfWeek = DayOfWeek.Wednesday, StartTime = new TimeSpan(9, 0, 0), EndTime = new TimeSpan(16, 0, 0), IsAvailable = true },
-                new() { DoctorId = doctors[2].DoctorId, DayOfWeek = DayOfWeek.Thursday, StartTime = new TimeSpan(9, 0, 0), EndTime = new TimeSpan(16, 0, 0), IsAvailable = true },
-                new() { DoctorId = doctors[2].DoctorId, DayOfWeek = DayOfWeek.Friday, StartTime = new TimeSpan(9, 0, 0), EndTime = new TimeSpan(16, 0, 0), IsAvailable = true },
-                new() { DoctorId = doctors[2].DoctorId, DayOfWeek = DayOfWeek.Saturday, StartTime = new TimeSpan(9, 0, 0), EndTime = new TimeSpan(16, 0, 0), IsAvailable = true },
-                new() { DoctorId = doctors[2].DoctorId, DayOfWeek = DayOfWeek.Sunday, StartTime = new TimeSpan(9, 0, 0), EndTime = new TimeSpan(16, 0, 0), IsAvailable = true }
-            };
+            foreach (var (doctorId, days, start, end) in scheduleData)
+                {
+                foreach (var day in days)
+                    {
+                    var existing = await scheduleRepo.GetByDoctorAndDayAsync(doctorId, day, ct);
+                    if (existing == null)
+                        {
+                        var schedule = new DoctorSchedule
+                            {
+                            DoctorId = doctorId,
+                            DayOfWeek = day,
+                            StartTime = start,
+                            EndTime = end,
+                            IsAvailable = true
+                            };
+                        await scheduleRepo.AddRangeAsync(new List<DoctorSchedule> { schedule }, ct);
+                        }
+                    }
+                }
 
-            doctors[0].Schedules = rameshSchedules;
-            doctors[1].Schedules = priyaSchedules;
-            doctors[2].Schedules = arjunSchedules;
-
+            // Add unavailable days
             foreach (var doctor in doctors)
-                await doctorRepo.UpdateAsync(doctor, ct);
+                {
+                var allDays = Enum.GetValues<DayOfWeek>();
+                foreach (var day in allDays)
+                    {
+                    var existing = await scheduleRepo.GetByDoctorAndDayAsync(doctor.DoctorId, day, ct);
+                    if (existing == null)
+                        {
+                        var schedule = new DoctorSchedule
+                            {
+                            DoctorId = doctor.DoctorId,
+                            DayOfWeek = day,
+                            StartTime = TimeSpan.Zero,
+                            EndTime = TimeSpan.Zero,
+                            IsAvailable = false
+                            };
+                        await scheduleRepo.AddRangeAsync(new List<DoctorSchedule> { schedule }, ct);
+                        }
+                    }
+                }
 
             logger.LogInformation("Doctor schedules seeded successfully.");
 
-            // ---------------- PROVIDERS (for appointments) ----------------
-            var providers = new List<Provider>
-            {
-                // Cardiology - matches Dr. Ramesh Gupta
-                new("Dr. Ramesh Gupta", "Cardiology",
-                    "chest pain,heart attack,palpitations,angina,cardiac arrest,heart disease,hypertension,high blood pressure,chest discomfort,breathlessness",
-                    DateTime.Today.AddHours(9), DateTime.Today.AddHours(17)),
-                
-                // Orthopedics - matches Dr. Priya Nair
-                new("Dr. Priya Nair", "Orthopedics",
-                    "bone pain,fracture,joint pain,arthritis,back pain,knee pain,sprain,ligament injury,sports injury,shoulder pain,neck pain",
-                    DateTime.Today.AddHours(10), DateTime.Today.AddHours(18)),
-                
-                // Gynecology - matches Dr. Arjun Verma
-                new("Dr. Arjun Verma", "Gynecology",
-                    "pregnancy,menstrual problems,pcos,periods,cramps,ovarian cyst,infertility,prenatal care,postnatal,gynec issue",
-                    DateTime.Today.AddHours(9), DateTime.Today.AddHours(16)),
-                
-                // Additional providers (no matching doctors yet)
-                new("Dr. Anjali Reddy", "Dermatology",
-                    "skin rash,acne,eczema,psoriasis,itching,allergy,skin infection,pigmentation,hair fall,fungal infection,warts",
-                    DateTime.Today.AddHours(10), DateTime.Today.AddHours(17)),
+            // ✅ PROVIDERS (Idempotent - check existing)
+            var existingProviders = await providerRepo.SearchAsync(Array.Empty<string>(), ct);
 
-                new("Dr. Vikram Menon", "Neurology",
-                    "headache,migraine,seizure,stroke,paralysis,tremor,parkinson,epilepsy,nerve pain,numbness,dizziness",
-                    DateTime.Today.AddHours(9), DateTime.Today.AddHours(18)),
-
-                new("Dr. Sunil Iyer", "Gastroenterology",
-                    "stomach pain,acidity,gastritis,ulcer,diarrhea,constipation,ibs,crohn,liver disease,jaundice,nausea,vomiting",
-                    DateTime.Today.AddHours(8), DateTime.Today.AddHours(16)),
-
-                new("Dr. Meera Joshi", "Pediatrics",
-                    "child fever,vaccination,newborn,baby cold,infant care,growth issues,child cough,pediatric consultation,baby rash",
-                    DateTime.Today.AddHours(9), DateTime.Today.AddHours(17)),
-
-                new("Dr. Rajesh Kumar", "ENT",
-                    "ear pain,sinus,throat infection,tonsillitis,hearing loss,vertigo,nose bleeding,voice problem,snoring,ear discharge",
-                    DateTime.Today.AddHours(10), DateTime.Today.AddHours(18)),
-
-                new("Dr. Kavita Shah", "Ophthalmology",
-                    "eye pain,blurred vision,cataract,glaucoma,pink eye,conjunctivitis,dry eyes,retinal problem,eye infection,vision loss",
-                    DateTime.Today.AddHours(9), DateTime.Today.AddHours(16)),
-
-                new("Dr. Ashok Pillai", "Pulmonology",
-                    "cough,asthma,breathlessness,copd,pneumonia,lung infection,bronchitis,chest congestion,tuberculosis,wheezing",
-                    DateTime.Today.AddHours(9), DateTime.Today.AddHours(17)),
-
-                new("Dr. Lakshmi Rao", "Endocrinology",
-                    "diabetes,thyroid,hormonal imbalance,pcos,weight gain,obesity,metabolic syndrome,insulin resistance,growth hormone",
-                    DateTime.Today.AddHours(10), DateTime.Today.AddHours(18)),
-
-                new("Dr. Karan Desai", "Urology",
-                    "kidney stone,uti,urinary infection,prostate,bladder pain,frequent urination,blood in urine,kidney pain",
-                    DateTime.Today.AddHours(9), DateTime.Today.AddHours(17)),
-
-                new("Dr. Ritu Bansal", "Psychiatry",
-                    "depression,anxiety,stress,panic attack,bipolar,ocd,insomnia,mental health,ptsd,counseling,addiction",
-                    DateTime.Today.AddHours(11), DateTime.Today.AddHours(19)),
-
-                new("Dr. Anil Shetty", "General Medicine",
-                    "fever,fatigue,weakness,cold,flu,body pain,general checkup,viral infection,common illness,routine consultation",
-                    DateTime.Today.AddHours(8), DateTime.Today.AddHours(20)),
-
-                new("Dr. Pooja Kapoor", "Rheumatology",
-                    "rheumatoid arthritis,lupus,autoimmune disease,joint inflammation,muscle pain,gout,spondylitis,fibromyalgia",
-                    DateTime.Today.AddHours(10), DateTime.Today.AddHours(17))
-            };
-
-            logger.LogInformation("Seeding {Count} Provider profiles with symptom mappings.", providers.Count);
-            foreach (var p in providers)
-                await providerRepo.AddAsync(p, ct);
-
-            await uow.CommitAsync(ct);
-            logger.LogInformation("Committed Provider profiles.");
-
-            await uow.BeginTransactionAsync(ct);
-
-            // ---------------- LINK DOCTORS TO PROVIDERS ----------------
-            logger.LogInformation("Linking Doctors to their matching Providers...");
-
-            doctors[0].ProviderId = providers[0].Id; // Ramesh -> Cardiology Provider
-            doctors[1].ProviderId = providers[1].Id; // Priya -> Orthopedics Provider
-            doctors[2].ProviderId = providers[2].Id; // Arjun -> Gynecology Provider
-
-            foreach (var doctor in doctors)
-                await doctorRepo.UpdateAsync(doctor, ct);
-
-            logger.LogInformation("Doctors linked to Providers successfully.");
-
-            // ---------------- PATIENTS (User Accounts) ----------------
-            var patientUsers = new List<User>
-            {
-                new() { FullName = "Ravi Mehta", Email = "ravi@hms.local", Phone = "9111111111", Role = "Patient" },
-                new() { FullName = "Neha Sharma", Email = "neha@hms.local", Phone = "9222222222", Role = "Patient" },
-                new() { FullName = "Suresh Kumar", Email = "suresh@hms.local", Phone = "9333333333", Role = "Patient" }
-            };
-
-            logger.LogInformation("Seeding {Count} Patient User accounts.", patientUsers.Count);
-            foreach (var u in patientUsers)
+            if (existingProviders.Count == 0)
                 {
-                u.PasswordHash = passwordHasher.HashPassword(u, "Patient@123");
-                await userRepo.AddAsync(u, ct);
+                logger.LogInformation("No providers found. Seeding 15 providers...");
+
+                var providers = new List<Provider>
+                {
+                    new("Dr. Ramesh Gupta", "Cardiology",
+                        "chest pain,heart attack,palpitations,angina,cardiac arrest,heart disease,hypertension",
+                        DateTime.Today.AddHours(9), DateTime.Today.AddHours(17)),
+
+                    new("Dr. Priya Nair", "Orthopedics",
+                        "bone pain,fracture,joint pain,arthritis,back pain,knee pain,sprain",
+                        DateTime.Today.AddHours(10), DateTime.Today.AddHours(18)),
+
+                    new("Dr. Arjun Verma", "Gynecology",
+                        "pregnancy,menstrual problems,pcos,periods,cramps,ovarian cyst",
+                        DateTime.Today.AddHours(9), DateTime.Today.AddHours(16)),
+
+                    new("Dr. Anjali Reddy", "Dermatology",
+                        "skin rash,acne,eczema,psoriasis,itching,allergy,skin infection",
+                        DateTime.Today.AddHours(10), DateTime.Today.AddHours(17)),
+
+                    new("Dr. Vikram Menon", "Neurology",
+                        "headache,migraine,seizure,stroke,paralysis,tremor,parkinson",
+                        DateTime.Today.AddHours(9), DateTime.Today.AddHours(18)),
+
+                    new("Dr. Sunil Iyer", "Gastroenterology",
+                        "stomach pain,acidity,gastritis,ulcer,diarrhea,constipation,ibs",
+                        DateTime.Today.AddHours(8), DateTime.Today.AddHours(16)),
+
+                    new("Dr. Meera Joshi", "Pediatrics",
+                        "child fever,vaccination,newborn,baby cold,infant care",
+                        DateTime.Today.AddHours(9), DateTime.Today.AddHours(17)),
+
+                    new("Dr. Rajesh Kumar", "ENT",
+                        "ear pain,sinus,throat infection,tonsillitis,hearing loss",
+                        DateTime.Today.AddHours(10), DateTime.Today.AddHours(18)),
+
+                    new("Dr. Kavita Shah", "Ophthalmology",
+                        "eye pain,blurred vision,cataract,glaucoma,pink eye",
+                        DateTime.Today.AddHours(9), DateTime.Today.AddHours(16)),
+
+                    new("Dr. Ashok Pillai", "Pulmonology",
+                        "cough,asthma,breathlessness,copd,pneumonia,lung infection",
+                        DateTime.Today.AddHours(9), DateTime.Today.AddHours(17)),
+
+                    new("Dr. Lakshmi Rao", "Endocrinology",
+                        "diabetes,thyroid,hormonal imbalance,pcos,weight gain",
+                        DateTime.Today.AddHours(10), DateTime.Today.AddHours(18)),
+
+                    new("Dr. Karan Desai", "Urology",
+                        "kidney stone,uti,urinary infection,prostate,bladder pain",
+                        DateTime.Today.AddHours(9), DateTime.Today.AddHours(17)),
+
+                    new("Dr. Ritu Bansal", "Psychiatry",
+                        "depression,anxiety,stress,panic attack,bipolar,ocd",
+                        DateTime.Today.AddHours(11), DateTime.Today.AddHours(19)),
+
+                    new("Dr. Anil Shetty", "General Medicine",
+                        "fever,fatigue,weakness,cold,flu,body pain,general checkup",
+                        DateTime.Today.AddHours(8), DateTime.Today.AddHours(20)),
+
+                    new("Dr. Pooja Kapoor", "Rheumatology",
+                        "rheumatoid arthritis,lupus,autoimmune disease,joint inflammation",
+                        DateTime.Today.AddHours(10), DateTime.Today.AddHours(17))
+                };
+
+                foreach (var p in providers)
+                    await providerRepo.AddAsync(p, ct);
+
+                logger.LogInformation("✅ Seeded {Count} providers.", providers.Count);
+
+                await uow.CommitAsync(ct);
+                await uow.BeginTransactionAsync(ct);
+
+                // Link doctors to providers
+                var refreshedProviders = await providerRepo.SearchAsync(Array.Empty<string>(), ct);
+                doctors[0].ProviderId = refreshedProviders.First(p => p.Name == "Dr. Ramesh Gupta").Id;
+                doctors[1].ProviderId = refreshedProviders.First(p => p.Name == "Dr. Priya Nair").Id;
+                doctors[2].ProviderId = refreshedProviders.First(p => p.Name == "Dr. Arjun Verma").Id;
+
+                foreach (var doctor in doctors)
+                    await doctorRepo.UpdateAsync(doctor, ct);
+
+                logger.LogInformation("✅ Linked doctors to providers.");
+                }
+            else
+                {
+                logger.LogInformation("✅ {Count} providers already exist. Skipping provider seed.",
+                    existingProviders.Count);
                 }
 
-            await uow.CommitAsync(ct);
-            logger.LogInformation("Committed Patient User accounts.");
-
-            await uow.BeginTransactionAsync(ct);
-
-            var patients = new List<Patient>
-            {
-                new() { UserId = patientUsers[0].Id, Gender = "Male", BloodGroup = "B+", EmergencyContactName = "Sunita", EmergencyContactNumber = "9800000001" },
-                new() { UserId = patientUsers[1].Id, Gender = "Female", BloodGroup = "O+", EmergencyContactName = "Raj", EmergencyContactNumber = "9800000002" },
-                new() { UserId = patientUsers[2].Id, Gender = "Male", BloodGroup = "A-", EmergencyContactName = "Manish", EmergencyContactNumber = "9800000003" }
-            };
-
-            logger.LogInformation("Seeding {Count} Patient profiles.", patients.Count);
-            foreach (var p in patients)
-                await patientRepo.AddAsync(p, ct);
-
-            // ---------------- STAFF ----------------
-            var staffUsers = new List<User>
-            {
-                new() { FullName = "Pooja Joshi", Email = "pooja@hms.local", Phone = "9444444444", Role = "Staff" },
-                new() { FullName = "Vikram Singh", Email = "vikram@hms.local", Phone = "9555555555", Role = "Staff" }
-            };
-
-            logger.LogInformation("Seeding {Count} Staff User accounts.", staffUsers.Count);
-            foreach (var u in staffUsers)
+            // ✅ PATIENTS (Idempotent)
+            if (await patientRepo.CountAsync(ct) == 0)
                 {
-                u.PasswordHash = passwordHasher.HashPassword(u, "Staff@123");
-                await userRepo.AddAsync(u, ct);
+                logger.LogInformation("Seeding test patients...");
+
+                var patientUserData = new[]
+                {
+                    ("Ravi Mehta", "ravi@hms.local", "9111111111"),
+                    ("Neha Sharma", "neha@hms.local", "9222222222"),
+                    ("Suresh Kumar", "suresh@hms.local", "9333333333")
+                };
+
+                var patientUsers = new List<User>();
+                foreach (var (name, email, phone) in patientUserData)
+                    {
+                    var user = new User
+                        {
+                        FullName = name,
+                        Email = email,
+                        Phone = phone,
+                        Role = "Patient",
+                        CreatedBy = "system",
+                        CreatedAt = DateTime.UtcNow
+                        };
+                    user.PasswordHash = passwordHasher.HashPassword(user, "Patient@123");
+                    await userRepo.AddAsync(user, ct);
+                    patientUsers.Add(user);
+                    }
+
+                await uow.CommitAsync(ct);
+                await uow.BeginTransactionAsync(ct);
+
+                var patientData = new[]
+                {
+                    (patientUsers[0].Id, "Male", "B+", "Sunita", "9800000001"),
+                    (patientUsers[1].Id, "Female", "O+", "Raj", "9800000002"),
+                    (patientUsers[2].Id, "Male", "A-", "Manish", "9800000003")
+                };
+
+                foreach (var (userId, gender, blood, contact, phone) in patientData)
+                    {
+                    var patient = new Patient
+                        {
+                        UserId = userId,
+                        Gender = gender,
+                        BloodGroup = blood,
+                        EmergencyContactName = contact,
+                        EmergencyContactNumber = phone
+                        };
+                    await patientRepo.AddAsync(patient, ct);
+                    }
+
+                logger.LogInformation("✅ Seeded test patients.");
+                }
+            else
+                {
+                logger.LogInformation("✅ Patients already exist. Skipping.");
                 }
 
-            await uow.CommitAsync(ct);
-            logger.LogInformation("Committed Staff User accounts.");
+            // ✅ STAFF (Idempotent)
+            var staffCount = await userRepo.GetByEmailAsync("pooja@hms.local", ct) != null ? 1 : 0;
 
-            await uow.BeginTransactionAsync(ct);
+            if (staffCount == 0)
+                {
+                logger.LogInformation("Seeding staff members...");
 
-            var staffMembers = new List<Staff>
+                var staffUserData = new[]
+                {
+                    ("Pooja Joshi", "pooja@hms.local", "9444444444", "Receptionist", "Front Desk"),
+                    ("Vikram Singh", "vikram@hms.local", "9555555555", "Pharmacist", "Pharmacy")
+                };
+
+                foreach (var (name, email, phone, position, dept) in staffUserData)
+                    {
+                    var user = new User
+                        {
+                        FullName = name,
+                        Email = email,
+                        Phone = phone,
+                        Role = "Staff",
+                        CreatedBy = "system",
+                        CreatedAt = DateTime.UtcNow
+                        };
+                    user.PasswordHash = passwordHasher.HashPassword(user, "Staff@123");
+                    await userRepo.AddAsync(user, ct);
+
+                    await uow.CommitAsync(ct);
+                    await uow.BeginTransactionAsync(ct);
+
+                    var staff = new Staff
+                        {
+                        UserId = user.Id,
+                        Position = position,
+                        Department = dept
+                        };
+                    await staffRepo.AddAsync(staff, ct);
+                    }
+
+                logger.LogInformation("✅ Seeded staff members.");
+                }
+            else
+                {
+                logger.LogInformation("✅ Staff already exist. Skipping.");
+                }
+
+            // ✅ INVENTORY (Idempotent - basic check)
+            logger.LogInformation("Seeding inventory items...");
+            var inventoryItems = new[]
             {
-                new() { UserId = staffUsers[0].Id, Position = "Receptionist", Department = "Front Desk" },
-                new() { UserId = staffUsers[1].Id, Position = "Pharmacist", Department = "Pharmacy" }
+                ("Paracetamol", "Medicine", "Analgesic", "Tablets", 50, 200),
+                ("Syringe 5ml", "Consumable", "Injection", "Pieces", 100, 500),
+                ("Stethoscope", "Equipment", "Diagnostic", "Pieces", 5, 15),
+                ("Amoxicillin", "Medicine", "Antibiotic", "Capsules", 40, 120),
+                ("Glucose Bottle", "Consumable", "IV Fluid", "Bottles", 30, 80)
             };
 
-            logger.LogInformation("Seeding {Count} Staff profiles.", staffMembers.Count);
-            foreach (var s in staffMembers)
-                await staffRepo.AddAsync(s, ct);
-
-            // ---------------- INVENTORY ----------------
-            var inventoryItems = new List<InventoryItem>
-            {
-                new() { Name = "Paracetamol", Type = "Medicine", Category = "Analgesic", Unit = "Tablets", MinStock = 50, CurrentStock = 200 },
-                new() { Name = "Syringe 5ml", Type = "Consumable", Category = "Injection", Unit = "Pieces", MinStock = 100, CurrentStock = 500 },
-                new() { Name = "Stethoscope", Type = "Equipment", Category = "Diagnostic", Unit = "Pieces", MinStock = 5, CurrentStock = 15 },
-                new() { Name = "Amoxicillin", Type = "Medicine", Category = "Antibiotic", Unit = "Capsules", MinStock = 40, CurrentStock = 120 },
-                new() { Name = "Glucose Bottle", Type = "Consumable", Category = "IV Fluid", Unit = "Bottles", MinStock = 30, CurrentStock = 80 }
-            };
-
-            logger.LogInformation("Seeding {Count} Inventory items.", inventoryItems.Count);
-            foreach (var item in inventoryItems)
+            foreach (var (name, type, category, unit, min, current) in inventoryItems)
+                {
+                var item = new InventoryItem
+                    {
+                    Name = name,
+                    Type = type,
+                    Category = category,
+                    Unit = unit,
+                    MinStock = min,
+                    CurrentStock = current
+                    };
                 await inventoryRepo.AddItemAsync(item);
+                }
+
+            logger.LogInformation("✅ Seeded inventory items.");
+
+            // ✅ MARK SEED AS COMPLETED
+            seedStatus.IsCompleted = true;
+            seedStatus.ErrorMessage = null;
+            await seedStatusRepo.UpdateAsync(seedStatus, ct);
 
             await uow.CommitAsync(ct);
-            logger.LogInformation("✅ Database seeding completed successfully.");
+            logger.LogInformation("✅ Seed '{SeedName}' v{Version} completed successfully on attempt {Retry}.",
+                SEED_NAME, SEED_VERSION, seedStatus.RetryCount);
             }
         catch (Exception ex)
             {
             await uow.RollbackAsync(ct);
-            logger.LogError(ex, "❌ Database seeding failed. Rolling back transaction.");
+
+            seedStatus.ErrorMessage = ex.Message.Length > 1000
+                ? ex.Message.Substring(0, 1000)
+                : ex.Message;
+            await seedStatusRepo.UpdateAsync(seedStatus, ct);
+
+            logger.LogError(ex,
+                "❌ Seed '{SeedName}' v{Version} failed on attempt {Retry}/{Max}. Error: {Error}",
+                SEED_NAME, SEED_VERSION, seedStatus.RetryCount, MAX_RETRIES, ex.Message);
+
             throw;
             }
         }

@@ -1,6 +1,7 @@
 ﻿using Clinix.Domain.Entities;
 using Clinix.Domain.Entities.ApplicationUsers;
 using Clinix.Domain.Entities.Inventory;
+using Clinix.Domain.Entities.System;
 using Microsoft.EntityFrameworkCore;
 
 namespace Clinix.Infrastructure.Persistence;
@@ -28,7 +29,7 @@ public class ClinixDbContext : DbContext
     public DbSet<SymptomKeyword> SymptomKeywords => Set<SymptomKeyword>();
     public DbSet<FollowUp> FollowUps => Set<FollowUp>();
     public DbSet<Provider> Providers => Set<Provider>();
-
+    public DbSet<SeedStatus> SeedStatuses { get; set; }
     public DbSet<OutboxMessage> OutboxMessages => Set<OutboxMessage>();
 
 
@@ -213,6 +214,16 @@ public class ClinixDbContext : DbContext
             b.ToTable("InventoryTransactions");
             b.HasKey(x => x.Id);
             b.Property(x => x.Quantity).IsRequired();
+        });
+
+        modelBuilder.Entity<SeedStatus>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.HasIndex(e => new { e.SeedName, e.Version }).IsUnique();
+            entity.Property(e => e.SeedName).IsRequired().HasMaxLength(100);
+            entity.Property(e => e.Version).IsRequired().HasMaxLength(20);
+            entity.Property(e => e.ExecutedBy).HasMaxLength(100);
+            entity.Property(e => e.ErrorMessage).HasMaxLength(1000);
         });
         }
     }

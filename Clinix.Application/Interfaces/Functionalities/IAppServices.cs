@@ -50,3 +50,25 @@ public interface IContactProvider
     {
     Task<(string? Email, string? Phone)> GetPatientContactAsync(long patientId, CancellationToken ct = default);
     }
+
+public interface IAdminScheduleAppService
+    {
+    Task<List<DoctorDayViewDto>> GetMasterScheduleAsync(
+        AdminScheduleRequest request,
+        CancellationToken ct = default);
+
+    Task<AdminScheduleStatsDto> GetDashboardStatsAsync(
+        DateOnly date,
+        CancellationToken ct = default);
+
+    Task<List<string>> GetAllSpecialtiesAsync(CancellationToken ct = default);
+    }
+
+
+//public record AdminScheduleStatsDto(
+//    int TotalAppointments,
+//    int PendingApprovals,
+//    int AvailableSlots,
+//    decimal AvgUtilizationPercent,
+//    int NoShowsToday
+//);
