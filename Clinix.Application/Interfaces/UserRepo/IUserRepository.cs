@@ -11,5 +11,9 @@ public interface IUserRepository
     Task UpdateAsync(User user, CancellationToken ct = default);
     Task DeleteAsync(long id, CancellationToken ct = default);
     Task<List<User>> GetAllAsync(CancellationToken ct = default);
+
+    Task<List<User>> GetAllWithRoleDetailsAsync(CancellationToken ct = default);
+    Task<int> CountByRoleAsync(string role, CancellationToken ct = default);
+
     }
 

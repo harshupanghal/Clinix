@@ -1,0 +1,419 @@
+﻿@page "/admin/edit-user/{userId:long}"
+@attribute [Authorize(Roles = "Admin")]
+@rendermode InteractiveServer
+@using Clinix.Application.Dtos.UserManagement
+@using Clinix.Application.Interfaces
+@using System.ComponentModel.DataAnnotations
+@using Clinix.Application.Interfaces.UserRepo
+@inject IUserManagementService UserManagementService
+@inject NavigationManager Navigation
+
+<PageTitle>Edit User</PageTitle>
+
+<div class="container-fluid py-4">
+    @if (isLoading)
+    {
+        <div class="text-center py-5">
+            <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;"></div>
+            <p class="mt-3 text-muted">Loading user information...</p>
+        </div>
+    }
+    else if (errorMessage != null)
+    {
+        <div class="alert alert-danger d-flex align-items-center">
+            <i class="bi bi-exclamation-triangle fs-4 me-3"></i>
+            <div>
+                <strong>Error:</strong> @errorMessage
+            </div>
+        </div>
+        <button class="btn btn-secondary" @onclick="GoBack">
+            <i class="bi bi-arrow-left"></i> Back
+        </button>
+    }
+    else if (model == null)
+    {
+        <div class="alert alert-warning">
+            <i class="bi bi-exclamation-triangle"></i> User not found.
+        </div>
+        <button class="btn btn-secondary" @onclick="GoBack">
+            <i class="bi bi-arrow-left"></i> Back
+        </button>
+    }
+    else
+    {
+        <!-- Header -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div class="d-flex align-items-center gap-3">
+                <button class="btn btn-outline-secondary" @onclick="GoBack">
+                    <i class="bi bi-arrow-left"></i> Back
+                </button>
+                <div>
+                    <h3 class="mb-1">Edit User</h3>
+                    <p class="text-muted small mb-0">Update user information for @model.FullName</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Edit Form -->
+        <div class="row">
+            <div class="col-lg-8 mx-auto">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body p-4">
+                        <!-- User Avatar Preview -->
+                        <div class="text-center mb-4 pb-4 border-bottom">
+                            <div class="avatar-circle-medium @GetRoleColorClass(model.Role) mx-auto mb-3">
+                                <span class="avatar-initials-medium">@GetInitials(model.FullName)</span>
+                            </div>
+                            <span class="badge @GetRoleBadgeClass(model.Role) px-3 py-2">
+                                <i class="bi @GetRoleIcon(model.Role) me-1"></i>
+                                @model.Role
+                            </span>
+                        </div>
+
+                        <EditForm Model="@model" OnValidSubmit="HandleValidSubmit">
+                            <DataAnnotationsValidator />
+
+                            <!-- Success Message -->
+                            @if (successMessage != null)
+                            {
+                                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                                    <i class="bi bi-check-circle-fill me-2"></i>
+                                    <strong>Success!</strong> @successMessage
+                                    <button type="button" class="btn-close" @onclick="() => successMessage = null"></button>
+                                </div>
+                            }
+
+                            <!-- Validation Summary -->
+                            <ValidationSummary class="alert alert-danger" />
+
+                            <!-- Full Name -->
+                            <div class="mb-4">
+                                <label for="fullName" class="form-label fw-semibold">
+                                    <i class="bi bi-person text-primary me-2"></i>
+                                    Full Name <span class="text-danger">*</span>
+                                </label>
+                                <InputText id="fullName" 
+                                          class="form-control form-control-lg" 
+                                          @bind-Value="model.FullName" 
+                                          placeholder="Enter full name" />
+                                <ValidationMessage For="@(() => model.FullName)" class="text-danger small mt-1" />
+                            </div>
+
+                            <!-- Email -->
+                            <div class="mb-4">
+                                <label for="email" class="form-label fw-semibold">
+                                    <i class="bi bi-envelope text-success me-2"></i>
+                                    Email Address <span class="text-danger">*</span>
+                                </label>
+                                <InputText id="email" 
+                                          type="email"
+                                          class="form-control form-control-lg" 
+                                          @bind-Value="model.Email" 
+                                          placeholder="Enter email address" />
+                                <ValidationMessage For="@(() => model.Email)" class="text-danger small mt-1" />
+                                <small class="form-text text-muted">
+                                    <i class="bi bi-info-circle"></i> Email should be valid and unique
+                                </small>
+                            </div>
+
+                            <!-- Phone -->
+                            <div class="mb-4">
+                                <label for="phone" class="form-label fw-semibold">
+                                    <i class="bi bi-telephone text-info me-2"></i>
+                                    Phone Number <span class="text-danger">*</span>
+                                </label>
+                                <InputText id="phone" 
+                                          class="form-control form-control-lg" 
+                                          @bind-Value="model.Phone" 
+                                          placeholder="Enter phone number" />
+                                <ValidationMessage For="@(() => model.Phone)" class="text-danger small mt-1" />
+                                <small class="form-text text-muted">
+                                    <i class="bi bi-info-circle"></i> Include country code (e.g., +91 for India)
+                                </small>
+                            </div>
+
+                            <!-- Role (Read-only) -->
+                            <div class="mb-4">
+                                <label for="role" class="form-label fw-semibold">
+                                    <i class="bi bi-shield text-warning me-2"></i>
+                                    Role
+                                </label>
+                                <input type="text" 
+                                       class="form-control form-control-lg" 
+                                       value="@model.Role" 
+                                       disabled 
+                                       readonly />
+                                <small class="form-text text-muted">
+                                    <i class="bi bi-lock"></i> Role cannot be changed after creation
+                                </small>
+                            </div>
+
+                            <!-- User ID (Read-only) -->
+                            <div class="mb-4">
+                                <label for="userId" class="form-label fw-semibold">
+                                    <i class="bi bi-hash text-muted me-2"></i>
+                                    User ID
+                                </label>
+                                <input type="text" 
+                                       class="form-control" 
+                                       value="@model.UserId" 
+                                       disabled 
+                                       readonly />
+                            </div>
+
+                            <!-- Form Actions -->
+                            <div class="d-flex gap-3 pt-3 border-top">
+                                <button type="submit" 
+                                        class="btn btn-primary btn-lg flex-fill" 
+                                        disabled="@isSaving">
+                                    @if (isSaving)
+                                    {
+                                        <span class="spinner-border spinner-border-sm me-2"></span>
+                                        <span>Saving...</span>
+                                    }
+                                    else
+                                    {
+                                        <i class="bi bi-check-circle me-2"></i>
+                                        <span>Save Changes</span>
+                                    }
+                                </button>
+                                <button type="button" 
+                                        class="btn btn-outline-secondary btn-lg" 
+                                        @onclick="GoBack"
+                                        disabled="@isSaving">
+                                    <i class="bi bi-x-circle me-2"></i>
+                                    Cancel
+                                </button>
+                            </div>
+                        </EditForm>
+                    </div>
+                </div>
+
+                <!-- Additional Info Card -->
+                <div class="card border-0 shadow-sm mt-4">
+                    <div class="card-body">
+                        <h6 class="card-title mb-3">
+                            <i class="bi bi-info-circle text-primary me-2"></i>
+                            Important Information
+                        </h6>
+                        <ul class="list-unstyled mb-0">
+                            <li class="mb-2">
+                                <i class="bi bi-check-circle text-success me-2"></i>
+                                Changes will be saved immediately and reflected across the system
+                            </li>
+                            <li class="mb-2">
+                                <i class="bi bi-check-circle text-success me-2"></i>
+                                Email and phone must be unique in the system
+                            </li>
+                            <li class="mb-2">
+                                <i class="bi bi-check-circle text-success me-2"></i>
+                                User role cannot be modified once created
+                            </li>
+                            <li class="mb-0">
+                                <i class="bi bi-check-circle text-success me-2"></i>
+                                Profile completion status is managed separately
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+<style>
+    .avatar-circle-medium {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        font-size: 2rem;
+        color: white;
+        box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.15);
+    }
+
+    .avatar-initials-medium {
+        text-transform: uppercase;
+    }
+
+    .role-admin { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+    .role-doctor { background: linear-gradient(135deg, #06beb6 0%, #48b1bf 100%); }
+    .role-patient { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
+    .role-staff { background: linear-gradient(135deg, #ffa751 0%, #ffe259 100%); }
+
+    .form-label {
+        margin-bottom: 0.5rem;
+        font-size: 0.95rem;
+    }
+
+    .form-control-lg {
+        padding: 0.75rem 1rem;
+        font-size: 1rem;
+    }
+
+    .form-control:focus {
+        border-color: #0d6efd;
+        box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.15);
+    }
+
+    .form-control:disabled {
+        background-color: #f8f9fa;
+        cursor: not-allowed;
+    }
+</style>
+
+@code {
+    [Parameter]
+    public long UserId { get; set; }
+
+    private EditUserModel? model;
+    private bool isLoading = true;
+    private bool isSaving = false;
+    private string? errorMessage = null;
+    private string? successMessage = null;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadUserData();
+    }
+
+    private async Task LoadUserData()
+    {
+        isLoading = true;
+        errorMessage = null;
+
+        try
+        {
+            var userDetail = await UserManagementService.GetUserDetailAsync(UserId);
+            
+            if (userDetail != null)
+            {
+                model = new EditUserModel
+                {
+                    UserId = userDetail.Id,
+                    FullName = userDetail.FullName,
+                    Email = userDetail.Email,
+                    Phone = userDetail.Phone,
+                    Role = userDetail.Role
+                };
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Failed to load user data: {ex.Message}";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private async Task HandleValidSubmit()
+    {
+        if (model == null) return;
+
+        isSaving = true;
+        errorMessage = null;
+        successMessage = null;
+
+        try
+        {
+            var request = new UpdateUserRequest(
+                model.UserId,
+                model.FullName,
+                model.Email,
+                model.Phone,
+                model.Role
+            );
+
+            var result = await UserManagementService.UpdateUserAsync(request, "Admin");
+
+            if (result.IsSuccess)
+            {
+                successMessage = "User information updated successfully!";
+                
+                // Navigate back after a short delay
+                await Task.Delay(1500);
+                Navigation.NavigateTo($"/admin/user-details/{UserId}");
+            }
+            else
+            {
+                errorMessage = result.Error ?? "Failed to update user information.";
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"An error occurred: {ex.Message}";
+        }
+        finally
+        {
+            isSaving = false;
+        }
+    }
+
+    private void GoBack()
+    {
+        Navigation.NavigateTo($"/admin/user-details/{UserId}");
+    }
+
+    private string GetInitials(string fullName)
+    {
+        if (string.IsNullOrWhiteSpace(fullName)) return "??";
+        var parts = fullName.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        return parts.Length >= 2
+            ? $"{parts[0][0]}{parts[^1][0]}"
+            : parts[0].Length >= 2 ? $"{parts[0][0]}{parts[0][1]}" : parts[0][0].ToString();
+    }
+
+    private string GetRoleColorClass(string role) => role switch
+    {
+        "Admin" => "role-admin",
+        "Doctor" => "role-doctor",
+        "Patient" => "role-patient",
+        "Staff" => "role-staff",
+        _ => "bg-secondary"
+    };
+
+    private string GetRoleBadgeClass(string role) => role switch
+    {
+        "Admin" => "bg-light text-purple border border-purple",
+        "Doctor" => "bg-light text-info border border-info",
+        "Patient" => "bg-light text-danger border border-danger",
+        "Staff" => "bg-light text-warning border border-warning",
+        _ => "bg-secondary"
+    };
+
+    private string GetRoleIcon(string role) => role switch
+    {
+        "Admin" => "bi-shield-check",
+        "Doctor" => "bi-person-badge",
+        "Patient" => "bi-person-heart",
+        "Staff" => "bi-person-workspace",
+        _ => "bi-person"
+    };
+
+    // Edit User Model with Validation
+    public class EditUserModel
+    {
+        public long UserId { get; set; }
+
+        [Required(ErrorMessage = "Full name is required")]
+        [StringLength(100, MinimumLength = 2, ErrorMessage = "Full name must be between 2 and 100 characters")]
+        public string FullName { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Email is required")]
+        [EmailAddress(ErrorMessage = "Please enter a valid email address")]
+        [StringLength(320, ErrorMessage = "Email cannot exceed 320 characters")]
+        public string Email { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Phone number is required")]
+        [Phone(ErrorMessage = "Please enter a valid phone number")]
+        [StringLength(20, MinimumLength = 10, ErrorMessage = "Phone number must be between 10 and 20 characters")]
+        public string Phone { get; set; } = string.Empty;
+
+        public string Role { get; set; } = string.Empty;
+    }
+}

@@ -66,7 +66,9 @@ builder.Services.AddScoped<IDoctorScheduleRepository, DoctorScheduleRepository>(
 builder.Services.AddScoped<IInventoryService, InventoryService>();
 builder.Services.AddScoped<IPatientDashboardService, PatientDashboardService>();
 builder.Services.AddScoped<IRegistrationService, RegistrationService>();
-builder.Services.AddScoped<IAuthenticationService, Clinix.Infrastructure.Services.AuthenticationService>();
+builder.Services.AddScoped<IAuthenticationService, AuthenticationService>();
+builder.Services.AddScoped<IUserManagementService, UserManagementService>();
+
 
 // NEW: Appointment/Follow-up application services
 builder.Services.AddScoped<IAppointmentAppService, AppointmentAppService>();

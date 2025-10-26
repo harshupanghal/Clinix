@@ -314,6 +314,7 @@
         padding: var(--clx-spacing-lg);
         max-width: 900px;
         margin: 0 auto;
+        overflow: visible !important;
     }
 
     .page-header {
@@ -343,16 +344,25 @@
         margin: 0;
     }
 
+    /* FIXED: All card containers must allow overflow */
+    .card {
+        overflow: visible !important;
+    }
 
     .step-card {
         margin-bottom: var(--clx-spacing-lg);
         box-shadow: var(--clx-shadow-md);
+        overflow: visible !important;
     }
 
     .step-card .card-header {
         background-color: var(--clx-gray-50);
         border-bottom: 2px solid var(--clx-gray-200);
         padding: var(--clx-spacing-lg);
+    }
+
+    .step-card .card-body {
+        overflow: visible !important;
     }
 
     .step-header {
@@ -390,25 +400,25 @@
 
     .search-container {
         position: relative;
+        overflow: visible !important;
     }
 
     .search-input {
         padding-right: var(--clx-spacing-xl);
     }
 
+    /* FIXED: Using fixed positioning to bypass all parent containers */
     .suggestions-dropdown {
-        position: absolute;
-        top: 100%;
-        left: 0;
-        right: 0;
+        position: fixed;
         background-color: var(--clx-white);
         border: 1px solid var(--clx-gray-300);
         border-radius: var(--clx-radius-md);
-        box-shadow: var(--clx-shadow-lg);
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
         max-height: 400px;
         overflow-y: auto;
-        z-index: 1000;
-        margin-top: var(--clx-spacing-xs);
+        z-index: 99999;
+        margin-top: 4px;
+        min-width: 300px;
     }
 
     .suggestion-item {
@@ -465,13 +475,11 @@
         background-color: var(--clx-white);
         border: 1px solid var(--clx-gray-300);
         border-radius: var(--clx-radius-md);
-        box-shadow: var(--clx-shadow-md);
-        position: absolute;
-        top: 100%;
-        left: 0;
-        right: 0;
-        z-index: 1000;
-        margin-top: var(--clx-spacing-xs);
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+        position: fixed;
+        z-index: 99999;
+        margin-top: 4px;
+        min-width: 300px;
     }
 
     .no-results-message svg {
@@ -585,6 +593,7 @@
 
     .form-group {
         margin-bottom: var(--clx-spacing-lg);
+        overflow: visible !important;
     }
 
     .form-label {
@@ -664,6 +673,7 @@
         }
     }
 </style>
+
 
 @code {
     private class FormModel

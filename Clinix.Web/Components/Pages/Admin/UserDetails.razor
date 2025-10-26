@@ -1,0 +1,715 @@
+﻿@page "/admin/user-details/{userId:long}"
+@attribute [Authorize(Roles = "Admin")]
+@rendermode InteractiveServer
+@using Clinix.Application.Dtos.UserManagement
+@using Clinix.Application.Interfaces
+@using Clinix.Application.Interfaces.UserRepo
+@inject IUserManagementService UserManagementService
+@inject NavigationManager Navigation
+@inject IJSRuntime JS
+
+<PageTitle>User Details</PageTitle>
+
+<div class="container-fluid py-4">
+    @if (isLoading)
+    {
+        <div class="text-center py-5">
+            <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;"></div>
+            <p class="mt-3 text-muted">Loading user details...</p>
+        </div>
+    }
+    else if (errorMessage != null)
+    {
+        <div class="alert alert-danger d-flex align-items-center">
+            <i class="bi bi-exclamation-triangle fs-4 me-3"></i>
+            <div>
+                <strong>Error:</strong> @errorMessage
+            </div>
+        </div>
+        <button class="btn btn-secondary" @onclick="GoBack">
+            <i class="bi bi-arrow-left"></i> Back to User Management
+        </button>
+    }
+    else if (userDetail == null)
+    {
+        <div class="alert alert-warning">
+            <i class="bi bi-exclamation-triangle"></i> User not found.
+        </div>
+        <button class="btn btn-secondary" @onclick="GoBack">
+            <i class="bi bi-arrow-left"></i> Back to User Management
+        </button>
+    }
+    else
+    {
+        <!-- Header with Actions -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div class="d-flex align-items-center gap-3">
+                <button class="btn btn-outline-secondary" @onclick="GoBack">
+                    <i class="bi bi-arrow-left"></i> Back
+                </button>
+                <div>
+                    <h3 class="mb-1">User Details</h3>
+                    <p class="text-muted small mb-0">Complete information about @userDetail.FullName</p>
+                </div>
+            </div>
+            <div class="d-flex gap-2">
+                <button class="btn btn-primary" @onclick="EditUser">
+                    <i class="bi bi-pencil"></i> Edit User
+                </button>
+                @if (userDetail.Role != "Admin")
+                {
+                    @if (!userDetail.IsDeleted)
+                    {
+                        <button class="btn btn-danger" @onclick="() => showDeleteModal = true">
+                            <i class="bi bi-trash"></i> Delete User
+                        </button>
+                    }
+                    else
+                    {
+                        <button class="btn btn-success" @onclick="ReactivateUser">
+                            <i class="bi bi-arrow-clockwise"></i> Reactivate
+                        </button>
+                    }
+                }
+            </div>
+        </div>
+
+        <!-- Main Profile Card -->
+        <div class="row g-4">
+            <!-- Left Column - Profile Overview -->
+            <div class="col-lg-4">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body text-center py-5">
+                        <!-- Avatar -->
+                        <div class="avatar-circle-large @GetRoleColorClass(userDetail.Role) mx-auto mb-4">
+                            <span class="avatar-initials-large">@GetInitials(userDetail.FullName)</span>
+                        </div>
+
+                        <!-- Name and Role -->
+                        <h4 class="mb-2">@userDetail.FullName</h4>
+                        <span class="badge @GetRoleBadgeClass(userDetail.Role) px-4 py-2 mb-3">
+                            <i class="bi @GetRoleIcon(userDetail.Role) me-1"></i>
+                            @userDetail.Role
+                        </span>
+
+                        <!-- Status Badges -->
+                        <div class="d-flex justify-content-center gap-2 mb-4">
+                            @if (userDetail.IsProfileCompleted)
+                            {
+                                <span class="badge bg-light text-success border border-success">
+                                    <i class="bi bi-check-circle-fill"></i> Profile Complete
+                                </span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-light text-warning border border-warning">
+                                    <i class="bi bi-exclamation-circle-fill"></i> Profile Incomplete
+                                </span>
+                            }
+                            
+                            @if (userDetail.IsDeleted)
+                            {
+                                <span class="badge bg-light text-danger border border-danger">
+                                    <i class="bi bi-x-circle-fill"></i> Deleted
+                                </span>
+                            }
+                        </div>
+
+                        <!-- Contact Info -->
+                        <div class="contact-info text-start">
+                            <div class="info-item">
+                                <i class="bi bi-envelope-fill text-primary"></i>
+                                <div>
+                                    <small class="text-muted d-block">Email</small>
+                                    <strong>@userDetail.Email</strong>
+                                </div>
+                            </div>
+                            <div class="info-item">
+                                <i class="bi bi-telephone-fill text-success"></i>
+                                <div>
+                                    <small class="text-muted d-block">Phone</small>
+                                    <strong>@userDetail.Phone</strong>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Audit Information Card -->
+                <div class="card border-0 shadow-sm mt-4">
+                    <div class="card-body">
+                        <h6 class="card-title mb-3">
+                            <i class="bi bi-clock-history text-muted me-2"></i>
+                            Audit Information
+                        </h6>
+                        <div class="audit-info">
+                            <div class="audit-item">
+                                <span class="text-muted">Created At:</span>
+                                <strong>@userDetail.CreatedAt.ToString("MMM dd, yyyy HH:mm")</strong>
+                            </div>
+                            @if (!string.IsNullOrEmpty(userDetail.CreatedBy))
+                            {
+                                <div class="audit-item">
+                                    <span class="text-muted">Created By:</span>
+                                    <strong>@userDetail.CreatedBy</strong>
+                                </div>
+                            }
+                            <div class="audit-item">
+                                <span class="text-muted">Updated At:</span>
+                                <strong>@userDetail.UpdatedAt.ToString("MMM dd, yyyy HH:mm")</strong>
+                            </div>
+                            @if (!string.IsNullOrEmpty(userDetail.UpdatedBy))
+                            {
+                                <div class="audit-item">
+                                    <span class="text-muted">Updated By:</span>
+                                    <strong>@userDetail.UpdatedBy</strong>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column - Role-Specific Details -->
+            <div class="col-lg-8">
+                @if (userDetail.Role == "Doctor" && userDetail.DoctorInfo != null)
+                {
+                    <!-- Doctor Information -->
+                    <div class="card border-0 shadow-sm mb-4">
+                        <div class="card-header bg-white border-0 py-3">
+                            <h5 class="mb-0">
+                                <i class="bi bi-person-badge text-info me-2"></i>
+                                Doctor Information
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row g-4">
+                                <div class="col-md-6">
+                                    <div class="detail-card">
+                                        <div class="detail-icon bg-info bg-opacity-10">
+                                            <i class="bi bi-award text-info"></i>
+                                        </div>
+                                        <div>
+                                            <small class="text-muted">Specialty</small>
+                                            <h6 class="mb-0">@(userDetail.DoctorInfo.Specialty ?? "Not specified")</h6>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="detail-card">
+                                        <div class="detail-icon bg-primary bg-opacity-10">
+                                            <i class="bi bi-mortarboard text-primary"></i>
+                                        </div>
+                                        <div>
+                                            <small class="text-muted">Degree</small>
+                                            <h6 class="mb-0">@(userDetail.DoctorInfo.Degree ?? "Not specified")</h6>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="detail-card">
+                                        <div class="detail-icon bg-success bg-opacity-10">
+                                            <i class="bi bi-card-checklist text-success"></i>
+                                        </div>
+                                        <div>
+                                            <small class="text-muted">License Number</small>
+                                            <h6 class="mb-0">@(userDetail.DoctorInfo.LicenseNumber ?? "Not provided")</h6>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="detail-card">
+                                        <div class="detail-icon bg-warning bg-opacity-10">
+                                            <i class="bi bi-calendar-check text-warning"></i>
+                                        </div>
+                                        <div>
+                                            <small class="text-muted">Experience</small>
+                                            <h6 class="mb-0">
+                                                @(userDetail.DoctorInfo.ExperienceYears.HasValue 
+                                                    ? $"{userDetail.DoctorInfo.ExperienceYears} years" 
+                                                    : "Not specified")
+                                            </h6>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="detail-card">
+                                        <div class="detail-icon bg-success bg-opacity-10">
+                                            <i class="bi bi-cash-coin text-success"></i>
+                                        </div>
+                                        <div>
+                                            <small class="text-muted">Consultation Fee</small>
+                                            <h6 class="mb-0">
+                                                @(userDetail.DoctorInfo.ConsultationFee.HasValue 
+                                                    ? $"₹{userDetail.DoctorInfo.ConsultationFee:N2}" 
+                                                    : "Not set")
+                                            </h6>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="detail-card">
+                                        <div class="detail-icon @(userDetail.DoctorInfo.IsOnDuty ? "bg-success" : "bg-danger") bg-opacity-10">
+                                            <i class="bi @(userDetail.DoctorInfo.IsOnDuty ? "bi-check-circle" : "bi-x-circle") @(userDetail.DoctorInfo.IsOnDuty ? "text-success" : "text-danger")"></i>
+                                        </div>
+                                        <div>
+                                            <small class="text-muted">Duty Status</small>
+                                            <h6 class="mb-0">
+                                                @(userDetail.DoctorInfo.IsOnDuty ? "On Duty" : "Off Duty")
+                                            </h6>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+
+                @if (userDetail.Role == "Patient" && userDetail.PatientInfo != null)
+                {
+                    <!-- Patient Information -->
+                    <div class="card border-0 shadow-sm mb-4">
+                        <div class="card-header bg-white border-0 py-3">
+                            <h5 class="mb-0">
+                                <i class="bi bi-person-heart text-danger me-2"></i>
+                                Patient Information
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row g-4">
+                                <div class="col-md-6">
+                                    <div class="detail-card">
+                                        <div class="detail-icon bg-primary bg-opacity-10">
+                                            <i class="bi bi-file-medical text-primary"></i>
+                                        </div>
+                                        <div>
+                                            <small class="text-muted">Medical Record Number</small>
+                                            <h6 class="mb-0">@(userDetail.PatientInfo.MedicalRecordNumber ?? "Not assigned")</h6>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="detail-card">
+                                        <div class="detail-icon bg-danger bg-opacity-10">
+                                            <i class="bi bi-droplet-fill text-danger"></i>
+                                        </div>
+                                        <div>
+                                            <small class="text-muted">Blood Group</small>
+                                            <h6 class="mb-0">@(userDetail.PatientInfo.BloodGroup ?? "Not specified")</h6>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="detail-card">
+                                        <div class="detail-icon bg-info bg-opacity-10">
+                                            <i class="bi bi-gender-ambiguous text-info"></i>
+                                        </div>
+                                        <div>
+                                            <small class="text-muted">Gender</small>
+                                            <h6 class="mb-0">@(userDetail.PatientInfo.Gender ?? "Not specified")</h6>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="detail-card">
+                                        <div class="detail-icon bg-success bg-opacity-10">
+                                            <i class="bi bi-calendar-event text-success"></i>
+                                        </div>
+                                        <div>
+                                            <small class="text-muted">Date of Birth</small>
+                                            <h6 class="mb-0">
+                                                @(userDetail.PatientInfo.DateOfBirth.HasValue 
+                                                    ? userDetail.PatientInfo.DateOfBirth.Value.ToString("MMM dd, yyyy") 
+                                                    : "Not provided")
+                                            </h6>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+
+                @if (userDetail.Role == "Staff" && userDetail.StaffInfo != null)
+                {
+                    <!-- Staff Information -->
+                    <div class="card border-0 shadow-sm mb-4">
+                        <div class="card-header bg-white border-0 py-3">
+                            <h5 class="mb-0">
+                                <i class="bi bi-person-workspace text-warning me-2"></i>
+                                Staff Information
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row g-4">
+                                <div class="col-md-6">
+                                    <div class="detail-card">
+                                        <div class="detail-icon bg-warning bg-opacity-10">
+                                            <i class="bi bi-briefcase text-warning"></i>
+                                        </div>
+                                        <div>
+                                            <small class="text-muted">Position</small>
+                                            <h6 class="mb-0">@userDetail.StaffInfo.Position</h6>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="detail-card">
+                                        <div class="detail-icon bg-info bg-opacity-10">
+                                            <i class="bi bi-building text-info"></i>
+                                        </div>
+                                        <div>
+                                            <small class="text-muted">Department</small>
+                                            <h6 class="mb-0">@(userDetail.StaffInfo.Department ?? "Not assigned")</h6>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="detail-card">
+                                        <div class="detail-icon bg-primary bg-opacity-10">
+                                            <i class="bi bi-hash text-primary"></i>
+                                        </div>
+                                        <div>
+                                            <small class="text-muted">Employee Code</small>
+                                            <h6 class="mb-0">@(userDetail.StaffInfo.EmployeeCode ?? "Not assigned")</h6>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="detail-card">
+                                        <div class="detail-icon bg-success bg-opacity-10">
+                                            <i class="bi bi-calendar-plus text-success"></i>
+                                        </div>
+                                        <div>
+                                            <small class="text-muted">Date of Joining</small>
+                                            <h6 class="mb-0">
+                                                @(userDetail.StaffInfo.DateOfJoining.HasValue 
+                                                    ? userDetail.StaffInfo.DateOfJoining.Value.ToString("MMM dd, yyyy") 
+                                                    : "Not recorded")
+                                            </h6>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+
+                @if (userDetail.Role == "Admin")
+                {
+                    <!-- Admin Information -->
+                    <div class="card border-0 shadow-sm mb-4">
+                        <div class="card-header bg-white border-0 py-3">
+                            <h5 class="mb-0">
+                                <i class="bi bi-shield-check text-primary me-2"></i>
+                                Administrator Information
+                            </h5>
+                        </div>
+                        <div class="card-body text-center py-5">
+                            <i class="bi bi-shield-fill-check text-primary" style="font-size: 4rem;"></i>
+                            <h5 class="mt-3 mb-2">System Administrator</h5>
+                            <p class="text-muted">
+                                This user has full administrative access to the system.
+                            </p>
+                        </div>
+                    </div>
+                }
+
+                <!-- Quick Actions Card -->
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-white border-0 py-3">
+                        <h5 class="mb-0">
+                            <i class="bi bi-lightning-charge text-warning me-2"></i>
+                            Quick Actions
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-grid gap-2">
+                            <button class="btn btn-outline-primary" @onclick="EditUser">
+                                <i class="bi bi-pencil-square me-2"></i>
+                                Edit User Information
+                            </button>
+                            @if (userDetail.Role == "Doctor")
+                            {
+                                <button class="btn btn-outline-info" @onclick="ViewSchedule">
+                                    <i class="bi bi-calendar-week me-2"></i>
+                                    View Doctor Schedule
+                                </button>
+                                @* <button class="btn btn-outline-success" @onclick="ViewAppointments">
+                                    <i class="bi bi-clipboard-check me-2"></i>
+                                    View Appointments
+                                </button> *@
+                            }
+                            @if (userDetail.Role == "Patient")
+                            {
+                                <button class="btn btn-outline-success" @onclick="ViewAppointments">
+                                    <i class="bi bi-clipboard-check me-2"></i>
+                                    View Appointment History
+                                </button>
+                            }
+                            @* @if (!userDetail.IsProfileCompleted)
+                            {
+                                <button class="btn btn-outline-warning">
+                                    <i class="bi bi-exclamation-triangle me-2"></i>
+                                    Complete Profile
+                                </button>
+                            } *@
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+<!-- Delete Confirmation Modal -->
+@if (showDeleteModal && userDetail != null)
+{
+    <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow">
+                <div class="modal-header border-0 pb-0">
+                    <h5 class="modal-title text-danger">
+                        <i class="bi bi-exclamation-triangle"></i> Confirm Delete
+                    </h5>
+                    <button type="button" class="btn-close" @onclick="() => showDeleteModal = false"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Are you sure you want to delete <strong>@userDetail.FullName</strong>?</p>
+                    <p class="text-muted small mb-0">This action will soft-delete the user and can be reversed later.</p>
+                </div>
+                <div class="modal-footer border-0">
+                    <button type="button" class="btn btn-secondary" @onclick="() => showDeleteModal = false">Cancel</button>
+                    <button type="button" class="btn btn-danger" @onclick="DeleteUser">
+                        <i class="bi bi-trash"></i> Delete User
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+<style>
+    .avatar-circle-large {
+        width: 120px;
+        height: 120px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        font-size: 2.5rem;
+        color: white;
+        box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.15);
+    }
+
+    .avatar-initials-large {
+        text-transform: uppercase;
+    }
+
+    .role-admin { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+    .role-doctor { background: linear-gradient(135deg, #06beb6 0%, #48b1bf 100%); }
+    .role-patient { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
+    .role-staff { background: linear-gradient(135deg, #ffa751 0%, #ffe259 100%); }
+
+    .contact-info {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .info-item {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        padding: 1rem;
+        background: #f8f9fa;
+        border-radius: 0.5rem;
+    }
+
+    .info-item i {
+        font-size: 1.5rem;
+        flex-shrink: 0;
+    }
+
+    .audit-info {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+
+    .audit-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.5rem 0;
+        border-bottom: 1px solid #e9ecef;
+    }
+
+    .audit-item:last-child {
+        border-bottom: none;
+    }
+
+    .detail-card {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        padding: 1.25rem;
+        background: #f8f9fa;
+        border-radius: 0.75rem;
+        transition: all 0.2s ease;
+    }
+
+    .detail-card:hover {
+        background: #e9ecef;
+        transform: translateY(-2px);
+    }
+
+    .detail-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 0.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+
+    .detail-icon i {
+        font-size: 1.5rem;
+    }
+
+    .detail-card small {
+        display: block;
+        font-size: 0.75rem;
+    }
+
+    .detail-card h6 {
+        font-size: 1rem;
+        margin-top: 0.25rem;
+    }
+</style>
+
+@code {
+    [Parameter]
+    public long UserId { get; set; }
+
+    private UserDetailDto? userDetail;
+    private bool isLoading = true;
+    private string? errorMessage = null;
+    private bool showDeleteModal = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadUserDetails();
+    }
+
+    private async Task LoadUserDetails()
+    {
+        isLoading = true;
+        errorMessage = null;
+
+        try
+        {
+            userDetail = await UserManagementService.GetUserDetailAsync(UserId);
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Failed to load user details: {ex.Message}";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private void GoBack()
+    {
+        Navigation.NavigateTo("/admin/user-management");
+    }
+
+    private void EditUser()
+    {
+        // TODO: Navigate to edit page or open edit modal
+        Navigation.NavigateTo($"/admin/edit-user/{UserId}");
+    }
+
+    private async Task DeleteUser()
+    {
+        if (userDetail == null) return;
+
+        var result = await UserManagementService.DeleteUserAsync(UserId, "Admin");
+        
+        if (result.IsSuccess)
+        {
+            showDeleteModal = false;
+            await LoadUserDetails();
+        }
+        else
+        {
+            errorMessage = result.Error;
+        }
+    }
+
+    private async Task ReactivateUser()
+    {
+        var result = await UserManagementService.ReactivateUserAsync(UserId, "Admin");
+        
+        if (result.IsSuccess)
+        {
+            await LoadUserDetails();
+        }
+        else
+        {
+            errorMessage = result.Error;
+        }
+    }
+
+    private void ViewSchedule()
+    {
+        // TODO: Navigate to doctor schedule
+        Navigation.NavigateTo($"/appointments/provider/{UserId}");
+    }
+
+    private void ViewAppointments()
+    {
+        // TODO: Navigate to appointments
+        Navigation.NavigateTo($"/appointments/{UserId}");
+    }
+
+    private string GetInitials(string fullName)
+    {
+        if (string.IsNullOrWhiteSpace(fullName)) return "??";
+        var parts = fullName.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        return parts.Length >= 2
+            ? $"{parts[0][0]}{parts[^1][0]}"
+            : parts[0].Length >= 2 ? $"{parts[0][0]}{parts[0][1]}" : parts[0][0].ToString();
+    }
+
+    private string GetRoleColorClass(string role) => role switch
+    {
+        "Admin" => "role-admin",
+        "Doctor" => "role-doctor",
+        "Patient" => "role-patient",
+        "Staff" => "role-staff",
+        _ => "bg-secondary"
+    };
+
+    private string GetRoleBadgeClass(string role) => role switch
+    {
+        "Admin" => "bg-light text-purple border border-purple",
+        "Doctor" => "bg-light text-info border border-info",
+        "Patient" => "bg-light text-danger border border-danger",
+        "Staff" => "bg-light text-warning border border-warning",
+        _ => "bg-secondary"
+    };
+
+    private string GetRoleIcon(string role) => role switch
+    {
+        "Admin" => "bi-shield-check",
+        "Doctor" => "bi-person-badge",
+        "Patient" => "bi-person-heart",
+        "Staff" => "bi-person-workspace",
+        _ => "bi-person"
+    };
+}

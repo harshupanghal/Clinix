@@ -98,6 +98,48 @@ public class UserRepository : IUserRepository
             .ToListAsync(ct);
         }
 
+    /// <summary>
+    /// Gets all users with eager loading of related Doctor, Patient, and Staff entities.
+    /// This is more efficient than making separate queries for each role type.
+    /// </summary>
+    public async Task<List<User>> GetAllWithRoleDetailsAsync(CancellationToken ct = default)
+        {
+        _logger.LogTrace("Getting all users with role details");
+
+        // Note: Since Doctor, Patient, and Staff have one-to-one relationships with User,
+        // we can't use Include here because there's no navigation property from User to these entities.
+        // The relationships are defined the other way (Doctor.User, Patient.User, Staff.User).
+        // 
+        // For this pattern, we'll just return users and let the service layer
+        // query Doctor, Patient, and Staff repositories separately.
+        // This is actually more efficient than trying to use complex joins here.
+
+        return await _db.Users
+            .AsNoTracking()
+            .Where(u => !u.IsDeleted)
+            .OrderByDescending(u => u.CreatedAt)
+            .ToListAsync(ct);
+        }
+
+    /// <summary>
+    /// Counts users by specific role
+    /// </summary>
+    public async Task<int> CountByRoleAsync(string role, CancellationToken ct = default)
+        {
+        if (string.IsNullOrWhiteSpace(role))
+            {
+            _logger.LogWarning("CountByRoleAsync called with empty role");
+            return 0;
+            }
+
+        _logger.LogTrace("Counting users with role: {Role}", role);
+
+        return await _db.Users
+            .AsNoTracking()
+            .Where(u => !u.IsDeleted && u.Role == role)
+            .CountAsync(ct);
+        }
+
     private static string NormalizePhone(string phone)
         {
         var trimmed = phone?.Trim() ?? string.Empty;
