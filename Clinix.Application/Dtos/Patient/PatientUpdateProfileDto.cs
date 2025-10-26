@@ -2,7 +2,6 @@
 
 /// <summary>
 /// Request DTO used by patients to update their profile from the dashboard.
-/// Note: phone changes are intentionally omitted for safety (handle phone changes via support or a separate flow).
 /// </summary>
 public class PatientUpdateProfileRequest
     {

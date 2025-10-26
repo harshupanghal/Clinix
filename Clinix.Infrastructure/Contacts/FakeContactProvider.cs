@@ -1,5 +1,4 @@
-﻿// Infrastructure/Contacts/FakeContactProvider.cs
-using Clinix.Application.Interfaces;
+﻿using Clinix.Application.Interfaces;
 
 namespace Clinix.Infrastructure.Contacts;
 

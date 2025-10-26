@@ -1,5 +1,4 @@
-﻿@* Web/Components/Pages/Admin/DoctorScheduleDetail.razor *@
-@page "/admin/doctor-schedule/{ProviderId:long}"
+﻿@page "/admin/doctor-schedule/{ProviderId:long}"
 @attribute [Authorize(Roles = "Admin")]
 @rendermode InteractiveServer
 @using Clinix.Application.DTOs
@@ -198,7 +197,6 @@
 
             scheduleData = await AdminScheduleService.GetMasterScheduleAsync(request);
 
-            // Calculate stats
             totalAppointments = scheduleData.Sum(d => d.BookedSlots);
             weekAppointments = scheduleData
                 .Where(d => d.Date >= DateOnly.FromDateTime(DateTime.Today) && 

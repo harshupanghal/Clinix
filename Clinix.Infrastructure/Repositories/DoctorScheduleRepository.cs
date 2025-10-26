@@ -1,5 +1,4 @@
-﻿// Infrastructure/Repositories/DoctorScheduleRepository.cs
-using Clinix.Domain.Entities.ApplicationUsers;
+﻿using Clinix.Domain.Entities.ApplicationUsers;
 using Clinix.Domain.Interfaces;
 using Clinix.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;

@@ -1,5 +1,4 @@
-﻿// Application/Services/AppointmentAppService.cs
-namespace Clinix.Application.Services;
+﻿namespace Clinix.Application.Services;
 using Clinix.Application.DTOs;
 using Clinix.Application.Interfaces;
 using Clinix.Application.Mappers;

@@ -1,5 +1,4 @@
-﻿// Infrastructure/Background/FollowUpReminderWorker.cs
-using Clinix.Application.Interfaces;
+﻿using Clinix.Application.Interfaces;
 using Clinix.Application.Options;
 using Clinix.Domain.Interfaces;
 using Microsoft.Extensions.DependencyInjection;

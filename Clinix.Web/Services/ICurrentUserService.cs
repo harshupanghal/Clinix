@@ -1,4 +1,4 @@
-﻿// Web/Services/ICurrentUserService.cs
+﻿
 namespace Clinix.Web.Services;
 
 public interface ICurrentUserService

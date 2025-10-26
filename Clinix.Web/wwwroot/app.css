@@ -1,8 +1,4 @@
-﻿/* ============================================
-   CLINIX HMS - DESIGN SYSTEM
-   ============================================ */
-
-:root {
+﻿:root {
     /* Sidebar & Layout Dimensions */
     --clinix-sidebar-width: 260px;
     --clinix-sidebar-collapsed-width: 80px;
@@ -69,9 +65,6 @@
     --clx-transition-slow: 350ms ease;
 }
 
-/* ============================================
-   BASE STYLES
-   ============================================ */
 html, body {
     font-family: var(--clx-font-family);
     font-size: 14px;
@@ -86,9 +79,6 @@ html, body {
     box-sizing: border-box;
 }
 
-/* ============================================
-   TYPOGRAPHY
-   ============================================ */
 h1, h2, h3, h4, h5, h6 {
     font-weight: 600;
     line-height: 1.2;
@@ -136,9 +126,6 @@ small, .small {
     color: var(--clx-gray-600) !important;
 }
 
-/* ============================================
-   LINKS
-   ============================================ */
 a, .btn-link {
     color: var(--clx-primary);
     text-decoration: none;
@@ -150,9 +137,6 @@ a, .btn-link {
         text-decoration: underline;
     }
 
-/* ============================================
-   BUTTONS
-   ============================================ */
 .btn {
     display: inline-flex;
     align-items: center;
@@ -206,6 +190,7 @@ a, .btn-link {
     .btn-secondary:hover:not(:disabled) {
         background-color: var(--clx-gray-50);
         border-color: var(--clx-gray-400);
+        color: var(--clx-gray-900);
     }
 
 .btn-success {
@@ -240,9 +225,6 @@ a, .btn-link {
     font-size: 1rem;
 }
 
-/* ============================================
-   FORM CONTROLS
-   ============================================ */
 .form-label {
     display: inline-block;
     margin-bottom: var(--clx-spacing-sm);
@@ -332,9 +314,7 @@ a, .btn-link {
     border-color: var(--clx-gray-500);
 }
 
-/* ============================================
-   VALIDATION STATES
-   ============================================ */
+
 .valid.modified:not([type=checkbox]) {
     border-color: var(--clx-success);
     background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='%2326b050' d='M12.736 3.97a.733.733 0 0 1 1.047 0c.286.289.29.756.01 1.05L7.88 12.01a.733.733 0 0 1-1.065.02L3.217 8.384a.757.757 0 0 1 0-1.06.733.733 0 0 1 1.047 0l3.052 3.093 5.4-6.425a.247.247 0 0 1 .02-.022Z'/%3e%3c/svg%3e");
@@ -360,9 +340,6 @@ a, .btn-link {
     color: var(--clx-danger);
 }
 
-/* ============================================
-   CARDS
-   ============================================ */
 .card {
     background-color: var(--clx-white);
     border: 1px solid var(--clx-gray-200);
@@ -393,9 +370,7 @@ a, .btn-link {
     border-top: 1px solid var(--clx-gray-200);
 }
 
-/* ============================================
-   BADGES
-   ============================================ */
+
 .badge {
     display: inline-flex;
     align-items: center;
@@ -437,9 +412,6 @@ a, .btn-link {
     border: 1px solid rgba(27, 110, 194, 0.2);
 }
 
-/* ============================================
-   TABLES
-   ============================================ */
 .table {
     width: 100%;
     margin-bottom: var(--clx-spacing-md);
@@ -476,9 +448,7 @@ a, .btn-link {
     background-color: rgba(0, 0, 0, 0.02);
 }
 
-/* ============================================
-   ALERTS
-   ============================================ */
+
 .alert {
     padding: var(--clx-spacing-md);
     margin-bottom: var(--clx-spacing-md);
@@ -511,9 +481,6 @@ a, .btn-link {
     border-color: var(--clx-active-border);
 }
 
-/* ============================================
-   UTILITIES
-   ============================================ */
 .content {
     padding-top: var(--clx-spacing-lg);
 }
@@ -541,9 +508,6 @@ a, .btn-link {
     box-shadow: var(--clx-shadow-xl);
 }
 
-/* ============================================
-   ERROR BOUNDARY
-   ============================================ */
 .blazor-error-boundary {
     background: linear-gradient(135deg, #c82333 0%, #dc3545 100%);
     padding: var(--clx-spacing-lg) var(--clx-spacing-lg) var(--clx-spacing-lg) 4rem;
@@ -570,9 +534,6 @@ a, .btn-link {
         display: block;
     }
 
-/* ============================================
-   LOADING SPINNER
-   ============================================ */
 .spinner-border {
     display: inline-block;
     width: 1rem;
@@ -595,18 +556,11 @@ a, .btn-link {
     }
 }
 
-/* ============================================
-   PAGE LAYOUT
-   ============================================ */
 .page-wrapper {
     display: flex;
     flex-direction: column;
     min-height: 100vh;
 }
-
-/* ============================================
-   MAIN CONTENT AREA - RESPONSIVE TO SIDEBAR
-   ============================================ */
 .main-content-area {
     flex: 1;
     padding-top: var(--clinix-topbar-height);
@@ -614,19 +568,16 @@ a, .btn-link {
     transition: margin-left var(--clx-transition-normal);
 }
 
-/* Desktop: account for sidebar */
 @media (min-width: 768px) {
     .main-content-area {
         margin-left: var(--clinix-sidebar-width);
     }
 
-    /* Collapsed sidebar state */
     body.sidebar-collapsed .main-content-area {
         margin-left: var(--clinix-sidebar-collapsed-width);
     }
 }
 
-/* Mobile: no sidebar margin */
 @media (max-width: 767.98px) {
     .main-content-area {
         margin-left: 0 !important;
@@ -634,9 +585,6 @@ a, .btn-link {
     }
 }
 
-/* ============================================
-   ERROR UI
-   ============================================ */
 #blazor-error-ui {
     position: fixed;
     bottom: 0;
@@ -689,9 +637,6 @@ a, .btn-link {
         font-size: 0.875rem;
     }
 
-/* ============================================
-   RESPONSIVE UTILITIES
-   ============================================ */
 @media (max-width: 768px) {
     html, body {
         font-size: 13px;
@@ -733,9 +678,6 @@ a, .btn-link {
         }
 }
 
-/* ============================================
-   ACCESSIBILITY
-   ============================================ */
 :focus-visible {
     outline: 2px solid var(--clx-primary);
     outline-offset: 2px;
@@ -753,9 +695,6 @@ a, .btn-link {
     border-width: 0;
 }
 
-/* ============================================
-   PRINT STYLES
-   ============================================ */
 @media print {
     body {
         background-color: white;
@@ -765,7 +704,6 @@ a, .btn-link {
         box-shadow: none;
     }
 }
-
 
 
 .spinner-border {
@@ -790,9 +728,7 @@ a, .btn-link {
     }
 }
 
-/* ============================================
-   RESPONSIVE UTILITIES
-   ============================================ */
+
 @media (max-width: 768px) {
     html, body {
         font-size: 13px;
@@ -819,9 +755,6 @@ a, .btn-link {
     }
 }
 
-/* ============================================
-   ACCESSIBILITY
-   ============================================ */
 /*:focus-visible {
     outline: 2px solid var(--clx-primary);
     outline-offset: 2px;
@@ -839,9 +772,6 @@ a, .btn-link {
     border-width: 0;
 }
 
-/* ============================================
-   PRINT STYLES
-   ============================================ */
 @media print {
     body {
         background-color: white;

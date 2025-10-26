@@ -1,5 +1,4 @@
-﻿// Infrastructure/Persistence/Repositories/AppointmentRepository.cs
-using Clinix.Domain.Entities;
+﻿using Clinix.Domain.Entities;
 using Clinix.Domain.Interfaces;
 using Clinix.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;

@@ -1,5 +1,4 @@
-﻿// Domain/Enums/AppointmentStatus.cs
-namespace Clinix.Domain.Enums;
+﻿namespace Clinix.Domain.Enums;
 
 public enum AppointmentStatus
     {

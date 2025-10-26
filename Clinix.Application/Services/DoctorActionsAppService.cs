@@ -1,5 +1,4 @@
-﻿// Application/Services/DoctorActionsAppService.cs
-namespace Clinix.Application.Services;
+﻿namespace Clinix.Application.Services;
 
 using Clinix.Application.Interfaces;
 using Clinix.Domain.Interfaces;
@@ -44,7 +43,6 @@ public sealed class DoctorActionsAppService : IDoctorActionsAppService
 
         var day = DateOnly.FromDateTime(target.When.Start.LocalDateTime);
 
-        // Extract TimeOfDay from DateTime working hours
         var startTime = provider.WorkStartTime.TimeOfDay;
         var endTime = provider.WorkEndTime.TimeOfDay;
 
@@ -69,7 +67,6 @@ public sealed class DoctorActionsAppService : IDoctorActionsAppService
             var proposedStart = appt.When.Start + currentShift;
             var proposedEnd = appt.When.End + currentShift;
 
-            // Handle overlap with previous appointment
             if (lastEnd > DateTimeOffset.MinValue && proposedStart < lastEnd)
                 {
                 var extra = lastEnd - proposedStart;
@@ -78,7 +75,6 @@ public sealed class DoctorActionsAppService : IDoctorActionsAppService
                 currentShift += extra;
                 }
 
-            // Handle overflow to next day
             if (proposedEnd > dayEnd)
                 {
                 day = day.AddDays(1);

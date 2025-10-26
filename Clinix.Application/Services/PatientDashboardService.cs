@@ -59,7 +59,7 @@ public class PatientDashboardService : IPatientDashboardService
             UpdatedAt = patient?.UpdatedAt ?? user.UpdatedAt
             };
 
-        // Appointments and FollowUps intentionally left out for now (commented)
+        // Appointments and FollowUps
         // dto.UpcomingAppointments = ...;
         // dto.FollowUps = ...;
 
@@ -81,7 +81,6 @@ public class PatientDashboardService : IPatientDashboardService
 
         try
             {
-            // If email change requested, ensure it is not used by another account
             if (!string.IsNullOrWhiteSpace(request.Email) && !string.Equals(request.Email.Trim(), user.Email?.Trim(), StringComparison.OrdinalIgnoreCase))
                 {
                 var existing = await _userRepo.GetByEmailAsync(request.Email.Trim(), ct);
@@ -91,7 +90,6 @@ public class PatientDashboardService : IPatientDashboardService
 
             var existingPatient = await _patientRepo.GetByUserIdAsync(user.Id, ct);
 
-            // map user updates (FullName, Email)
             if (!string.IsNullOrWhiteSpace(request.FullName))
                 user.FullName = request.FullName.Trim();
 
@@ -104,7 +102,6 @@ public class PatientDashboardService : IPatientDashboardService
             await _uow.BeginTransactionAsync(ct);
             try
                 {
-                // update or create patient record
                 if (existingPatient == null)
                     {
                     var newPatient = new Patient
@@ -124,12 +121,11 @@ public class PatientDashboardService : IPatientDashboardService
                         };
 
                     await _patientRepo.AddAsync(newPatient, ct);
-                    // update profile completed flag based on new patient
+                 
                     user.IsProfileCompleted = newPatient.IsProfileComplete();
                     }
                 else
                     {
-                    // update tracked patient fields
                     existingPatient.DateOfBirth = request.DateOfBirth ?? existingPatient.DateOfBirth;
                     existingPatient.Gender = request.Gender ?? existingPatient.Gender;
                     existingPatient.BloodGroup = request.BloodGroup ?? existingPatient.BloodGroup;
@@ -142,11 +138,9 @@ public class PatientDashboardService : IPatientDashboardService
 
                     await _patientRepo.UpdateAsync(existingPatient, ct);
 
-                    // set profile completion based on updated data
                     user.IsProfileCompleted = existingPatient.IsProfileComplete();
                     }
 
-                // persist user update
                 await _userRepo.UpdateAsync(user, ct);
 
                 await _uow.CommitAsync(ct);

@@ -1,5 +1,4 @@
-﻿// Application/Mappings/DoctorMappers.cs
-using System;
+﻿using System;
 using System.Linq;
 using Clinix.Application.Dtos;
 using Clinix.Domain.Entities.ApplicationUsers;
@@ -27,7 +26,6 @@ public static class DoctorMappers
             UpdatedAt = DateTime.UtcNow
             };
 
-        // Map schedules if provided
         if (req.Schedules?.Any() == true)
             {
             doctor.Schedules = req.Schedules.Select(s => new DoctorSchedule

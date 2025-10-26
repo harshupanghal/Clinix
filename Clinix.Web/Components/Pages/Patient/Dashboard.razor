@@ -10,7 +10,7 @@
 @inject Blazored.Toast.Services.IToastService ToastService
 
 <div class="patient-dashboard-page">
-    <!-- Page Header -->
+
     <div class="page-header">
         <div>
             <h1 class="page-title">
@@ -43,9 +43,9 @@
     else
     {
         <div class="dashboard-grid">
-            <!-- Left Column -->
+            
             <div class="left-column">
-                <!-- Profile Card -->
+              
                 <div class="card profile-card">
                     <div class="card-body">
                         <div class="profile-header">
@@ -87,7 +87,6 @@
                     </div>
                 </div>
 
-                <!-- Profile Summary Card -->
                 <div class="card summary-card">
                     <div class="card-header">
                         <h5 class="card-header-title">
@@ -152,9 +151,7 @@
                 </div>
             </div>
 
-            <!-- Right Column -->
             <div class="right-column">
-                <!-- Quick Actions Card -->
                 <div class="card quick-actions-card">
                     <div class="card-header">
                         <h5 class="card-header-title">
@@ -192,7 +189,6 @@
                     </div>
                 </div>
 
-                <!-- Activity Card -->
                 <div class="card activity-card">
                     <div class="card-header">
                         <h5 class="card-header-title">
@@ -220,18 +216,13 @@
 </div>
 
 <style>
-    /* ============================================
-       PATIENT DASHBOARD PAGE
-       ============================================ */
+
     .patient-dashboard-page {
         padding: var(--clx-spacing-lg);
         max-width: 1400px;
         margin: 0 auto;
     }
 
-    /* ============================================
-       PAGE HEADER
-       ============================================ */
     .page-header {
         margin-bottom: var(--clx-spacing-xl);
     }
@@ -255,9 +246,6 @@
         margin: 0;
     }
 
-    /* ============================================
-       LOADING STATE
-       ============================================ */
     .loading-container {
         display: flex;
         flex-direction: column;
@@ -267,9 +255,6 @@
         text-align: center;
     }
 
-    /* ============================================
-       DASHBOARD GRID
-       ============================================ */
     .dashboard-grid {
         display: grid;
         grid-template-columns: 1fr 400px;
@@ -283,9 +268,6 @@
         gap: var(--clx-spacing-lg);
     }
 
-    /* ============================================
-       PROFILE CARD
-       ============================================ */
     .profile-card {
         box-shadow: var(--clx-shadow-md);
     }
@@ -363,9 +345,6 @@
         gap: var(--clx-spacing-xs);
     }
 
-    /* ============================================
-       SUMMARY CARD
-       ============================================ */
     .summary-card {
         box-shadow: var(--clx-shadow-md);
     }
@@ -447,9 +426,6 @@
         font-weight: 600;
     }
 
-    /* ============================================
-       QUICK ACTIONS CARD
-       ============================================ */
     .quick-actions-card {
         box-shadow: var(--clx-shadow-md);
     }
@@ -518,9 +494,6 @@
         font-weight: 600;
     }
 
-    /* ============================================
-       ACTIVITY CARD
-       ============================================ */
     .activity-card {
         box-shadow: var(--clx-shadow-md);
     }
@@ -556,9 +529,6 @@
         margin: 0;
     }
 
-    /* ============================================
-       RESPONSIVE DESIGN
-       ============================================ */
     @@media (max-width: 1024px) {
         .dashboard-grid {
             grid-template-columns: 1fr;

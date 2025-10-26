@@ -4,7 +4,7 @@ namespace Clinix.Application.Interfaces.Generic;
 
 public interface IRepository<T> where T : class
     {
-    // ... other methods like GetByIdAsync, AddAsync, etc.
+
 
     /// <summary>
     /// Gets the count of all entities in the table.

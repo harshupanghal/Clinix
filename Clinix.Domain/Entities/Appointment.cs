@@ -1,5 +1,4 @@
-﻿// Domain/Entities/Appointment.cs
-namespace Clinix.Domain.Entities;
+﻿namespace Clinix.Domain.Entities;
 using Clinix.Domain.Abstractions;
 using Clinix.Domain.Enums;
 using Clinix.Domain.Events;

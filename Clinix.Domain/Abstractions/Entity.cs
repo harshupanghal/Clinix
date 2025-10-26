@@ -1,5 +1,4 @@
-﻿// Domain/Abstractions/Entity.cs
-namespace Clinix.Domain.Abstractions;
+﻿namespace Clinix.Domain.Abstractions;
 
 public abstract class Entity
     {

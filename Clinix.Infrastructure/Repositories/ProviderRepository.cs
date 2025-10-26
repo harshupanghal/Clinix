@@ -1,5 +1,4 @@
-﻿// Infrastructure/Persistence/Repositories/ProviderRepository.cs
-using Clinix.Domain.Entities;
+﻿using Clinix.Domain.Entities;
 using Clinix.Domain.Interfaces;
 using Clinix.Infrastructure.Persistence;
 using HandlebarsDotNet;
@@ -15,7 +14,6 @@ public sealed class ProviderRepository : IProviderRepository
     public Task<Provider?> GetByIdAsync(long id, CancellationToken ct = default) =>
         _db.Providers.FirstOrDefaultAsync(p => p.Id == id, ct);
 
-    // Infrastructure/Repositories/ProviderRepository.cs
     public async Task<List<Provider>> SearchAsync(string[] keywords, CancellationToken ct = default)
         {
         Console.WriteLine($"[ProviderRepo] SearchAsync called with {keywords?.Length ?? 0} keywords");
@@ -30,7 +28,6 @@ public sealed class ProviderRepository : IProviderRepository
 
         Console.WriteLine($"[ProviderRepo] Keywords: {string.Join(", ", keywords)}");
 
-        // Get all providers first
         var allProviders = await _db.Providers.AsNoTracking().ToListAsync(ct);
         Console.WriteLine($"[ProviderRepo] Total providers in DB: {allProviders.Count}");
 
@@ -40,13 +37,11 @@ public sealed class ProviderRepository : IProviderRepository
             return new List<Provider>();
             }
 
-        // Log each provider
-        foreach (var p in allProviders)
-            {
-            Console.WriteLine($"[ProviderRepo] Provider: {p.Name} | Specialty: {p.Specialty} | Tags: {p.Tags ?? "NULL"}");
-            }
+        //foreach (var p in allProviders)
+        //    {
+        //    Console.WriteLine($"[ProviderRepo] Provider: {p.Name} | Specialty: {p.Specialty} | Tags: {p.Tags ?? "NULL"}");
+        //    }
 
-        // Filter in memory
         var results = allProviders.Where(p =>
         {
             var searchText = $"{p.Name} {p.Specialty} {p.Tags}".ToLowerInvariant();
@@ -66,8 +61,6 @@ public sealed class ProviderRepository : IProviderRepository
         return results;
         }
 
-
-    // Infrastructure/Persistence/Repositories/ProviderRepository.cs (add method)
     public async Task UpdateAsync(Provider provider, CancellationToken ct = default)
         {
         _db.Providers.Update(provider);

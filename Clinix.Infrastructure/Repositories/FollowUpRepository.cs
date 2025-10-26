@@ -1,5 +1,4 @@
-﻿// Infrastructure/Persistence/Repositories/FollowUpRepository.cs
-using Clinix.Domain.Entities;
+﻿using Clinix.Domain.Entities;
 using Clinix.Domain.Enums;
 using Clinix.Domain.Interfaces;
 using Clinix.Infrastructure.Persistence;

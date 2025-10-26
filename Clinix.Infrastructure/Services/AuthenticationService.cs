@@ -21,9 +21,8 @@ public class AuthenticationService : IAuthenticationService
         if (string.IsNullOrWhiteSpace(Phone) || string.IsNullOrWhiteSpace(password))
             return new LoginResult(false, "Phone number and password are required.", null, null,null,null, null);
 
-        // Try email then username
         var user = await _userRepo.GetByPhoneAsync(Phone.Trim(), ct);
-        //if (user == null) user = await _userRepo.GetByUsernameAsync(Phone.Trim(), ct);
+    
         if (user == null) return new LoginResult(false, "Invalid credentials.", null, null,null,null, null);
 
         var verify = _passwordHasher.VerifyHashedPassword(user, user.PasswordHash, password);

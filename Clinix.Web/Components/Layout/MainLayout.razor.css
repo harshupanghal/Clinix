@@ -1,41 +1,33 @@
-/* ============================================
-   PAGE WRAPPER & LAYOUT
-   ============================================ */
+
 .page-wrapper {
     display: flex;
     flex-direction: column;
     min-height: 100vh;
 }
 
-/* ============================================
-   MAIN CONTENT AREA - FIXED SPACING
-   ============================================ */
 .main-content-area {
     flex: 1;
-    padding-top: 4rem; /* Height of topbar */
+    padding-top: 4rem; 
     background-color: var(--clx-gray-50);
     transition: margin-left var(--clx-transition-normal);
 }
 
-    /* Content padding */
+  
     .main-content-area .content {
 /*        padding: var(--clx-spacing-xl) var(--clx-spacing-lg);*/
         max-width: 100%;
     }
 
-/* Desktop: account for sidebar */
 @media (min-width: 641px) {
     .main-content-area {
-        margin-left: 260px; /* Width of expanded sidebar */
+        margin-left: 260px; 
     }
 }
 
-/* Collapsed sidebar state */
 .clinix-sidebar[data-collapsed="true"] ~ .main-content-area {
     margin-left: 70px;
 }
 
-/* Mobile: no sidebar margin */
 @media (max-width: 640px) {
     .main-content-area {
         margin-left: 0;
@@ -47,9 +39,6 @@
         }
 }
 
-/* ============================================
-   ERROR UI
-   ============================================ */
 #blazor-error-ui {
     position: fixed;
     bottom: 0;

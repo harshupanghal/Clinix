@@ -1,5 +1,4 @@
-﻿// Application/Mappers/AppointmentMappings.cs
-namespace Clinix.Application.Mappers;
+﻿namespace Clinix.Application.Mappers;
 using Clinix.Application.DTOs;
 using Clinix.Domain.Entities;
 

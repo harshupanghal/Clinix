@@ -10,20 +10,17 @@ public class ClinixDbContext : DbContext
     {
     public ClinixDbContext(DbContextOptions<ClinixDbContext> options) : base(options) { }
 
-    // ---------------------------
     // Users & roles
     public DbSet<User> Users => Set<User>();
     public DbSet<Patient> Patients => Set<Patient>();
     public DbSet<Doctor> Doctors => Set<Doctor>();
     public DbSet<Staff> Staffs => Set<Staff>();
 
-    // ---------------------------
     // Inventory
     public DbSet<InventoryItem> InventoryItems => Set<InventoryItem>();
     public DbSet<InventoryTransaction> InventoryTransactions => Set<InventoryTransaction>();
 
-    // ---------------------------
-    // Core Domain
+    // others
     public DbSet<Appointment> Appointments => Set<Appointment>();
     public DbSet<DoctorSchedule> DoctorSchedules => Set<DoctorSchedule>();
     public DbSet<SymptomKeyword> SymptomKeywords => Set<SymptomKeyword>();
@@ -32,12 +29,11 @@ public class ClinixDbContext : DbContext
     public DbSet<SeedStatus> SeedStatuses { get; set; }
     public DbSet<OutboxMessage> OutboxMessages => Set<OutboxMessage>();
 
-
     protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
         base.OnModelCreating(modelBuilder);
 
-        // ---------------------------
+        
         // Users
         modelBuilder.Entity<User>(b =>
         {
@@ -53,7 +49,6 @@ public class ClinixDbContext : DbContext
             b.HasIndex(x => x.Phone).IsUnique();
         });
 
-        // ---------------------------
         // Patients
         modelBuilder.Entity<Patient>(b =>
         {
@@ -71,7 +66,6 @@ public class ClinixDbContext : DbContext
             b.Property(x => x.EmergencyContactNumber).HasMaxLength(30);
         });
 
-        // ---------------------------
         // Doctors
         modelBuilder.Entity<Doctor>(b =>
         {
@@ -83,16 +77,13 @@ public class ClinixDbContext : DbContext
                 .HasForeignKey<Doctor>(d => d.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            // NEW: ProviderId configuration
-            //b.Property(d => d.ProviderId).IsRequired(true); // Nullable Guid
-            b.HasIndex(d => d.ProviderId); // Index for faster lookups
+            b.HasIndex(d => d.ProviderId); 
 
             b.Property(d => d.Specialty).HasMaxLength(100);
             b.HasIndex(d => d.Specialty);
             b.Property(x => x.RowVersion).IsRowVersion();
         });
 
-        // ---------------------------
         // Staff
         modelBuilder.Entity<Staff>(b =>
         {
@@ -105,7 +96,6 @@ public class ClinixDbContext : DbContext
             b.Property(s => s.Position).IsRequired().HasMaxLength(100);
         });
 
-        // ---------------------------
         // DoctorSchedule
         modelBuilder.Entity<DoctorSchedule>(b =>
         {
@@ -121,7 +111,6 @@ public class ClinixDbContext : DbContext
             b.Property(s => s.IsAvailable).HasDefaultValue(true);
         });
 
-        // ---------------------------
         // Provider
         modelBuilder.Entity<Provider>(b =>
         {
@@ -135,7 +124,6 @@ public class ClinixDbContext : DbContext
             b.HasIndex(p => p.Specialty);
         });
 
-        // ---------------------------
         // Appointment
         modelBuilder.Entity<Appointment>(b =>
         {
@@ -160,7 +148,6 @@ public class ClinixDbContext : DbContext
             b.HasIndex(a => new { a.ProviderId, a.Status });
         });
 
-        // ---------------------------
         // FollowUp
         modelBuilder.Entity<FollowUp>(b =>
         {
@@ -175,7 +162,6 @@ public class ClinixDbContext : DbContext
             b.HasIndex(f => new { f.Status, f.DueBy });
         });
 
-        // ---------------------------
         // SymptomKeyword
         modelBuilder.Entity<SymptomKeyword>(b =>
         {
@@ -186,7 +172,6 @@ public class ClinixDbContext : DbContext
             b.HasIndex(x => x.Keyword);
         });
 
-        // ---------------------------
         // OutboxMessage
         modelBuilder.Entity<OutboxMessage>(b =>
         {
@@ -197,7 +182,6 @@ public class ClinixDbContext : DbContext
             b.HasIndex(x => new { x.Processed, x.OccurredAtUtc });
         });
 
-        // ---------------------------
         // Inventory
         modelBuilder.Entity<InventoryItem>(b =>
         {

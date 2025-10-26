@@ -1,5 +1,4 @@
-﻿// Infrastructure/Repositories/SeedStatusRepository.cs
-using Clinix.Domain.Entities.System;
+﻿using Clinix.Domain.Entities.System;
 using Clinix.Domain.Interfaces;
 using Clinix.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;

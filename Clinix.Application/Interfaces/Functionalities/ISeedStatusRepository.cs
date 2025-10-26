@@ -1,5 +1,4 @@
-﻿// Domain/Interfaces/ISeedStatusRepository.cs
-namespace Clinix.Domain.Interfaces;
+﻿namespace Clinix.Domain.Interfaces;
 
 using Clinix.Domain.Entities.System;
 

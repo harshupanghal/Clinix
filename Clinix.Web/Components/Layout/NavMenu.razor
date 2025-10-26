@@ -1,4 +1,4 @@
-﻿@* Layout/NavBar.razor *@
+﻿
 @using Microsoft.AspNetCore.Components.Authorization
 @using System.Security.Claims
 @inject AuthenticationStateProvider AuthStateProvider
@@ -7,7 +7,6 @@
 
 <div class="clinix-nav-container">
 
-    <!-- Topbar -->
     <header class="clinix-topbar">
         <div class="clinix-topbar-left">
             <button class="icon-btn d-md-none" @onclick="ToggleMobileSidebar" aria-label="Toggle menu">
@@ -59,11 +58,10 @@
         </div>
     </header>
 
-    <!-- Sidebar -->
     <aside class="clinix-sidebar @(_mobileSidebarOpen ? "open-mobile" : "")" data-collapsed="@_isCollapsed.ToString().ToLower()">
         <div class="sidebar-header">
             <a class="sidebar-brand" href="/">
-                <!-- Improved Medical Logo -->
+               
                 <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
                 </svg>
@@ -131,6 +129,20 @@
                             </NavLink>
                         </li>
                     }
+
+                       @if (_isAuthenticated && _userRole == "Chemist")
+                    {
+                       
+                        <li class="nav-item">
+                            <NavLink class="nav-link" href="/inventory" @onclick="CloseMobileSidebar">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"></path><path d="M12 6v6l4 2"></path>
+                                </svg>
+                                <span class="link-text">Manage Inventory</span>
+                            </NavLink>
+                        </li>
+                    }
+
 
                     @if (_isAuthenticated && _userRole == "Admin")
                     {
@@ -213,11 +225,9 @@
                     </button>
                 }
 
-                <!-- Fixed Collapse Button with Dynamic SVG -->
                 <button class="sidebar-collapse-btn d-none d-md-flex" @onclick="ToggleCollapse" aria-label="Toggle sidebar">
                     @if (_isCollapsed)
                     {
-                        <!-- Collapsed: Show expand (chevrons pointing right) -->
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <polyline points="13 17 18 12 13 7"></polyline>
                             <polyline points="6 17 11 12 6 7"></polyline>
@@ -226,7 +236,6 @@
                     }
                     else
                     {
-                        <!-- Expanded: Show collapse (chevrons pointing left) -->
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <polyline points="11 17 6 12 11 7"></polyline>
                             <polyline points="18 17 13 12 18 7"></polyline>
@@ -273,7 +282,6 @@
     {
         _isCollapsed = !_isCollapsed;
         
-        // Toggle body class for main content adjustment
         await JS.InvokeVoidAsync("eval", 
             _isCollapsed 
                 ? "document.body.classList.add('sidebar-collapsed')" 
@@ -331,9 +339,7 @@
         position: relative;
     }
 
-    /* ============================================
-       TOPBAR
-       ============================================ */
+
     .clinix-topbar {
         position: fixed;
         top: 0;
@@ -447,9 +453,7 @@
         line-height: 1.2;
     }
 
-    /* ============================================
-       SIDEBAR
-       ============================================ */
+
     .clinix-sidebar {
         position: fixed;
         top: 0;
@@ -617,9 +621,6 @@
         padding: 0;
     }
 
-    /* ============================================
-       SIDEBAR FOOTER
-       ============================================ */
     .sidebar-footer {
         padding: 16px;
         border-top: 1px solid rgba(255, 255, 255, 0.1);
@@ -771,9 +772,6 @@
         display: none;
     }
 
-    /* ============================================
-       RESPONSIVE
-       ============================================ */
     .mobile-overlay {
         position: fixed;
         top: 0;
@@ -825,5 +823,5 @@
             animation: none !important;
             transition: none !important;
         }
-    }
+    }}
 </style>

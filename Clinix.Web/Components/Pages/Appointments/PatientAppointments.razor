@@ -9,7 +9,7 @@
 @inject NavigationManager Navigation
 
 <div class="patient-appointments-page">
-    <!-- Page Header -->
+
     <div class="page-header">
         <div>
             <h1 class="page-title">
@@ -67,7 +67,6 @@
     }
     else
     {
-        <!-- Filter Tabs -->
         <div class="filter-tabs">
             <button class="filter-tab @(_filterStatus == "All" ? "active" : "")" 
                     @onclick="@(() => FilterByStatus("All"))">
@@ -187,18 +186,13 @@
 </div>
 
 <style>
-    /* ============================================
-       PATIENT APPOINTMENTS PAGE
-       ============================================ */
+   
     .patient-appointments-page {
         padding: var(--clx-spacing-lg);
         max-width: 1400px;
         margin: 0 auto;
     }
 
-    /* ============================================
-       PAGE HEADER
-       ============================================ */
     .page-header {
         display: flex;
         justify-content: space-between;
@@ -226,9 +220,6 @@
         margin: 0;
     }
 
-    /* ============================================
-       LOADING STATE
-       ============================================ */
     .loading-container {
         display: flex;
         flex-direction: column;
@@ -238,9 +229,6 @@
         text-align: center;
     }
 
-    /* ============================================
-       EMPTY STATE
-       ============================================ */
     .empty-state-card {
         text-align: center;
         box-shadow: var(--clx-shadow-md);
@@ -271,9 +259,6 @@
         margin-right: auto;
     }
 
-    /* ============================================
-       FILTER TABS
-       ============================================ */
     .filter-tabs {
         display: flex;
         gap: var(--clx-spacing-xs);
@@ -322,9 +307,6 @@
         opacity: 0.8;
     }
 
-    /* ============================================
-       APPOINTMENTS TABLE
-       ============================================ */
     .appointments-table {
         font-size: 0.875rem;
         margin: 0;
@@ -364,9 +346,6 @@
         background-color: var(--clx-gray-50);
     }
 
-    /* ============================================
-       TABLE CELLS
-       ============================================ */
     .datetime-cell {
         display: flex;
         flex-direction: column;
@@ -409,9 +388,6 @@
         color: var(--clx-gray-600);
     }
 
-    /* ============================================
-       BADGES
-       ============================================ */
     .badge-warning { background-color: var(--clx-warning); color: #856404; }
     .badge-info { background-color: var(--clx-info); color: var(--clx-white); }
     .badge-primary { background-color: var(--clx-primary); color: var(--clx-white); }
@@ -420,9 +396,6 @@
     .badge-secondary { background-color: var(--clx-gray-600); color: var(--clx-white); }
     .badge-dark { background-color: var(--clx-gray-800); color: var(--clx-white); }
 
-    /* ============================================
-       ACTION BUTTONS
-       ============================================ */
     .action-buttons-sm {
         display: flex;
         gap: var(--clx-spacing-xs);
@@ -433,9 +406,6 @@
         color: currentColor;
     }
 
-    /* ============================================
-       ALERTS
-       ============================================ */
     .alert {
         display: flex;
         align-items: center;
@@ -446,9 +416,6 @@
         flex-shrink: 0;
     }
 
-    /* ============================================
-       RESPONSIVE DESIGN
-       ============================================ */
     @@media (max-width: 768px) {
         .patient-appointments-page {
             padding: var(--clx-spacing-md);

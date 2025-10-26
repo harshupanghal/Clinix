@@ -172,7 +172,7 @@ using (var scope = app.Services.CreateScope())
         {
         var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
         logger.LogCritical(ex, "Fatal error during database seeding.");
-        // Don't crash the app, just log
+     
         }
     }
 

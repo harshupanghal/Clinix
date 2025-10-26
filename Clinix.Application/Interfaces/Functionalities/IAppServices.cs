@@ -1,5 +1,4 @@
-﻿// Application/Interfaces/IAppServices.cs
-namespace Clinix.Application.Interfaces;
+﻿namespace Clinix.Application.Interfaces;
 
 using Clinix.Application.Dtos;
 using Clinix.Application.DTOs;
@@ -39,7 +38,6 @@ public interface IDoctorActionsAppService
     Task<bool> DelayCascadeAsync(long appointmentId, TimeSpan delay, CancellationToken ct = default);
     }
 
-// Cross-cutting interfaces
 public interface INotificationSender
     {
     Task SendEmailAsync(string to, string subject, string body, CancellationToken ct = default);

@@ -11,7 +11,7 @@
 @inject IJSRuntime Js
 
 <div class="stock-management-page">
-    <!-- Page Header -->
+   
     <div class="page-header">
         <div>
             <h1 class="page-title">
@@ -50,7 +50,6 @@
     }
     else
     {
-        <!-- Item Info Card -->
         <div class="card item-info-card">
             <div class="card-body">
                 <div class="item-info-grid">
@@ -79,7 +78,6 @@
             </div>
         </div>
 
-        <!-- Transaction Form Card -->
         <div class="card form-card">
             <div class="card-body">
                 <h5 class="form-section-title">Transaction Details</h5>
@@ -171,18 +169,12 @@
 </div>
 
 <style>
-    /* ============================================
-       STOCK MANAGEMENT PAGE
-       ============================================ */
     .stock-management-page {
         padding: var(--clx-spacing-lg);
         max-width: 900px;
         margin: 0 auto;
     }
 
-    /* ============================================
-       PAGE HEADER
-       ============================================ */
     .page-header {
         display: flex;
         justify-content: space-between;
@@ -210,9 +202,6 @@
         margin: 0;
     }
 
-    /* ============================================
-       LOADING STATE
-       ============================================ */
     .loading-container {
         display: flex;
         flex-direction: column;
@@ -222,9 +211,6 @@
         text-align: center;
     }
 
-    /* ============================================
-       ITEM INFO CARD
-       ============================================ */
     .item-info-card {
         margin-bottom: var(--clx-spacing-lg);
         background: linear-gradient(135deg, var(--clx-primary-light) 0%, var(--clx-white) 100%);
@@ -266,9 +252,6 @@
         font-weight: 600;
     }
 
-    /* ============================================
-       FORM CARD
-       ============================================ */
     .form-card {
         box-shadow: var(--clx-shadow-md);
     }
@@ -326,9 +309,6 @@
         color: var(--clx-danger);
     }
 
-    /* ============================================
-       ALERTS WITH ICONS
-       ============================================ */
     .alert {
         display: flex;
         align-items: center;
@@ -339,16 +319,10 @@
         flex-shrink: 0;
     }
 
-    /* ============================================
-       BUTTON HOVER FIXES
-       ============================================ */
     .btn:hover svg {
         color: currentColor;
     }
 
-    /* ============================================
-       RESPONSIVE DESIGN
-       ============================================ */
     @@media (max-width: 768px) {
         .stock-management-page {
             padding: var(--clx-spacing-md);

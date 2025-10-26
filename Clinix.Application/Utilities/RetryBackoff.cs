@@ -15,7 +15,7 @@ public static class RetryBackoff
     /// <param name="maxSeconds">max backoff seconds (default 86400 => 24h)</param>
     public static TimeSpan ComputeNextDelay(int attempt, int baseSeconds = 60, int maxSeconds = 86400)
         {
-        // exponential backoff: base * 2^attempt, cap at maxSeconds
+       
         try
             {
             var secs = Math.Min(maxSeconds, baseSeconds * Math.Pow(2, Math.Max(0, attempt)));

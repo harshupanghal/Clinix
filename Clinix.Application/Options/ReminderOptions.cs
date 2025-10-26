@@ -1,5 +1,4 @@
-﻿// Application/Options/ReminderOptions.cs
-namespace Clinix.Application.Options;
+﻿namespace Clinix.Application.Options;
 
 public sealed class ReminderOptions
     {

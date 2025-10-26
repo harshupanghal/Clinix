@@ -3,7 +3,7 @@ using Clinix.Domain.Entities.ApplicationUsers;
 using Clinix.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using System.Linq.Expressions; // Required for the predicate overload
+using System.Linq.Expressions;
 
 namespace Clinix.Infrastructure.Repositories;
 
@@ -18,10 +18,6 @@ public class PatientRepository : IPatientRepository
         _logger = logger;
         }
 
-    // ----------------------------------------------------
-    // START: Implementation of IRepository<Patient>.CountAsync
-    // ----------------------------------------------------
-
     public async Task<int> CountAsync(CancellationToken ct = default)
         {
         _logger.LogTrace("Counting all Patient records.");
@@ -33,10 +29,6 @@ public class PatientRepository : IPatientRepository
         _logger.LogTrace("Counting Patient records with predicate.");
         return await _db.Patients.CountAsync(predicate, ct);
         }
-
-    // ----------------------------------------------------
-    // END: Implementation of IRepository<Patient>.CountAsync
-    // ----------------------------------------------------
 
     public async Task AddAsync(Patient patient, CancellationToken ct = default)
         {
@@ -61,7 +53,6 @@ public class PatientRepository : IPatientRepository
         if (existing == null)
             throw new KeyNotFoundException($"Patient with ID {patient.PatientId} not found.");
 
-        // Map only allowed updatable fields (avoid overwriting navigation properties)
         existing.DateOfBirth = patient.DateOfBirth;
         existing.Gender = patient.Gender;
         existing.BloodGroup = patient.BloodGroup;

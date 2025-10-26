@@ -1,5 +1,4 @@
-﻿// Infrastructure/Data/DataSeeder.cs
-using Clinix.Application.Interfaces.Functionalities;
+﻿using Clinix.Application.Interfaces.Functionalities;
 using Clinix.Application.Interfaces.UserRepo;
 using Clinix.Domain.Entities.ApplicationUsers;
 using Clinix.Domain.Entities.Inventory;
@@ -29,10 +28,10 @@ public static class DataSeeder
 
         logger.LogInformation("🔍 Checking seed status for '{SeedName}' v{Version}", SEED_NAME, SEED_VERSION);
 
-        // ✅ STEP 1: Get SeedStatus repository
+        //  1: Get SeedStatus repository
         var seedStatusRepo = serviceProvider.GetRequiredService<ISeedStatusRepository>();
 
-        // ✅ STEP 2: Check if seed already completed
+        // 2: Check if seed already completed
         if (await seedStatusRepo.IsSeedCompletedAsync(SEED_NAME, SEED_VERSION, ct))
             {
             logger.LogInformation("✅ Seed '{SeedName}' v{Version} already completed. Skipping.",
@@ -40,7 +39,7 @@ public static class DataSeeder
             return;
             }
 
-        // ✅ STEP 3: Check for failed previous attempts
+        //  3: Check for failed previous attempts
         var existingSeedStatus = await seedStatusRepo.GetBySeedNameAsync(SEED_NAME, SEED_VERSION, ct);
         if (existingSeedStatus != null && existingSeedStatus.RetryCount >= MAX_RETRIES)
             {
@@ -59,7 +58,7 @@ public static class DataSeeder
         var providerRepo = serviceProvider.GetRequiredService<IProviderRepository>();
         var uow = serviceProvider.GetRequiredService<IUnitOfWork>();
 
-        // ✅ STEP 4: Create or update seed status
+        //  4: Create or update seed status
         var seedStatus = existingSeedStatus ?? new SeedStatus
             {
             SeedName = SEED_NAME,
@@ -78,7 +77,7 @@ public static class DataSeeder
         else
             await seedStatusRepo.UpdateAsync(seedStatus, ct);
 
-        logger.LogInformation("🚀 Starting seed attempt {Retry} of {Max}",
+        logger.LogInformation(" Starting seed attempt {Retry} of {Max}",
             seedStatus.RetryCount, MAX_RETRIES);
 
         var passwordHasher = new PasswordHasher<User>();
@@ -86,7 +85,7 @@ public static class DataSeeder
         await uow.BeginTransactionAsync(ct);
         try
             {
-            // ✅ ADMIN SEEDING (Idempotent)
+            //  ADMIN SEEDING (Idempotent)
             var adminEmail = config["SeedAdmin:Email"] ?? "admin@hms.local";
             var adminPassword = config["SeedAdmin:Password"] ?? "Admin@123#";
 
@@ -110,7 +109,7 @@ public static class DataSeeder
                 logger.LogInformation("Admin user already exists. Skipping.");
                 }
 
-            // ✅ DOCTOR USER ACCOUNTS (Idempotent)
+            // DOCTOR USER ACCOUNTS (Idempotent)
             var doctorUserData = new[]
             {
                 ("Dr. Ramesh Gupta", "ramesh@hms.local", "9000000001"),
@@ -150,7 +149,7 @@ public static class DataSeeder
 
             await uow.BeginTransactionAsync(ct);
 
-            // ✅ DOCTOR PROFILES (Idempotent - check by UserId)
+            //  DOCTOR PROFILES (Idempotent - check by UserId)
             var doctorProfileData = new[]
             {
                 (doctorUsers[0].Id, "MBBS, MD", "Cardiology", "DOC001", 12, "A101", 500m),
@@ -191,7 +190,7 @@ public static class DataSeeder
 
             await uow.BeginTransactionAsync(ct);
 
-            // ✅ DOCTOR SCHEDULES (Idempotent - check existing)
+            //  DOCTOR SCHEDULES (Idempotent - check existing)
             logger.LogInformation("Seeding Doctor Schedules...");
 
             var scheduleData = new[]
@@ -416,7 +415,7 @@ public static class DataSeeder
                 var staffUserData = new[]
                 {
                     ("Pooja Joshi", "pooja@hms.local", "9444444444", "Receptionist", "Front Desk"),
-                    ("Vikram Singh", "vikram@hms.local", "9555555555", "Pharmacist", "Pharmacy")
+                    ("Vikram Singh", "vikram@hms.local", "9555555555", "Chemist", "Pharmacy")
                 };
 
                 foreach (var (name, email, phone, position, dept) in staffUserData)

@@ -10,7 +10,6 @@
 <div class="access-denied-page">
     <div class="access-denied-container">
         
-        <!-- Error Icon -->
         <svg class="error-icon" xmlns="http://www.w3.org/2000/svg" width="120" height="120" fill="currentColor" viewBox="0 0 16 16">
             <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zM5.354 4.646a.5.5 0 1 0-.708.708L7.293 8l-2.647 2.646a.5.5 0 0 0 .708.708L8 8.707l2.646 2.647a.5.5 0 0 0 .708-.708L8.707 8l2.647-2.646a.5.5 0 0 0-.708-.708L8 7.293 5.354 4.646z"/>
         </svg>
@@ -57,7 +56,6 @@
             </button>
         </div>
 
-        @* Debug/Admin Info *@
         @if (isDebugModeEnabled)
         {
             <div class="debug-section">
@@ -121,9 +119,6 @@
 </div>
 
 <style>
-    /* ============================================
-       ACCESS DENIED PAGE
-       ============================================ */
     .access-denied-page {
         display: flex;
         align-items: center;
@@ -143,9 +138,6 @@
         text-align: center;
     }
 
-    /* ============================================
-       ERROR ICON & TEXT
-       ============================================ */
     .error-icon {
         color: var(--clx-danger);
         margin-bottom: var(--clx-spacing-lg);
@@ -171,9 +163,6 @@
         line-height: 1.6;
     }
 
-    /* ============================================
-       USER INFO BOX
-       ============================================ */
     .user-info-box {
         display: flex;
         gap: var(--clx-spacing-md);
@@ -204,9 +193,6 @@
         font-size: 0.875rem;
     }
 
-    /* ============================================
-       ALERTS
-       ============================================ */
     .alert {
         display: flex;
         gap: var(--clx-spacing-md);
@@ -220,9 +206,6 @@
         margin-top: 2px;
     }
 
-    /* ============================================
-       ACTION BUTTONS
-       ============================================ */
     .action-buttons {
         margin-bottom: var(--clx-spacing-xl);
     }
@@ -234,9 +217,6 @@
         padding: var(--clx-spacing-md) var(--clx-spacing-xl);
     }
 
-    /* ============================================
-       DEBUG SECTION
-       ============================================ */
     .debug-section {
         margin-top: var(--clx-spacing-xl);
         padding-top: var(--clx-spacing-xl);
@@ -326,9 +306,6 @@
         font-weight: 600;
     }
 
-    /* ============================================
-       DEBUG CLAIMS SECTION
-       ============================================ */
     .debug-claims-section {
         background-color: var(--clx-white);
         border: 1px solid var(--clx-gray-300);
@@ -381,9 +358,6 @@
         flex-shrink: 0;
     }
 
-    /* ============================================
-       RESPONSIVE DESIGN
-       ============================================ */
     @@media (max-width: 768px) {
         .access-denied-page {
             padding: var(--clx-spacing-md);

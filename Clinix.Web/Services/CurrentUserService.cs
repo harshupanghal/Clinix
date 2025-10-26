@@ -1,4 +1,4 @@
-﻿// Web/Services/CurrentUserService.cs
+﻿
 using System.Security.Claims;
 using Microsoft.AspNetCore.Components.Authorization;
 using Clinix.Application.Interfaces.UserRepo;
@@ -44,7 +44,6 @@ public class CurrentUserService : ICurrentUserService
         string? providerId = null;
         string? patientId = null;
 
-        // Fetch related IDs based on role
         if (role == "Doctor" && long.TryParse(userId, out var doctorUserId))
             {
             var doctor = await _doctorRepo.GetByUserIdAsync(doctorUserId);

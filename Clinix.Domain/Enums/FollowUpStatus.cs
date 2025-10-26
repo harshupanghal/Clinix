@@ -1,5 +1,4 @@
-﻿// Domain/Enums/FollowUpStatus.cs
-namespace Clinix.Domain.Enums;
+﻿namespace Clinix.Domain.Enums;
 
 public enum FollowUpStatus
     {

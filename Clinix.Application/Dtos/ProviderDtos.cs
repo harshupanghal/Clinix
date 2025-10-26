@@ -1,5 +1,4 @@
-﻿// Application/DTOs/ProviderDtos.cs
-namespace Clinix.Application.DTOs;
+﻿namespace Clinix.Application.DTOs;
 
 using Clinix.Domain.Enums;
 

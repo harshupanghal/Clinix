@@ -1,5 +1,4 @@
-﻿// Infrastructure/Messaging/RealNotificationSender.cs
-using System.Net;
+﻿using System.Net;
 using System.Net.Mail;
 
 using Clinix.Application.Interfaces;

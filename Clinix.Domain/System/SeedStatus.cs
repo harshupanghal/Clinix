@@ -1,5 +1,4 @@
-﻿// Domain/Entities/System/SeedStatus.cs
-namespace Clinix.Domain.Entities.System;
+﻿namespace Clinix.Domain.Entities.System;
 
 public class SeedStatus
     {

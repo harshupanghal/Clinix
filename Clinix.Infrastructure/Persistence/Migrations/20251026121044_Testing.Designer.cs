@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Clinix.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(ClinixDbContext))]
-    [Migration("20251025200703_Testing")]
+    [Migration("20251026121044_Testing")]
     partial class Testing
     {
         /// <inheritdoc />

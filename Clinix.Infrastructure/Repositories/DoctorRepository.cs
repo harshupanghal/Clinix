@@ -17,17 +17,11 @@ public class DoctorRepository : IDoctorRepository
         _logger = logger;
         }
 
-    // ----------------------------------------------------
-    // START: Implementation of IRepository<Doctor>.CountAsync
-    // ----------------------------------------------------
-
     public async Task<int> CountAsync(CancellationToken ct = default)
         {
         _logger.LogTrace("Counting all Doctor records.");
         return await _db.Doctors.CountAsync(ct);
         }
-
-
     public async Task AddAsync(Doctor doctor, CancellationToken ct = default)
         {
         if (doctor == null) throw new ArgumentNullException(nameof(doctor));
@@ -71,10 +65,4 @@ public class DoctorRepository : IDoctorRepository
         _db.Doctors.Update(doctor);
         return Task.CompletedTask;
         }
-
-   
-
-   
-
-   
     }

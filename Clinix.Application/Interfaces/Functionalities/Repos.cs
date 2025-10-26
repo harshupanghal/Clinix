@@ -1,5 +1,4 @@
-﻿// Domain/Interfaces/Repositories.cs
-namespace Clinix.Domain.Interfaces;
+﻿namespace Clinix.Domain.Interfaces;
 
 using Clinix.Domain.Entities;
 using Clinix.Domain.Entities.ApplicationUsers;

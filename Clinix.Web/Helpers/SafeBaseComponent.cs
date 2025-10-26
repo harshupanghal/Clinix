@@ -1,9 +1,6 @@
-﻿// SafeBaseComponent.cs
-using System;
-using System.Threading.Tasks;
+﻿
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
-using Microsoft.Extensions.Logging;
 
 namespace Clinix.Web.Helpers;
 public abstract class SafeBaseComponent : ComponentBase, IDisposable

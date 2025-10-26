@@ -1,5 +1,4 @@
-﻿// Application/DTOs/AppointmentDtos.cs
-namespace Clinix.Application.DTOs;
+﻿namespace Clinix.Application.DTOs;
 
 using System.ComponentModel.DataAnnotations;
 using Clinix.Domain.Enums;

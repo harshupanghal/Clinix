@@ -29,7 +29,6 @@
     }
     else
     {
-        <!-- Stats Cards -->
         <div class="row g-3 mb-4">
             <div class="col-md-3">
                 <div class="card border-0 shadow-sm">
@@ -65,7 +64,6 @@
             </div>
         </div>
 
-        <!-- Filters -->
         <div class="card border-0 shadow-sm mb-4">
             <div class="card-body">
                 <div class="row g-3">
@@ -103,7 +101,6 @@
             </div>
         </div>
 
-        <!-- Date-Partitioned Schedule -->
         @if (scheduleData.Count == 0)
         {
             <div class="alert alert-light border">
@@ -124,7 +121,6 @@
                 var workingDoctors = daySchedules.Where(d => d.IsWorkingDay).ToList();
                 var offDoctors = daySchedules.Where(d => !d.IsWorkingDay).ToList();
 
-                <!-- Increased spacing: mb-4 instead of mb-3 -->
                 <div class="card border-0 shadow-sm mb-4">
                     <div class="card-header bg-white border-bottom py-3">
                         <div class="row align-items-center">
@@ -245,7 +241,6 @@
                 </div>
             }
 
-            <!-- Summary Footer -->
             <div class="card border-0 shadow-sm mt-5">
                 <div class="card-body py-4">
                     <h6 class="text-muted mb-3 text-center">Summary Statistics</h6>

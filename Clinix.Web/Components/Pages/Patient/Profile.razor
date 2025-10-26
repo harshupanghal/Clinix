@@ -11,7 +11,7 @@
 @inject Blazored.Toast.Services.IToastService ToastService
 
 <div class="complete-profile-page">
-    <!-- Page Header -->
+
     <div class="page-header">
         <div>
             <h1 class="page-title">
@@ -56,7 +56,6 @@
         <EditForm Model="profileModel" OnValidSubmit="OnValidSubmit" class="complete-profile-form">
             <FluentValidationValidator />
 
-            <!-- Personal Details Section -->
             <div class="card form-section-card">
                 <div class="card-header">
                     <h5 class="section-title">
@@ -115,7 +114,6 @@
                 </div>
             </div>
 
-            <!-- Emergency Contact Section -->
             <div class="card form-section-card">
                 <div class="card-header">
                     <h5 class="section-title">
@@ -152,7 +150,6 @@
                 </div>
             </div>
 
-            <!-- Medical Information Section -->
             <div class="card form-section-card">
                 <div class="card-header">
                     <h5 class="section-title">
@@ -189,7 +186,6 @@
                 </div>
             </div>
 
-            <!-- Submit Button -->
             <button type="submit" class="btn btn-primary btn-lg submit-button" disabled="@isSubmitting">
                 @if (isSubmitting)
                 {
@@ -213,18 +209,13 @@
 </div>
 
 <style>
-    /* ============================================
-       COMPLETE PROFILE PAGE
-       ============================================ */
+
     .complete-profile-page {
         padding: var(--clx-spacing-lg);
         max-width: 900px;
         margin: 0 auto;
     }
 
-    /* ============================================
-       PAGE HEADER
-       ============================================ */
     .page-header {
         margin-bottom: var(--clx-spacing-xl);
     }
@@ -248,9 +239,6 @@
         margin: 0;
     }
 
-    /* ============================================
-       ALERTS
-       ============================================ */
     .alert {
         display: flex;
         align-items: center;
@@ -266,9 +254,6 @@
         margin-left: auto;
     }
 
-    /* ============================================
-       LOADING STATE
-       ============================================ */
     .loading-container {
         display: flex;
         flex-direction: column;
@@ -278,9 +263,6 @@
         text-align: center;
     }
 
-    /* ============================================
-       FORM SECTIONS
-       ============================================ */
     .complete-profile-form {
         display: flex;
         flex-direction: column;
@@ -311,9 +293,6 @@
         color: var(--clx-primary);
     }
 
-    /* ============================================
-       FORM GRID
-       ============================================ */
     .form-grid {
         display: grid;
         grid-template-columns: repeat(2, 1fr);
@@ -366,9 +345,6 @@
         margin-top: var(--clx-spacing-xs);
     }
 
-    /* ============================================
-       SUBMIT BUTTON
-       ============================================ */
     .submit-button {
         width: 100%;
         display: flex;
@@ -396,9 +372,6 @@
         gap: var(--clx-spacing-sm);
     }
 
-    /* ============================================
-       RESPONSIVE DESIGN
-       ============================================ */
     @@media (max-width: 768px) {
         .complete-profile-page {
             padding: var(--clx-spacing-md);

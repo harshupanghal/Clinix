@@ -11,7 +11,7 @@
 @inject IJSRuntime Js
 
 <div class="inventory-page">
-    <!-- Page Header -->
+
     <div class="page-header">
         <div>
             <h1 class="page-title">
@@ -43,11 +43,10 @@
     }
     else
     {
-        <!-- Search & Filter Card -->
         <div class="card search-filter-card">
             <div class="card-body">
                 <div class="search-filter-grid">
-                    <!-- Search Input -->
+                   
                     <div class="search-input-wrapper">
                         <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
                             <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/>
@@ -59,7 +58,6 @@
                                @bind:event="oninput" />
                     </div>
 
-                    <!-- Type Filter -->
                     <div>
                         <select class="form-select" @bind="_filterType">
                             <option value="">All Types</option>
@@ -69,7 +67,6 @@
                         </select>
                     </div>
 
-                    <!-- Filter Button -->
                     <button class="btn btn-primary" @onclick="LoadInventory">
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
                             <path d="M6 10.5a.5.5 0 0 1 .5-.5h3a.5.5 0 0 1 0 1h-3a.5.5 0 0 1-.5-.5zm-2-3a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 0 1h-7a.5.5 0 0 1-.5-.5zm-2-3a.5.5 0 0 1 .5-.5h11a.5.5 0 0 1 0 1h-11a.5.5 0 0 1-.5-.5z"/>
@@ -80,7 +77,6 @@
             </div>
         </div>
 
-        <!-- Statistics Cards -->
         <div class="stats-grid">
             <div class="stat-card">
                 <div class="stat-icon stat-icon-primary">
@@ -120,7 +116,6 @@
             </div>
         </div>
 
-        <!-- Inventory Table -->
         <div class="card">
             <div class="table-responsive">
                 <table class="table">
@@ -205,7 +200,6 @@
                 </table>
             </div>
 
-            <!-- Pagination -->
             @if (_totalPages > 1)
             {
                 <div class="card-footer">
@@ -236,18 +230,13 @@
 </div>
 
 <style>
-    /* ============================================
-       INVENTORY PAGE LAYOUT
-       ============================================ */
+ 
     .inventory-page {
         padding: var(--clx-spacing-lg);
         max-width: 1400px;
         margin: 0 auto;
     }
 
-    /* ============================================
-       PAGE HEADER
-       ============================================ */
     .page-header {
         display: flex;
         justify-content: space-between;
@@ -275,9 +264,6 @@
         margin: 0;
     }
 
-    /* ============================================
-       SEARCH & FILTER CARD
-       ============================================ */
     .search-filter-card {
         margin-bottom: var(--clx-spacing-lg);
     }
@@ -306,9 +292,6 @@
         padding-left: 2.5rem;
     }
 
-    /* ============================================
-       STATISTICS GRID
-       ============================================ */
     .stats-grid {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -374,9 +357,6 @@
         line-height: 1;
     }
 
-    /* ============================================
-       TABLE ENHANCEMENTS
-       ============================================ */
     .table-responsive {
         overflow-x: auto;
     }
@@ -425,12 +405,7 @@
         font-size: 0.875rem;
     }
 
-    /* ============================================
-       ACTION BUTTONS
-       ============================================ */
-    /* ============================================
-   ACTION BUTTONS - FIXED
-   ============================================ */
+
 .action-buttons {
     display: flex;
     gap: var(--clx-spacing-xs);
@@ -441,19 +416,16 @@
     display: block;
 }
 
-/* Fix hover state for action buttons */
 .action-buttons .btn-sm:hover svg {
-    color: currentColor; /* Inherit button text color */
+    color: black; 
 }
 
-/* Ensure secondary button has proper contrast on hover */
 .btn-secondary:hover {
     background-color: var(--clx-gray-600);
     border-color: var(--clx-gray-600);
     color: var(--clx-white);
 }
 
-/* Make Stock In/Out button more visible with better color */
 .action-buttons .btn-primary {
     background-color: var(--clx-info);
     border-color: var(--clx-info);
@@ -469,9 +441,6 @@
         display: block;
     }
 
-    /* ============================================
-       PAGINATION
-       ============================================ */
     .pagination-wrapper {
         display: flex;
         justify-content: space-between;
@@ -488,9 +457,6 @@
         color: var(--clx-gray-900);
     }
 
-    /* ============================================
-       RESPONSIVE DESIGN
-       ============================================ */
     @@media (max-width: 768px) {
         .inventory-page {
             padding: var(--clx-spacing-md);

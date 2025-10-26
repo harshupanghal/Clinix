@@ -15,7 +15,6 @@ public class RegisterPatientRequestValidator : AbstractValidator<RegisterPatient
             .NotEmpty().WithMessage("Email is required.")
             .EmailAddress().WithMessage("Invalid email address.");
 
-        // unified pattern: optional leading + then 10-15 digits
         RuleFor(x => x.Phone)
             .NotEmpty().WithMessage("Phone number is required.")
             .Matches(@"^\+?\d{10,15}$").WithMessage("Invalid phone number format. Include country code if required.");

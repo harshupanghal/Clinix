@@ -8,7 +8,7 @@
 @inject NavigationManager Navigation
 
 <div class="symptom-mapping-page">
-    <!-- Page Header -->
+ 
     <div class="page-header">
         <div>
             <h1 class="page-title">
@@ -204,7 +204,6 @@
                 </div>
             </div>
 
-            <!-- Guidelines Card -->
             <div class="card guidelines-card">
                 <div class="card-header">
                     <h5 class="guidelines-title">
@@ -278,18 +277,12 @@
 </div>
 
 <style>
-    /* ============================================
-       SYMPTOM MAPPING PAGE
-       ============================================ */
     .symptom-mapping-page {
         padding: var(--clx-spacing-lg);
         max-width: 1400px;
         margin: 0 auto;
     }
 
-    /* ============================================
-       PAGE HEADER
-       ============================================ */
     .page-header {
         display: flex;
         justify-content: space-between;
@@ -317,9 +310,6 @@
         margin: 0;
     }
 
-    /* ============================================
-       INFO BOX
-       ============================================ */
     .info-box {
         display: flex;
         gap: var(--clx-spacing-md);
@@ -332,9 +322,6 @@
         margin-top: 2px;
     }
 
-    /* ============================================
-       LOADING & EMPTY STATES
-       ============================================ */
     .loading-container {
         display: flex;
         flex-direction: column;
@@ -371,9 +358,6 @@
         margin-bottom: 0;
     }
 
-    /* ============================================
-       MAPPING TABLE
-       ============================================ */
     .mapping-table {
         font-size: 0.875rem;
         margin: 0;
@@ -417,9 +401,6 @@
         background-color: var(--clx-primary-light);
     }
 
-    /* ============================================
-       TABLE CELLS
-       ============================================ */
     .provider-name-cell {
         display: flex;
         align-items: center;
@@ -471,9 +452,6 @@
         font-size: 0.8125rem;
     }
 
-    /* ============================================
-       EDIT MODE
-       ============================================ */
     .edit-tags-container {
         display: flex;
         flex-direction: column;
@@ -493,9 +471,6 @@
         font-size: 0.75rem;
     }
 
-    /* ============================================
-       ACTION BUTTONS
-       ============================================ */
     .action-buttons-mapping {
         display: flex;
         gap: var(--clx-spacing-xs);
@@ -506,9 +481,6 @@
         color: currentColor;
     }
 
-    /* ============================================
-       CARD FOOTER
-       ============================================ */
     .card-footer {
         display: flex;
         align-items: center;
@@ -522,9 +494,6 @@
         color: var(--clx-primary);
     }
 
-    /* ============================================
-       GUIDELINES CARD
-       ============================================ */
     .guidelines-card {
         margin-top: var(--clx-spacing-lg);
         box-shadow: var(--clx-shadow-md);
@@ -591,9 +560,6 @@
         font-size: 0.8125rem;
     }
 
-    /* ============================================
-       ALERTS
-       ============================================ */
     .alert {
         display: flex;
         align-items: center;
@@ -604,9 +570,6 @@
         flex-shrink: 0;
     }
 
-    /* ============================================
-       RESPONSIVE DESIGN
-       ============================================ */
     @@media (max-width: 768px) {
         .symptom-mapping-page {
             padding: var(--clx-spacing-md);

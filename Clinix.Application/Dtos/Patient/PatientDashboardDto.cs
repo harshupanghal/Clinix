@@ -25,7 +25,6 @@ public class PatientDashboardDto
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
 
-    // TODO: implement appointment and follow-up DTOs later.
     // public IEnumerable<AppointmentDto> UpcomingAppointments { get; set; } = Enumerable.Empty<AppointmentDto>();
     // public IEnumerable<FollowUpDto> FollowUps { get; set; } = Enumerable.Empty<FollowUpDto>();
     }

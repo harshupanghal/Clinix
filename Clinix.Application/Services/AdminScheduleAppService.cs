@@ -1,5 +1,4 @@
-﻿// Application/Services/AdminScheduleAppService.cs
-namespace Clinix.Application.Services;
+﻿namespace Clinix.Application.Services;
 
 using Clinix.Application.DTOs;
 using Clinix.Application.Interfaces;
@@ -31,7 +30,7 @@ public sealed class AdminScheduleAppService : IAdminScheduleAppService
         AdminScheduleRequest request,
         CancellationToken ct = default)
         {
-        // Get providers based on filters
+   
         var providers = await GetFilteredProvidersAsync(request, ct);
         var result = new List<DoctorDayViewDto>();
 
@@ -41,7 +40,6 @@ public sealed class AdminScheduleAppService : IAdminScheduleAppService
                 {
                 var dayView = await BuildDoctorDayViewAsync(provider, date, request, ct);
 
-                // Apply utilization filters
                 if (request.MinUtilizationPercent.HasValue &&
                     dayView.UtilizationPercent < request.MinUtilizationPercent.Value)
                     continue;
@@ -86,12 +84,10 @@ public sealed class AdminScheduleAppService : IAdminScheduleAppService
         {
         var dayOfWeek = date.DayOfWeek;
 
-        // ✅ FIX: Get all doctors linked to this provider first
         var doctorsForProvider = await _doctors.GetByProviderIdAsync(provider.Id, ct);
 
         if (!doctorsForProvider.Any())
             {
-            // No doctors assigned to this provider
             return new DoctorDayViewDto(
                 provider.Id,
                 provider.Name,
@@ -103,11 +99,9 @@ public sealed class AdminScheduleAppService : IAdminScheduleAppService
             );
             }
 
-        // ✅ FIX: Use the first active doctor (or implement better logic)
         var doctor = doctorsForProvider.FirstOrDefault(d => d.IsActive && d.IsOnDuty)
                      ?? doctorsForProvider.First();
 
-        // ✅ FIX: Get schedule by DoctorId, not ProviderId
         var schedule = await _doctorSchedules.GetByDoctorAndDayAsync(doctor.DoctorId, dayOfWeek, ct);
 
         if (schedule == null || !schedule.IsAvailable)
@@ -127,10 +121,8 @@ public sealed class AdminScheduleAppService : IAdminScheduleAppService
         var start = new DateTimeOffset(baseDate.Add(schedule.StartTime), DateTimeOffset.Now.Offset);
         var end = new DateTimeOffset(baseDate.Add(schedule.EndTime), DateTimeOffset.Now.Offset);
 
-        // Get appointments for this day
         var appointments = await _appointments.GetByProviderAsync(provider.Id, start, end, ct);
 
-        // Filter by status if requested
         if (request.Statuses?.Any() == true)
             appointments = appointments.Where(a => request.Statuses.Contains(a.Status)).ToList();
 
@@ -216,7 +208,6 @@ public sealed class AdminScheduleAppService : IAdminScheduleAppService
         var allProviders = await _providers.SearchAsync(Array.Empty<string>(), ct);
         var allAppointments = new List<Appointment>();
 
-        // Gather all appointments for today
         foreach (var provider in allProviders)
             {
             var appts = await _appointments.GetByProviderAsync(provider.Id, start, end, ct);
@@ -228,7 +219,6 @@ public sealed class AdminScheduleAppService : IAdminScheduleAppService
         var noShows = allAppointments.Count(a => a.Status == AppointmentStatus.NoShow);
         var completed = allAppointments.Count(a => a.Status == AppointmentStatus.Completed);
 
-        // Calculate available slots
         var totalPossibleSlots = 0;
         var bookedSlots = 0;
 

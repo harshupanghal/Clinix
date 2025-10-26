@@ -1,5 +1,4 @@
-﻿// Application/Services/ProviderAppService.cs
-namespace Clinix.Application.Services;
+﻿namespace Clinix.Application.Services;
 
 using Clinix.Application.DTOs;
 using Clinix.Application.Interfaces;
@@ -22,9 +21,6 @@ public sealed class ProviderAppService : IProviderAppService
         return p is null ? null : new ProviderDto(p.Id, p.Name, p.Specialty, p.Tags, p.WorkStartTime, p.WorkEndTime);
         }
 
-    // Application/Services/ProviderAppService.cs
-    // Application/Services/ProviderAppService.cs
-    // Application/Services/ProviderAppService.cs
     public async Task<List<ProviderDto>> RecommendAsync(ProviderRecommendationRequest request, CancellationToken ct = default)
         {
         Console.WriteLine($"[ProviderAppService] RecommendAsync called");
@@ -36,7 +32,6 @@ public sealed class ProviderAppService : IProviderAppService
             return new List<ProviderDto>();
             }
 
-        // Split search text into keywords
         var keywords = request.Query
             .ToLowerInvariant()
             .Split(new[] { ' ', ',', ';' }, StringSplitOptions.RemoveEmptyEntries)
@@ -52,7 +47,6 @@ public sealed class ProviderAppService : IProviderAppService
             return new List<ProviderDto>();
             }
 
-        // Search providers
         Console.WriteLine($"[ProviderAppService] Calling repository.SearchAsync...");
         var providers = await _providers.SearchAsync(keywords, ct);
         Console.WriteLine($"[ProviderAppService] Repository returned {providers.Count} providers");
@@ -70,8 +64,6 @@ public sealed class ProviderAppService : IProviderAppService
         return dtos;
         }
 
-
-
     public async Task<List<(DateTimeOffset Start, DateTimeOffset End)>> GetAvailableSlotsAsync(AvailableSlotsRequest req, CancellationToken ct = default)
         {
         var provider = await _providers.GetByIdAsync(req.ProviderId, ct)
@@ -79,7 +71,6 @@ public sealed class ProviderAppService : IProviderAppService
 
         var baseDate = new DateTime(req.Day.Year, req.Day.Month, req.Day.Day, 0, 0, 0, DateTimeKind.Unspecified);
 
-        // Extract time-of-day from provider's DateTime working hours
         var startTime = provider.WorkStartTime.TimeOfDay;
         var endTime = provider.WorkEndTime.TimeOfDay;
 

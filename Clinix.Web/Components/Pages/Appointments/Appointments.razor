@@ -12,7 +12,7 @@
 @rendermode InteractiveServer
 
 <div class="appointment-details-page">
-    <!-- Page Header -->
+ 
     <div class="page-header">
         <div>
             <h1 class="page-title">
@@ -64,7 +64,6 @@
     }
     else
     {
-        <!-- Appointment Info Card -->
         <div class="card info-card">
             <div class="card-header">
                 <div class="d-flex justify-content-between align-items-center">
@@ -201,7 +200,6 @@
             }
         </div>
 
-        <!-- Reschedule Card -->
         @if (showReschedule)
         {
             <div class="card action-card">
@@ -250,7 +248,6 @@
             </div>
         }
 
-        <!-- Cancel Card -->
         @if (showCancel)
         {
             <div class="card action-card">
@@ -301,7 +298,7 @@
                     </h5>
                 </div>
                 <div class="card-body">
-                    <!-- Add Follow-up Form -->
+                 
                     <div class="form-grid-2col mb-4">
                         <div class="form-group">
                             <label class="form-label">
@@ -412,18 +409,14 @@
 </div>
 
 <style>
-    /* ============================================
-       APPOINTMENT DETAILS PAGE
-       ============================================ */
+    
     .appointment-details-page {
         padding: var(--clx-spacing-lg);
         max-width: 1200px;
         margin: 0 auto;
     }
 
-    /* ============================================
-       PAGE HEADER
-       ============================================ */
+    
     .page-header {
         display: flex;
         justify-content: space-between;
@@ -451,9 +444,6 @@
         margin: 0;
     }
 
-    /* ============================================
-       LOADING STATE
-       ============================================ */
     .loading-container {
         display: flex;
         flex-direction: column;
@@ -469,9 +459,6 @@
         padding: var(--clx-spacing-md);
     }
 
-    /* ============================================
-       INFO CARD
-       ============================================ */
     .info-card {
         margin-bottom: var(--clx-spacing-lg);
         box-shadow: var(--clx-shadow-md);
@@ -537,9 +524,6 @@
         font-family: var(--clx-font-family);
     }
 
-    /* ============================================
-       ACTION CARDS
-       ============================================ */
     .action-card {
         margin-bottom: var(--clx-spacing-lg);
         box-shadow: var(--clx-shadow-md);
@@ -557,9 +541,6 @@
         color: var(--clx-danger);
     }
 
-    /* ============================================
-       ACTION BUTTONS
-       ============================================ */
     .action-buttons {
         display: flex;
         gap: var(--clx-spacing-sm);
@@ -576,9 +557,6 @@
         color: currentColor;
     }
 
-    /* ============================================
-       FORM LAYOUT
-       ============================================ */
     .form-grid-2col {
         display: grid;
         grid-template-columns: repeat(2, 1fr);
@@ -603,9 +581,6 @@
         color: var(--clx-primary);
     }
 
-    /* ============================================
-       FOLLOW-UP TABLE
-       ============================================ */
     .followup-table {
         font-size: 0.875rem;
     }
@@ -633,9 +608,6 @@
         background-color: var(--clx-gray-50);
     }
 
-    /* ============================================
-       BADGES
-       ============================================ */
     .badge-warning { background-color: var(--clx-warning); color: #856404; }
     .badge-info { background-color: var(--clx-info); color: var(--clx-white); }
     .badge-primary { background-color: var(--clx-primary); color: var(--clx-white); }
@@ -644,9 +616,6 @@
     .badge-secondary { background-color: var(--clx-gray-600); color: var(--clx-white); }
     .badge-dark { background-color: var(--clx-gray-800); color: var(--clx-white); }
 
-    /* ============================================
-       ALERTS
-       ============================================ */
     .alert {
         display: flex;
         align-items: center;
@@ -657,9 +626,6 @@
         flex-shrink: 0;
     }
 
-    /* ============================================
-       RESPONSIVE DESIGN
-       ============================================ */
     @@media (max-width: 768px) {
         .appointment-details-page {
             padding: var(--clx-spacing-md);

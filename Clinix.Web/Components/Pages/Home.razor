@@ -1,7 +1,7 @@
 ﻿@page "/"
 
 <div class="landing-page">
-    <!-- Hero Section -->
+   
     <section class="hero-section">
         <div class="hero-container">
             <div class="hero-content">
@@ -61,7 +61,6 @@
         </div>
     </section>
 
-    <!-- Features Section -->
     <section class="features-section">
         <div class="features-container">
             <div class="section-header">
@@ -70,7 +69,7 @@
             </div>
 
             <div class="features-grid">
-                <!-- Patient Management -->
+                
                 <div class="feature-card">
                     <div class="feature-icon feature-icon-patient">
                         <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" fill="currentColor" viewBox="0 0 16 16">
@@ -81,7 +80,6 @@
                     <p class="feature-description">Complete patient profiles with medical history, allergies, and conditions. Track patient journeys from registration to follow-ups.</p>
                 </div>
 
-                <!-- Appointment System -->
                 <div class="feature-card">
                     <div class="feature-icon feature-icon-appointment">
                         <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" fill="currentColor" viewBox="0 0 16 16">
@@ -93,7 +91,7 @@
                     <p class="feature-description">Intelligent appointment booking with symptom-based doctor recommendations. Automatic slot management and conflict resolution.</p>
                 </div>
 
-                <!-- Doctor Portal -->
+       
                 <div class="feature-card">
                     <div class="feature-icon feature-icon-doctor">
                         <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" fill="currentColor" viewBox="0 0 16 16">
@@ -104,7 +102,6 @@
                     <p class="feature-description">Dedicated dashboards for healthcare providers. Manage schedules, approve appointments, and configure working hours.</p>
                 </div>
 
-                <!-- Inventory Management -->
                 <div class="feature-card">
                     <div class="feature-icon feature-icon-inventory">
                         <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" fill="currentColor" viewBox="0 0 16 16">
@@ -115,7 +112,6 @@
                     <p class="feature-description">Track medical supplies, medicines, and equipment. Low stock alerts and comprehensive stock movement history.</p>
                 </div>
 
-                <!-- Role-Based Access -->
                 <div class="feature-card">
                     <div class="feature-icon feature-icon-security">
                         <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" fill="currentColor" viewBox="0 0 16 16">
@@ -126,7 +122,7 @@
                     <p class="feature-description">Role-based permissions for Admin, Doctor, Chemist, and Patient roles. Ensure data privacy and compliance.</p>
                 </div>
 
-                <!-- AI-Powered Matching -->
+              
                 <div class="feature-card">
                     <div class="feature-icon feature-icon-ai">
                         <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" fill="currentColor" viewBox="0 0 16 16">
@@ -141,7 +137,6 @@
         </div>
     </section>
 
-    <!-- User Roles Section -->
     <section class="roles-section">
         <div class="roles-container">
             <div class="section-header">
@@ -265,7 +260,6 @@
         </div>
     </section>
 
-    <!-- CTA Section -->
     <section class="cta-section">
         <div class="cta-container">
             <h2 class="cta-title">Ready to Transform Your Healthcare Management?</h2>
@@ -282,7 +276,6 @@
         </div>
     </section>
 
-    <!-- Footer -->
     <footer class="landing-footer">
         <div class="footer-container">
             <div class="footer-brand">
@@ -297,16 +290,11 @@
 </div>
 
 <style>
-    /* ============================================
-           LANDING PAGE
-           ============================================ */
+    
     .landing-page {
         min-height: 100vh;
     }
 
-    /* ============================================
-           HERO SECTION
-           ============================================ */
     .hero-section {
         background: linear-gradient(135deg, var(--clx-primary-light) 0%, var(--clx-white) 50%, var(--clx-primary-light) 100%);
         padding: calc(var(--clx-spacing-2xl) * 2) var(--clx-spacing-lg) var(--clx-spacing-2xl);
@@ -411,9 +399,6 @@
         grid-column: 1 / -1;
     }
 
-    /* ============================================
-           FEATURES SECTION
-           ============================================ */
     .features-section {
         padding: calc(var(--clx-spacing-2xl) * 2) var(--clx-spacing-lg);
         background-color: var(--clx-white);
@@ -512,9 +497,6 @@
         line-height: 1.7;
     }
 
-    /* ============================================
-           ROLES SECTION
-           ============================================ */
     .roles-section {
         padding: calc(var(--clx-spacing-2xl) * 2) var(--clx-spacing-lg);
         background: linear-gradient(135deg, var(--clx-gray-50) 0%, var(--clx-white) 100%);
@@ -602,9 +584,6 @@
                 flex-shrink: 0;
             }
 
-    /* ============================================
-           CTA SECTION
-           ============================================ */
     .cta-section {
         padding: calc(var(--clx-spacing-2xl) * 2) var(--clx-spacing-lg);
         background: linear-gradient(135deg, var(--clx-primary) 0%, var(--clx-primary-hover) 100%);
@@ -654,9 +633,6 @@
             background-color: rgba(255, 255, 255, 0.1);
         }
 
-    /* ============================================
-           FOOTER
-           ============================================ */
     .landing-footer {
         background-color: var(--clx-gray-900);
         color: var(--clx-white);
@@ -689,9 +665,6 @@
         font-size: 0.875rem;
     }
 
-    /* ============================================
-           RESPONSIVE DESIGN
-           ============================================ */
     @@media (max-width: 1024px) {
         .hero-container
 

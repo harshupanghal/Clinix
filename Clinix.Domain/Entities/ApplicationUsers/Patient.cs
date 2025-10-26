@@ -34,8 +34,6 @@ public class Patient
             && DateOfBirth.HasValue
             && !string.IsNullOrEmpty(EmergencyContactNumber);
         }
-
-    // Navigation: patient can have many appointments
     public ICollection<Appointment> Appointments { get; set; } = new List<Appointment>();
     }
 

@@ -9,7 +9,7 @@
 @inject Blazored.Toast.Services.IToastService ToastService
 
 <div class="create-staff-page">
-    <!-- Page Header -->
+
     <div class="page-header">
         <div>
             <h1 class="page-title">
@@ -31,7 +31,6 @@
     <EditForm Model="_model" OnValidSubmit="OnValidSubmit" FormName="createStaffForm">
         <FluentValidationValidator />
 
-        <!-- Section 1: Basic Information -->
         <div class="card form-section">
             <div class="card-body">
                 <h5 class="section-title">
@@ -125,12 +124,10 @@
             </div>
         </div>
 
-        <!-- Section 2: Role-Specific Details -->
         @if (!string.IsNullOrWhiteSpace(_model.Position))
         {
             @if (_model.Position == "Doctor")
             {
-                <!-- Doctor Professional Details -->
                 <div class="card form-section">
                     <div class="card-body">
                         <h5 class="section-title section-title-doctor">
@@ -223,7 +220,6 @@
                             </div>
                         </div>
 
-                        <!-- Weekly Schedule -->
                         <div class="schedule-section">
                             <h6 class="schedule-title">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
@@ -270,7 +266,6 @@
                             </div>
                         </div>
 
-                        <!-- Notes -->
                         <div class="form-group">
                             <label class="form-label">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
@@ -288,7 +283,6 @@
 
             @if (_model.Position == "Receptionist" || _model.Position == "Chemist")
             {
-                <!-- Staff Work Details -->
                 <div class="card form-section">
                     <div class="card-body">
                         <h5 class="section-title section-title-staff">
@@ -345,7 +339,6 @@
                             </div>
                         </div>
 
-                        <!-- Notes -->
                         <div class="form-group">
                             <label class="form-label">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
@@ -374,7 +367,6 @@
             </div>
         }
 
-        <!-- Form Actions -->
         <div class="form-actions">
             <button class="btn btn-secondary" type="button" @onclick="NavigateBack" disabled="@_isSubmitting">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
@@ -402,18 +394,13 @@
 </div>
 
 <style>
-    /* ============================================
-       CREATE STAFF PAGE
-       ============================================ */
+    
     .create-staff-page {
         padding: var(--clx-spacing-lg);
         max-width: 1100px;
         margin: 0 auto;
     }
 
-    /* ============================================
-       PAGE HEADER
-       ============================================ */
     .page-header {
         display: flex;
         justify-content: space-between;
@@ -441,9 +428,6 @@
         margin: 0;
     }
 
-    /* ============================================
-       FORM SECTIONS
-       ============================================ */
     .form-section {
         margin-bottom: var(--clx-spacing-lg);
         box-shadow: var(--clx-shadow-md);
@@ -473,9 +457,6 @@
         color: var(--clx-info);
     }
 
-    /* ============================================
-       FORM LAYOUT
-       ============================================ */
     .form-grid-2col {
         display: grid;
         grid-template-columns: repeat(2, 1fr);
@@ -515,9 +496,6 @@
         color: var(--clx-danger);
     }
 
-    /* ============================================
-       PASSWORD INPUT
-       ============================================ */
     .password-input-wrapper {
         position: relative;
     }
@@ -544,9 +522,6 @@
         background-color: var(--clx-gray-100);
     }
 
-    /* ============================================
-       SCHEDULE TABLE
-       ============================================ */
     .schedule-section {
         margin-top: var(--clx-spacing-lg);
         padding-top: var(--clx-spacing-lg);
@@ -614,9 +589,6 @@
         max-width: 140px;
     }
 
-    /* ============================================
-       INFO PROMPT
-       ============================================ */
     .info-prompt {
         display: flex;
         align-items: center;
@@ -633,9 +605,6 @@
         color: var(--clx-info);
     }
 
-    /* ============================================
-       FORM ACTIONS
-       ============================================ */
     .form-actions {
         display: flex;
         justify-content: flex-end;
@@ -649,16 +618,10 @@
         min-width: 150px;
     }
 
-    /* ============================================
-       BUTTON HOVER FIXES
-       ============================================ */
     .btn:hover svg {
         color: currentColor;
     }
 
-    /* ============================================
-       RESPONSIVE DESIGN
-       ============================================ */
     @@media (max-width: 768px) {
         .create-staff-page {
             padding: var(--clx-spacing-md);
@@ -757,7 +720,6 @@
                 return;
             }
 
-            // ===== STAFF CREATION (Receptionist/Chemist) =====
             if (_model.Position == "Receptionist" || _model.Position == "Chemist")
             {
                 var staffDto = new CreateStaffRequest(
@@ -788,7 +750,6 @@
                 return;
             }
 
-            // Fallback for unknown position
             ToastService.ShowError($"Unknown position: {_model.Position}");
         }
         catch (Exception ex)
@@ -804,10 +765,11 @@
     private void ClearFormAndNavigate()
     {
         _model = new CreateStaffUiModel();
-        Navigation.NavigateTo("/admin/dashboard", forceLoad: true);
+        // Navigation.NavigateTo("/admin/dashboard", forceLoad: true);
     }
 
-    private void NavigateBack() => Navigation.NavigateTo("/admin/dashboard", forceLoad: true);
+    private void NavigateBack() => Navigation.NavigateTo("/", forceLoad: true);
+    // private void NavigateBack() => Navigation.NavigateTo("/admin/dashboard", forceLoad: true);
 
     private class CreateStaffUiModel
     {
@@ -826,7 +788,6 @@
         [Required(ErrorMessage = "A Role/Position must be selected.")] 
         public string Position { get; set; } = "";
 
-        // Doctor fields
         public string? Degree { get; set; }
         public string? Specialty { get; set; }
         public string? LicenseNumber { get; set; }
@@ -844,7 +805,6 @@
                 EndTimeStr = "17:00"
             }).ToList();
 
-        // General Staff fields
         public string? Department { get; set; }
         public string? ShiftJson { get; set; }
         public string? AssignedLocation { get; set; }

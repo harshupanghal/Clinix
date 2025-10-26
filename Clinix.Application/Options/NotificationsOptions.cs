@@ -1,5 +1,4 @@
-﻿// Application/Options/NotificationsOptions.cs
-namespace Clinix.Application.Options;
+﻿namespace Clinix.Application.Options;
 
 public sealed class NotificationsOptions
     {

@@ -23,7 +23,7 @@ public class RegistrationService : IRegistrationService
     private readonly IPatientRepository _patientRepo;
     private readonly IDoctorRepository _doctorRepo;
     private readonly IStaffRepository _staffRepo;
-    private readonly IProviderRepository _providerRepo; // NEW
+    private readonly IProviderRepository _providerRepo; 
     private readonly IUnitOfWork _uow;
     private readonly PasswordHasher<User> _passwordHasher = new();
     private readonly ILogger<RegistrationService> _logger;
@@ -88,7 +88,7 @@ public class RegistrationService : IRegistrationService
                 {
                 await _uow.RollbackAsync(ct);
                 _logger.LogError(dbEx, "DB error while registering user with phone {Phone}", normalizedPhone);
-                // If unique constraint violation, return friendly message
+                
                 return Result.Failure("Phone number already in use.");
                 }
             }
@@ -223,7 +223,6 @@ public class RegistrationService : IRegistrationService
         return keepPlus ? "+" + digitsOnly : digitsOnly;
         }
 
-    // Application/Services/RegistrationService.cs (update CreateDoctorAsync method)
     public async Task<Result> CreateDoctorAsync(CreateDoctorRequest request, string createdBy, CancellationToken ct = default)
         {
         if (request is null)
@@ -252,7 +251,6 @@ public class RegistrationService : IRegistrationService
                 var doctor = DoctorMappers.CreateFrom(user, request);
                 await _doctorRepo.AddAsync(doctor, ct);
 
-                // NEW: Auto-create Provider for appointment scheduling
                 var provider = await CreateProviderFromDoctor(doctor, request, ct);
                 doctor.ProviderId = provider.Id;
                 await _doctorRepo.UpdateAsync(doctor, ct);
@@ -276,14 +274,13 @@ public class RegistrationService : IRegistrationService
             }
         }
 
-    // NEW: Helper to create Provider from Doctor schedules
     private async Task<Provider> CreateProviderFromDoctor(Doctor doctor, CreateDoctorRequest request, CancellationToken ct)
         {
-        // Calculate earliest start and latest end from schedules
+      
         var schedules = request.Schedules?.Where(s => s.IsAvailable).ToList();
 
-        TimeSpan earliestStart = new TimeSpan(9, 0, 0); // Default 9 AM
-        TimeSpan latestEnd = new TimeSpan(17, 0, 0);   // Default 5 PM
+        TimeSpan earliestStart = new TimeSpan(9, 0, 0); 
+        TimeSpan latestEnd = new TimeSpan(17, 0, 0);   
 
         if (schedules?.Any() == true)
             {
@@ -294,7 +291,6 @@ public class RegistrationService : IRegistrationService
         var startDateTime = DateTime.Today.Add(earliestStart);
         var endDateTime = DateTime.Today.Add(latestEnd);
 
-        // Generate symptom tags from specialty
         var tags = GenerateTagsFromSpecialty(request.Specialty);
 
         var provider = new Provider(

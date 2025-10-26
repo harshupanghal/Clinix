@@ -1,5 +1,4 @@
-﻿// Domain/Entities/ApplicationUsers/Doctor.cs
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 
@@ -29,7 +28,6 @@ public class Doctor
     [Timestamp]
     public byte[]? RowVersion { get; set; }
 
-    // NEW: Link to Provider for appointment scheduling
     public long ProviderId { get; set; }
 
     public ICollection<Appointment> Appointments { get; set; } = new List<Appointment>();

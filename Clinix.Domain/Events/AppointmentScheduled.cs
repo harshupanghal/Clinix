@@ -1,5 +1,4 @@
-﻿// Domain/Events/AppointmentEvents.cs
-namespace Clinix.Domain.Events;
+﻿namespace Clinix.Domain.Events;
 
 using Clinix.Domain.Abstractions;
 

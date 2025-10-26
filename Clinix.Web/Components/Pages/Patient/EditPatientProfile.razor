@@ -11,7 +11,7 @@
 @using Blazored.FluentValidation
 
 <div class="edit-profile-page">
-    <!-- Page Header -->
+
     <div class="page-header">
         <div>
             <h1 class="page-title">
@@ -42,7 +42,6 @@
         <EditForm Model="model" OnValidSubmit="OnValidSubmit" class="edit-profile-form">
             <FluentValidationValidator />
 
-            <!-- Personal Information Section -->
             <div class="card form-section-card">
                 <div class="card-header">
                     <h5 class="section-title">
@@ -123,7 +122,6 @@
                 </div>
             </div>
 
-            <!-- Emergency Contact Section -->
             <div class="card form-section-card">
                 <div class="card-header">
                     <h5 class="section-title">
@@ -160,7 +158,6 @@
                 </div>
             </div>
 
-            <!-- Medical Information Section -->
             <div class="card form-section-card">
                 <div class="card-header">
                     <h5 class="section-title">
@@ -197,7 +194,6 @@
                 </div>
             </div>
 
-            <!-- Action Buttons -->
             <div class="action-buttons-container">
                 <button class="btn btn-primary btn-lg submit-button" type="submit" disabled="@isSubmitting">
                     @if (isSubmitting)
@@ -230,18 +226,12 @@
 </div>
 
 <style>
-    /* ============================================
-       EDIT PROFILE PAGE
-       ============================================ */
     .edit-profile-page {
         padding: var(--clx-spacing-lg);
         max-width: 900px;
         margin: 0 auto;
     }
 
-    /* ============================================
-       PAGE HEADER
-       ============================================ */
     .page-header {
         display: flex;
         justify-content: space-between;
@@ -269,9 +259,6 @@
         margin: 0;
     }
 
-    /* ============================================
-       LOADING STATE
-       ============================================ */
     .loading-container {
         display: flex;
         flex-direction: column;
@@ -281,9 +268,6 @@
         text-align: center;
     }
 
-    /* ============================================
-       FORM SECTIONS
-       ============================================ */
     .edit-profile-form {
         display: flex;
         flex-direction: column;
@@ -314,9 +298,6 @@
         color: var(--clx-primary);
     }
 
-    /* ============================================
-       FORM GRID
-       ============================================ */
     .form-grid {
         display: grid;
         grid-template-columns: repeat(2, 1fr);
@@ -369,9 +350,6 @@
         margin-top: var(--clx-spacing-xs);
     }
 
-    /* ============================================
-       ACTION BUTTONS
-       ============================================ */
     .action-buttons-container {
         display: flex;
         gap: var(--clx-spacing-md);
@@ -404,9 +382,6 @@
         gap: var(--clx-spacing-sm);
     }
 
-    /* ============================================
-       RESPONSIVE DESIGN
-       ============================================ */
     @@media (max-width: 768px) {
         .edit-profile-page {
             padding: var(--clx-spacing-md);

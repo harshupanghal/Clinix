@@ -1,5 +1,4 @@
-﻿// Domain/ValueObjects/DateRange.cs
-namespace Clinix.Domain.ValueObjects;
+﻿namespace Clinix.Domain.ValueObjects;
 
 public sealed class DateRange
     {
