@@ -1,6 +1,6 @@
 ﻿@page "/inventory"
 @rendermode InteractiveServer
-@attribute [Authorize(Roles = "Admin, Chemist")] 
+@attribute [Authorize(Roles = "Admin, Staff")] 
 @using Clinix.Application.Interfaces
 @using Clinix.Application.Interfaces.Functionalities
 @using Clinix.Domain.Entities
@@ -32,15 +32,20 @@
     </div>
 
     @if (_accessDenied)
-    {
-        <div class="alert alert-danger">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
-                <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
-                <path d="M7.002 11a1 1 0 1 1 2 0 1 1 0 0 1-2 0zM7.1 4.995a.905.905 0 1 1 1.8 0l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 4.995z"/>
-            </svg>
-            <strong>Access Denied</strong> - Only Admins and Chemists can view this page.
+{
+    <div class="alert alert-danger">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+            <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+            <path d="M7.002 11a1 1 0 1 1 2 0 1 1 0 0 1-2 0zM7.1 4.995a.905.905 0 1 1 1.8 0l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 4.995z"/>
+        </svg>
+        <div>
+            <strong>Access Denied</strong> - Only Admins and Staff can view this page.
+            <br/>
+            <span class="text-muted small">You are currently logged in as: <strong>@_userName</strong> (Role: <strong>@_userRole</strong>)</span>
         </div>
-    }
+    </div>
+}
+
     else
     {
         <div class="card search-filter-card">
@@ -510,12 +515,17 @@
     private int _totalPages => (int)Math.Ceiling(_allItems.Count / (double)_pageSize);
 
     private bool _accessDenied = false;
+    private string _userRole = string.Empty;  
+    private string _userName = string.Empty; 
 
     protected override async Task OnInitializedAsync()
-    {
+        {
         var authState = await AuthStateProvider.GetAuthenticationStateAsync();
         var user = authState.User;
-        if (!user.IsInRole("Admin") && !user.IsInRole("Chemist"))
+           
+        _userRole = user.FindFirst(c => c.Type == System.Security.Claims.ClaimTypes.Role)?.Value ?? "Unknown";
+        _userName = user.Identity?.Name ?? "Unknown User";
+        if (!user.IsInRole("Admin") && !user.IsInRole("Staff"))
         {
             _accessDenied = true;
             return;

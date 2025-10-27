@@ -203,11 +203,11 @@ public class ClinixDbContext : DbContext
         modelBuilder.Entity<SeedStatus>(entity =>
         {
             entity.HasKey(e => e.Id);
-            entity.HasIndex(e => new { e.SeedName, e.Version }).IsUnique();
             entity.Property(e => e.SeedName).IsRequired().HasMaxLength(100);
             entity.Property(e => e.Version).IsRequired().HasMaxLength(20);
             entity.Property(e => e.ExecutedBy).HasMaxLength(100);
             entity.Property(e => e.ErrorMessage).HasMaxLength(1000);
+            entity.HasIndex(e => new { e.SeedName, e.Version }).IsUnique();
         });
         }
     }

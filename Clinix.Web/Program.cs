@@ -1,4 +1,4 @@
-using Blazored.Toast;
+﻿using Blazored.Toast;
 using Clinix.Application.Interfaces;
 using Clinix.Application.Interfaces.Functionalities;
 using Clinix.Application.Interfaces.UserRepo;
@@ -9,7 +9,9 @@ using Clinix.Domain.Interfaces;
 using Clinix.Infrastructure.Background;
 using Clinix.Infrastructure.Contacts;
 using Clinix.Infrastructure.Data;
+using Clinix.Infrastructure.Events;
 using Clinix.Infrastructure.Messaging;
+using Clinix.Infrastructure.Notifications;
 using Clinix.Infrastructure.Persistence;
 using Clinix.Infrastructure.Repositories;
 using Clinix.Infrastructure.Services;
@@ -21,100 +23,113 @@ using FluentValidation.AspNetCore;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Components.Server;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using MudBlazor.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Core services
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents()
     .AddCircuitOptions(options =>
     {
-        options.DetailedErrors = true;
+        options.DetailedErrors = builder.Environment.IsDevelopment();
     });
 
 builder.Services.AddSignalR();
 
-// Database
 var connectionString = builder.Configuration.GetConnectionString("ClinixConnection")
-                       ?? "Server=(localdb)\\mssqllocaldb;Database=ClxDb;Trusted_Connection=True;";
+                       ?? "Server=(localdb)\\mssqllocaldb;Database=ClxDb;Trusted_Connection=True;MultipleActiveResultSets=true;";
 
-builder.Services.AddDbContext<ClinixDbContext>(options =>
-    options.UseSqlServer(connectionString));
+// ===================================================================
+// ✅ FIXED: Domain Event Infrastructure with Proper Interceptor
+// ===================================================================
+builder.Services.AddScoped<DomainEventDispatcher>();
+
+// ✅ FIXED: DbContext with interceptor (no circular dependency)
+builder.Services.AddDbContext<ClinixDbContext>((sp, options) =>
+{
+    options.UseSqlServer(connectionString);
+
+    // Create interceptor directly with IServiceProvider to avoid circular dependency
+    var interceptor = new DomainEventSaveChangesInterceptor(sp);
+    options.AddInterceptors(interceptor);
+});
 
 builder.Services.AddScoped<ISeedStatusRepository, SeedStatusRepository>();
 
-// Options configuration for appointments/follow-ups
 builder.Services.Configure<NotificationsOptions>(builder.Configuration.GetSection("Notifications"));
 builder.Services.Configure<ReminderOptions>(builder.Configuration.GetSection("Reminders"));
 
-// Domain repositories (existing)
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IPatientRepository, PatientRepository>();
 builder.Services.AddScoped<IDoctorRepository, DoctorRepository>();
 builder.Services.AddScoped<IStaffRepository, StaffRepository>();
-builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
-
-// NEW: Appointment/Follow-up repositories
 builder.Services.AddScoped<IAppointmentRepository, AppointmentRepository>();
 builder.Services.AddScoped<IFollowUpRepository, FollowUpRepository>();
 builder.Services.AddScoped<IProviderRepository, ProviderRepository>();
 builder.Services.AddScoped<IDoctorScheduleRepository, DoctorScheduleRepository>();
+builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 
-// Application services (existing)
+// Core services
 builder.Services.AddScoped<IInventoryService, InventoryService>();
 builder.Services.AddScoped<IPatientDashboardService, PatientDashboardService>();
 builder.Services.AddScoped<IRegistrationService, RegistrationService>();
 builder.Services.AddScoped<IAuthenticationService, AuthenticationService>();
 builder.Services.AddScoped<IUserManagementService, UserManagementService>();
 
-
-// NEW: Appointment/Follow-up application services
+// Appointment & Follow-up services
 builder.Services.AddScoped<IAppointmentAppService, AppointmentAppService>();
 builder.Services.AddScoped<IFollowUpAppService, FollowUpAppService>();
 builder.Services.AddScoped<IProviderAppService, ProviderAppService>();
 builder.Services.AddScoped<IDoctorActionsAppService, DoctorActionsAppService>();
 builder.Services.AddScoped<IAdminScheduleAppService, AdminScheduleAppService>();
 
+// Notification sender (Email/SMS)
+builder.Services.AddSingleton<INotificationSender, RealNotificationSender>();
 
-// UI services (existing)
+// Contact provider (gets patient/doctor email/phone from DB)
+builder.Services.AddScoped<DbContactProvider>();
+builder.Services.AddScoped<IContactProvider, DbContactProvider>();
+
+// Notification handlers (processes domain events)
+builder.Services.AddScoped<NotificationHandlers>();
+
+// Register workers WITHOUT auto-start (manual start after seeding)
+builder.Services.AddSingleton<OutboxProcessorWorker>();
+builder.Services.AddSingleton<FollowUpReminderWorker>();
+
+// UI SERVICES
 builder.Services.AddScoped<IRegistrationUiService, RegistrationUiService>();
 builder.Services.AddScoped<ISafeNavigationService, SafeNavigationService>();
 builder.Services.AddScoped<IPatientDashboardUiService, PatientDashboardUiService>();
 builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
 
-
-// NEW: Notification and background services
-builder.Services.AddSingleton<INotificationSender, RealNotificationSender>();
-builder.Services.AddSingleton<IContactProvider, FakeContactProvider>();
-builder.Services.AddHostedService<FollowUpReminderWorker>();
-
-// Toast notifications
+// TOAST NOTIFICATIONS
 builder.Services.AddBlazoredToast();
 
-// Validation
+// VALIDATION
 builder.Services.AddValidatorsFromAssemblyContaining<LoginModelValidator>();
 builder.Services.AddFluentValidationAutoValidation();
 builder.Services.AddFluentValidationClientsideAdapters();
 builder.Services.AddValidatorsFromAssemblyContaining<RegisterPatientRequestValidator>();
 
-// Antiforgery
+// ANTIFORGERY
 builder.Services.AddAntiforgery(options =>
 {
     options.HeaderName = "X-CSRF-TOKEN";
     options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
-    options.Cookie.SameSite = SameSiteMode.None;
+    options.Cookie.SameSite = SameSiteMode.Strict;
     options.Cookie.IsEssential = true;
 });
 
-// HTTP client
+// HTTP CLIENT
 builder.Services.AddScoped(sp => new HttpClient
     {
     BaseAddress = new Uri(builder.Configuration["AppBaseAddress"] ?? "https://localhost:5001/")
     });
 
-// Authentication
+// AUTHENTICATION & AUTHORIZATION
 const string AuthScheme = "clx-auth";
 const string AuthCookie = "clx-cookie";
 
@@ -133,21 +148,90 @@ builder.Services.AddAuthentication(AuthScheme)
         options.SlidingExpiration = true;
     });
 
-builder.Services.AddAuthorization();
+//builder.Services.AddAuthorization(options =>
+//{
+//    options.AddPolicy("AdminOnly", policy => policy.RequireRole("Admin"));
+//    options.AddPolicy("DoctorOnly", policy => policy.RequireRole("Doctor"));
+//    options.AddPolicy("PatientOnly", policy => policy.RequireRole("Patient"));
+//    options.AddPolicy("ReceptionistOnly", policy => policy.RequireRole("Receptionist"));
+//    options.AddPolicy("ChemistOnly", policy => policy.RequireRole("Chemist"));
+//    options.AddPolicy("StaffOnly", policy => policy.RequireRole("Receptionist", "Chemist"));
+//});
+
 builder.Services.AddScoped<AuthenticationStateProvider, ServerAuthenticationStateProvider>();
 
-// Additional services
 builder.Services.AddRazorPages();
 builder.Services.AddMudServices();
 builder.Services.AddControllers();
 
+// BUILD APPLICATION
 var app = builder.Build();
 
-// Middleware
+// ===================================================================
+// STEP 1: SEED DATABASE FIRST (Before starting workers)
+// ===================================================================
+using (var scope = app.Services.CreateScope())
+    {
+    var seedLogger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+
+    try
+        {
+        seedLogger.LogInformation("🌱 Starting database seeding...");
+        await DataSeeder.SeedAsync(scope.ServiceProvider);
+        seedLogger.LogInformation("✅ Database seeding completed!");
+        }
+    catch (Exception ex)
+        {
+        seedLogger.LogError(ex, "❌ Seeding failed: {Message}", ex.Message);
+        // Don't throw - let app start even if seeding fails
+        }
+    }
+
+// ===================================================================
+// STEP 2: NOW START BACKGROUND WORKERS (After seeding)
+// ===================================================================
+var workerLogger = app.Services.GetRequiredService<ILogger<Program>>();
+workerLogger.LogInformation("🚀 Starting background workers...");
+
+// Start OutboxProcessorWorker
+_ = Task.Run(async () =>
+{
+    try
+        {
+        var worker = app.Services.GetRequiredService<OutboxProcessorWorker>();
+        await worker.StartAsync(CancellationToken.None);
+        workerLogger.LogInformation("✅ OutboxProcessorWorker started");
+        }
+    catch (Exception ex)
+        {
+        workerLogger.LogError(ex, "❌ Failed to start OutboxProcessorWorker");
+        }
+});
+
+// Start FollowUpReminderWorker  
+_ = Task.Run(async () =>
+{
+    try
+        {
+        var worker = app.Services.GetRequiredService<FollowUpReminderWorker>();
+        await worker.StartAsync(CancellationToken.None);
+        workerLogger.LogInformation("✅ FollowUpReminderWorker started");
+        }
+    catch (Exception ex)
+        {
+        workerLogger.LogError(ex, "❌ Failed to start FollowUpReminderWorker");
+        }
+});
+
+// MIDDLEWARE PIPELINE
 if (!app.Environment.IsDevelopment())
     {
     app.UseExceptionHandler("/Error");
     app.UseHsts();
+    }
+else
+    {
+    app.UseDeveloperExceptionPage();
     }
 
 app.UseHttpsRedirection();
@@ -164,24 +248,5 @@ app.MapControllers();
 app.MapRazorComponents<App>()
    .AddInteractiveServerRenderMode();
 
-using (var scope = app.Services.CreateScope())
-    {
-    try
-        {
-        await DataSeeder.SeedAsync(scope.ServiceProvider);
-        }
-    catch (Exception ex)
-        {
-        var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
-        logger.LogCritical(ex, "Fatal error during database seeding.");
-     
-        }
-    }
-
+workerLogger.LogInformation("🎉 Clinix HMS started successfully!");
 app.Run();
-
-
-
-
-//await _notifyUseCase.NotifyAsync(patientId.ToString(), $"Your appointment with Dr. {doctor.FullName} at {appointment.StartAt:HH:mm} has been {appointment.Status}.");
-//await _notifyUseCase.NotifyAsync(doctorId.ToString(), $"Appointment with patient {patient.FullName} at {appointment.StartAt:HH:mm} has been {appointment.Status}.");

@@ -9,5 +9,6 @@ public interface IPatientRepository : IRepository<Patient>
     Task<Patient?> GetByUserIdAsync(long id, CancellationToken ct = default);
     Task UpdateAsync(Patient patient, CancellationToken ct = default);
     Task<IEnumerable<Patient>> GetAllPatientsAsync(CancellationToken ct = default);
+    Task<List<Patient>> GetAllAsync(CancellationToken ct = default);
     }
 

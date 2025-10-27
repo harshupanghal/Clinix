@@ -47,6 +47,9 @@ public interface INotificationSender
 public interface IContactProvider
     {
     Task<(string? Email, string? Phone)> GetPatientContactAsync(long patientId, CancellationToken ct = default);
+    Task<(string? Email, string? Phone)> GetDoctorContactAsync(long doctorId, CancellationToken ct = default);
+    Task<string> GetProviderNameAsync(long providerId, CancellationToken ct = default);
+    Task<string> GetPatientNameAsync(long patientId, CancellationToken ct = default);
     }
 
 public interface IAdminScheduleAppService

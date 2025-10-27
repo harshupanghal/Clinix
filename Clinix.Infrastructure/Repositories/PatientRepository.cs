@@ -24,6 +24,11 @@ public class PatientRepository : IPatientRepository
         return await _db.Patients.CountAsync(ct);
         }
 
+    public async Task<List<Patient>> GetAllAsync(CancellationToken ct = default)
+        {
+        return await _db.Patients.ToListAsync(ct);
+        }
+
     public async Task<int> CountAsync(Expression<Func<Patient, bool>> predicate, CancellationToken ct = default)
         {
         _logger.LogTrace("Counting Patient records with predicate.");

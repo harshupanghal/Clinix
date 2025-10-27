@@ -38,5 +38,9 @@ public class UnitOfWork : IUnitOfWork
         await _transaction.DisposeAsync();
         _transaction = null;
         }
+    public async Task SaveChangesAsync(CancellationToken ct = default)
+        {
+        await _dbContext.SaveChangesAsync(ct);
+        }
     }
 
