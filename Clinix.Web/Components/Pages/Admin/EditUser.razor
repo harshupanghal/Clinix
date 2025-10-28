@@ -1,4 +1,4 @@
-﻿@page "/admin/edit-user/{userId:long}"
+﻿@page "/edit-user/{userId:long}"
 @attribute [Authorize(Roles = "Admin")]
 @rendermode InteractiveServer
 @using Clinix.Application.Dtos.UserManagement
@@ -337,7 +337,7 @@
                 
                 // Navigate back after a short delay
                 await Task.Delay(1500);
-                Navigation.NavigateTo($"/admin/user-details/{UserId}");
+                Navigation.NavigateTo($"/user-details/{UserId}");
             }
             else
             {
@@ -356,7 +356,7 @@
 
     private void GoBack()
     {
-        Navigation.NavigateTo($"/admin/user-details/{UserId}");
+        Navigation.NavigateTo($"/user-details/{UserId}");
     }
 
     private string GetInitials(string fullName)

@@ -14,7 +14,7 @@ public sealed class NotificationsOptions
         public string? User { get; set; }
         public string? Password { get; set; }
         public string FromEmail { get; set; } = "noreply@example.test";
-        public string FromName { get; set; } = "Clinic";
+        public string FromName { get; set; } = "Clinix";
         }
 
     public sealed class TwilioOptions

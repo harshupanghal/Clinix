@@ -10,14 +10,15 @@ using System.Text.Json;
 namespace Clinix.Infrastructure.Background;
 
 /// <summary>
-/// Background worker that polls OutboxMessages table and processes domain events.
-/// Ensures reliable notification delivery with automatic retry on failure.
-/// Runs every 10 seconds to process pending notifications.
+/// Background worker that processes notification events from OutboxMessages table.
+/// Runs every 10 seconds to ensure reliable, asynchronous notification delivery.
 /// </summary>
 public sealed class OutboxProcessorWorker : BackgroundService
     {
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly ILogger<OutboxProcessorWorker> _logger;
+    private int _processedCount = 0;
+    private int _failedCount = 0;
 
     public OutboxProcessorWorker(IServiceScopeFactory scopeFactory, ILogger<OutboxProcessorWorker> logger)
         {
@@ -27,8 +28,15 @@ public sealed class OutboxProcessorWorker : BackgroundService
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
-        _logger.LogInformation("OutboxProcessorWorker started");
-        var timer = new PeriodicTimer(TimeSpan.FromSeconds(100));
+        _logger.LogInformation(
+            "\n" +
+            "╔═══════════════════════════════════════════════════════════════╗\n" +
+            "║  🚀 OUTBOX PROCESSOR WORKER STARTED                          ║\n" +
+            "║  📦 Polling Interval: 10 seconds                             ║\n" +
+            "║  🔄 Max Retries: 3 attempts per message                      ║\n" +
+            "╚═══════════════════════════════════════════════════════════════╝");
+
+        var timer = new PeriodicTimer(TimeSpan.FromSeconds(30));
 
         try
             {
@@ -38,59 +46,94 @@ public sealed class OutboxProcessorWorker : BackgroundService
                 var db = scope.ServiceProvider.GetRequiredService<ClinixDbContext>();
                 var handlers = scope.ServiceProvider.GetRequiredService<NotificationHandlers>();
 
-                // Get unprocessed notification events (max 20 per batch)
                 var messages = await db.OutboxMessages
                     .Where(m => !m.Processed && m.Channel == "Notification" && m.AttemptCount < 3)
                     .OrderBy(m => m.OccurredAtUtc)
                     .Take(20)
                     .ToListAsync(stoppingToken);
 
+                if (messages.Any())
+                    {
+                    _logger.LogInformation(
+                        "\n📨 [OUTBOX PROCESSING BATCH]\n" +
+                        "   Found {Count} pending messages\n" +
+                        "   Timestamp: {Timestamp}",
+                        messages.Count,
+                        DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"));
+                    }
+
                 foreach (var msg in messages)
                     {
                     try
                         {
-                        // Dispatch to appropriate handler based on event type
+                        _logger.LogInformation(
+                            "   ⚙️  Processing Message #{Id} | Type: {Type} | Attempt: {Attempt}",
+                            msg.Id, msg.Type, msg.AttemptCount + 1);
+
                         await ProcessEventAsync(msg, handlers, stoppingToken);
 
-                        // Mark as processed
                         msg.Processed = true;
                         msg.ProcessedAtUtc = DateTime.UtcNow;
+                        _processedCount++;
+
+                        _logger.LogInformation(
+                            "   ✅ Message #{Id} processed successfully\n",
+                            msg.Id);
                         }
                     catch (Exception ex)
                         {
-                        _logger.LogError(ex, "Failed to process outbox message {Id} (Type: {Type})", msg.Id, msg.Type);
                         msg.AttemptCount++;
+                        _failedCount++;
 
-                        // If max retries reached, mark as processed to avoid infinite loop
+                        _logger.LogError(
+                            "   ❌ Message #{Id} failed (Attempt {Attempt}/3)\n" +
+                            "      Error: {Error}\n",
+                            msg.Id, msg.AttemptCount, ex.Message);
+
                         if (msg.AttemptCount >= 3)
                             {
                             msg.Processed = true;
-                            _logger.LogWarning("Outbox message {Id} exceeded max retries, marked as processed", msg.Id);
+                            _logger.LogWarning(
+                                "   ⚠️  Message #{Id} marked as failed (max retries exceeded)\n",
+                                msg.Id);
                             }
                         }
                     }
 
                 if (messages.Any())
+                    {
                     await db.SaveChangesAsync(stoppingToken);
+
+                    _logger.LogInformation(
+                        "📊 [BATCH COMPLETE] Processed: {Processed} | Failed: {Failed} | Total Stats: ✅ {TotalSuccess} ❌ {TotalFailed}\n",
+                        messages.Count(m => m.Processed && m.AttemptCount < 3),
+                        messages.Count(m => !m.Processed || m.AttemptCount >= 3),
+                        _processedCount,
+                        _failedCount);
+                    }
                 }
             }
         catch (OperationCanceledException)
             {
-            _logger.LogInformation("OutboxProcessorWorker stopping gracefully");
+            _logger.LogInformation("\n🛑 OutboxProcessorWorker stopping gracefully...");
             }
         catch (Exception ex)
             {
-            _logger.LogError(ex, "Fatal error in OutboxProcessorWorker");
+            _logger.LogCritical(ex, "\n💥 FATAL ERROR in OutboxProcessorWorker: {Error}", ex.Message);
             }
         finally
             {
-            _logger.LogInformation("OutboxProcessorWorker stopped");
+            _logger.LogInformation(
+                "\n" +
+                "╔═══════════════════════════════════════════════════════════════╗\n" +
+                "║  🛑 OUTBOX PROCESSOR WORKER STOPPED                          ║\n" +
+                "║  📊 Final Stats - Processed: {Processed,-31} ║\n" +
+                "║                   Failed: {Failed,-34} ║\n" +
+                "╚═══════════════════════════════════════════════════════════════╝",
+                _processedCount, _failedCount);
             }
         }
 
-    /// <summary>
-    /// Routes domain events to appropriate notification handlers based on event type.
-    /// </summary>
     private async Task ProcessEventAsync(
         Clinix.Domain.Entities.OutboxMessage msg,
         NotificationHandlers handlers,
@@ -123,7 +166,7 @@ public sealed class OutboxProcessorWorker : BackgroundService
                 break;
 
             default:
-                _logger.LogWarning("Unknown event type: {Type}", msg.Type);
+                _logger.LogWarning("      ⚠️  Unknown event type: {Type}", msg.Type);
                 break;
             }
         }

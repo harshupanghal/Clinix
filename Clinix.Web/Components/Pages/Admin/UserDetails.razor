@@ -1,4 +1,4 @@
-﻿@page "/admin/user-details/{userId:long}"
+﻿@page "/user-details/{userId:long}"
 @attribute [Authorize(Roles = "Admin")]
 @rendermode InteractiveServer
 @using Clinix.Application.Dtos.UserManagement
@@ -625,13 +625,12 @@
 
     private void GoBack()
     {
-        Navigation.NavigateTo("/admin/user-management");
+        Navigation.NavigateTo("/user-management");
     }
 
     private void EditUser()
     {
-        // TODO: Navigate to edit page or open edit modal
-        Navigation.NavigateTo($"/admin/edit-user/{UserId}");
+        Navigation.NavigateTo($"/edit-user/{UserId}");
     }
 
     private async Task DeleteUser()

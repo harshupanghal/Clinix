@@ -12,7 +12,7 @@ public sealed class DomainEventSaveChangesInterceptor : SaveChangesInterceptor
     {
     private readonly IServiceProvider _serviceProvider;
 
-    // ✅ FIXED: Constructor accepts IServiceProvider
+ 
     public DomainEventSaveChangesInterceptor(IServiceProvider serviceProvider)
         => _serviceProvider = serviceProvider;
 
@@ -37,7 +37,6 @@ public sealed class DomainEventSaveChangesInterceptor : SaveChangesInterceptor
         {
         if (eventData.Context == null) return;
 
-        // ✅ Resolve dispatcher lazily from a new scope (avoids circular dependency)
         using var scope = _serviceProvider.CreateScope();
         var dispatcher = scope.ServiceProvider.GetRequiredService<DomainEventDispatcher>();
         dispatcher.DispatchEvents();
