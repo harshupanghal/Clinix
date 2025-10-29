@@ -38,7 +38,7 @@ public class CurrentUserService : ICurrentUserService
         var userName = user.Identity?.Name ?? "User";
 
         var role = user.FindFirst(ClaimTypes.Role)?.Value
-                ?? user.FindFirst("role")?.Value
+                ?? user.FindFirst("Role")?.Value
                 ?? "User";
 
         string? providerId = null;

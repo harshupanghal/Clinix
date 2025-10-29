@@ -41,17 +41,12 @@ builder.Services.AddSignalR();
 var connectionString = builder.Configuration.GetConnectionString("ClinixConnection")
                        ?? "Server=(localdb)\\mssqllocaldb;Database=ClxDb;Trusted_Connection=True;MultipleActiveResultSets=true;";
 
-// ===================================================================
-// ✅ FIXED: Domain Event Infrastructure with Proper Interceptor
-// ===================================================================
 builder.Services.AddScoped<DomainEventDispatcher>();
 
-// ✅ FIXED: DbContext with interceptor (no circular dependency)
 builder.Services.AddDbContext<ClinixDbContext>((sp, options) =>
 {
     options.UseSqlServer(connectionString);
 
-    // Create interceptor directly with IServiceProvider to avoid circular dependency
     var interceptor = new DomainEventSaveChangesInterceptor(sp);
     options.AddInterceptors(interceptor);
 });
@@ -167,9 +162,6 @@ builder.Services.AddControllers();
 // BUILD APPLICATION
 var app = builder.Build();
 
-// ===================================================================
-// STEP 1: SEED DATABASE FIRST (Before starting workers)
-// ===================================================================
 using (var scope = app.Services.CreateScope())
     {
     var seedLogger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
@@ -187,9 +179,6 @@ using (var scope = app.Services.CreateScope())
         }
     }
 
-// ===================================================================
-// STEP 2: NOW START BACKGROUND WORKERS (After seeding)
-// ===================================================================
 var workerLogger = app.Services.GetRequiredService<ILogger<Program>>();
 workerLogger.LogInformation("🚀 Starting background workers...");
 
@@ -223,7 +212,7 @@ _ = Task.Run(async () =>
         }
 });
 
-// MIDDLEWARE PIPELINE
+// MIDDLEWARES
 if (!app.Environment.IsDevelopment())
     {
     app.UseExceptionHandler("/Error");
@@ -250,3 +239,4 @@ app.MapRazorComponents<App>()
 
 workerLogger.LogInformation("🎉 Clinix HMS started successfully!");
 app.Run();
+

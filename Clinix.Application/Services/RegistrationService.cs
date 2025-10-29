@@ -55,7 +55,9 @@ public class RegistrationService : IRegistrationService
         if (request is null)
             return Result.Failure("Invalid request.");
 
-        if (string.IsNullOrWhiteSpace(request.FullName) || string.IsNullOrWhiteSpace(request.Phone) || string.IsNullOrWhiteSpace(request.Password))
+        if (string.IsNullOrWhiteSpace(request.FullName) ||
+            string.IsNullOrWhiteSpace(request.Phone) ||
+            string.IsNullOrWhiteSpace(request.Password))
             return Result.Failure("FullName, phone and password are required.");
 
         var normalizedPhone = NormalizePhone(request.Phone);
@@ -70,7 +72,14 @@ public class RegistrationService : IRegistrationService
 
             var emailNormalized = request.Email?.Trim();
 
-            var user = UserMappers.CreateForRole(request.FullName.Trim(), emailNormalized ?? string.Empty, normalizedPhone, role: "Patient", createdBy);
+            var user = UserMappers.CreateForRole(
+                fullName: request.FullName.Trim(),
+                email: emailNormalized ?? string.Empty,
+                Phone: normalizedPhone,
+                role: "Patient",
+                createdBy: createdBy
+            );
+
             user.PasswordHash = _passwordHasher.HashPassword(user, request.Password);
             user.CreatedBy = createdBy;
             user.UpdatedBy = createdBy;
@@ -80,17 +89,25 @@ public class RegistrationService : IRegistrationService
             try
                 {
                 await _userRepo.AddAsync(user, ct);
+                await _uow.SaveChangesAsync(ct); // ensure user.Id exists in DB
+
+                var patient = PatientMappers.CreateFrom(user, request);
+                await _patientRepo.AddAsync(patient, ct);
+
                 await _uow.CommitAsync(ct);
-                _logger.LogInformation("New patient registered with phone {Phone} and id {UserId}", normalizedPhone, user.Id);
+
+                _logger.LogInformation("New patient registered. Phone: {Phone}, UserId: {UserId}, PatientId: {PatientId}",
+                    normalizedPhone, user.Id, patient.PatientId);
+
                 return Result.Success("Registration successful. Please login to continue.");
                 }
             catch (DbUpdateException dbEx)
                 {
                 await _uow.RollbackAsync(ct);
                 _logger.LogError(dbEx, "DB error while registering user with phone {Phone}", normalizedPhone);
-                
-                return Result.Failure("Phone number already in use.");
+                return Result.Failure("A database error occurred while registering.");
                 }
+
             }
         catch (Exception ex)
             {
@@ -98,6 +115,7 @@ public class RegistrationService : IRegistrationService
             return Result.Failure("An error occurred while registering. Please try again later.");
             }
         }
+
 
     public async Task<Result> CreateStaffAsync(CreateStaffRequest request, string createdBy, CancellationToken ct = default)
         {
@@ -129,7 +147,7 @@ public class RegistrationService : IRegistrationService
                 await _staffRepo.AddAsync(staff, ct);
                 await _uow.CommitAsync(ct);
 
-                _logger.LogInformation("New staff created. UserId: {UserId}", user.Id);
+                _logger.LogInformation("New staff created. Phone number: {request.Phone}", request.Phone);
                 return Result.Success("Staff created successfully.");
                 }
             catch (DbUpdateException dbEx)

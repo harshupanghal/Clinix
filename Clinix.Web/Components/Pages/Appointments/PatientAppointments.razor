@@ -1,4 +1,5 @@
 ﻿@page "/appointments/patient"
+@attribute [Authorize(Roles = "Patient")]
 @rendermode InteractiveServer
 @using Clinix.Application.DTOs
 @using Clinix.Application.Interfaces
@@ -7,6 +8,7 @@
 @inject IAppointmentAppService AppointmentService
 @inject ICurrentUserService CurrentUser
 @inject NavigationManager Navigation
+@inject AuthenticationStateProvider AuthStateProvider
 
 <div class="patient-appointments-page">
 
@@ -29,17 +31,17 @@
         </a>
     </div>
 
-    @if (!_authorized)
+    @* @if (!_authorized)
     {
         <div class="alert alert-danger">
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
                 <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
                 <path d="M7.002 11a1 1 0 1 1 2 0 1 1 0 0 1-2 0zM7.1 4.995a.905.905 0 1 1 1.8 0l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 4.995z"/>
             </svg>
-            <strong>Access Denied</strong> - You are not authorized to view this page. Please log in as a patient.
+            <strong>Access Denied</strong> - You are not authorized to view this page. Please log in as a patient. @(_userRole)
         </div>
-    }
-    else if (Items is null)
+    } *@
+     @if (Items is null)
     {
         <div class="loading-container">
             <div class="spinner-border text-primary" role="status"></div>
@@ -130,7 +132,7 @@
                                     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
                                         <path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm2-3a2 2 0 1 1-4 0 2 2 0 0 1 4 0zm4 8c0 1-1 1-1 1H3s-1 0-1-1 1-4 6-4 6 3 6 4zm-1-.004c-.001-.246-.154-.986-.832-1.664C11.516 10.68 10.289 10 8 10c-2.29 0-3.516.68-4.168 1.332-.678.678-.83 1.418-.832 1.664h10z"/>
                                     </svg>
-                                    Provider
+                                    Doctor
                                 </th>
                                 <th>
                                     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
@@ -159,7 +161,7 @@
                                     <span class="type-badge">@a.Type</span>
                                 </td>
                                 <td>
-                                    <span class="provider-id">Provider #@a.ProviderId</span>
+                                    <span class="provider-id">Doctor #@a.ProviderId</span>
                                 </td>
                                 <td>
                                     <span class="badge badge-@GetStatusColor(a.Status)">@a.Status</span>
@@ -473,10 +475,17 @@
     private CurrentUserInfo _userInfo = new(false, "", "", "");
     private long _patientId;
     private string _filterStatus = "All";
+     private string _userRole = string.Empty;  
+    private string _userName = string.Empty; 
 
     protected override async Task OnInitializedAsync()
     {
         _userInfo = await CurrentUser.GetCurrentUserAsync();
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+           
+        _userRole = user.FindFirst(c => c.Type == System.Security.Claims.ClaimTypes.Role)?.Value ?? "Unknown";
+        _userName = user.Identity?.Name ?? "Unknown User";
         
         if (!_userInfo.IsAuthenticated)
         {
@@ -484,23 +493,23 @@
             return;
         }
 
-        if (_userInfo.Role != "Patient")
-        {
-            _authorized = false;
-            return;
-        }
+        // if (_userInfo.Role != "Patient")
+        // {
+        //     _authorized = false;
+        //     return;
+        // }
 
-        _authorized = true;
+        // _authorized = true;
         
         if (long.TryParse(_userInfo.PatientId, out var patientId))
         {
             _patientId = patientId;
             await LoadAppointmentsAsync();
         }
-        else
-        {
-            _authorized = false;
-        }
+        // else
+        // {
+        //     _authorized = false;
+        // }
     }
 
     private async Task LoadAppointmentsAsync()

@@ -27,7 +27,6 @@ public class PatientDashboardUiService : IPatientDashboardUiService
         {
         try
             {
-            // actor is "self" for patient dashboard updates
             var res = await _dashboardService.UpdateProfileAsync(request, updatedBy: "self", ct);
             return res;
             }

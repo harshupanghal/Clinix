@@ -4,6 +4,7 @@
 		<TargetFramework>net9.0</TargetFramework>
 		<Nullable>enable</Nullable>
 		<ImplicitUsings>enable</ImplicitUsings>
+		<UserSecretsId>2e50ca97-1757-4ca3-956d-df1421c84613</UserSecretsId>
 	</PropertyGroup>
 
 	<ItemGroup>
@@ -28,7 +29,6 @@
 		</PackageReference>
 		<PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="9.0.9" />
 		<PackageReference Include="MudBlazor" Version="8.13.0" />
-
 	</ItemGroup>
 
 	<ItemGroup>

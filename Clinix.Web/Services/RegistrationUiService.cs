@@ -44,7 +44,6 @@ public class RegistrationUiService : IRegistrationUiService
         catch (Exception ex)
             {
             _logger.LogError(ex, "Error checking phone uniqueness for {Phone}", phone);
-            // Fail-safe: return true to avoid accepting a possibly-duplicate phone in a failure scenario
             return true;
             }
         }
