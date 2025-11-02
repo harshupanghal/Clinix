@@ -26,11 +26,18 @@ public sealed class Appointment : Entity
         When = when;
         Notes = notes;
         Status = AppointmentStatus.Scheduled;
-        Raise(new AppointmentScheduled(Id));
+        // ✅ Don't raise event here - will be raised after save when ID is assigned
         }
 
     public static Appointment Schedule(long patientId, long providerId, AppointmentType type, DateRange when, string? notes = null)
         => new Appointment(patientId, providerId, type, when, notes);
+
+    // ✅ Method to raise event after save (called from application service)
+    public void RaiseScheduledEvent()
+        {
+        if (Id == 0) throw new InvalidOperationException("Cannot raise scheduled event before appointment is saved");
+        Raise(new AppointmentScheduled(Id));
+        }
 
     public void Reschedule(DateRange newWhen)
         {
@@ -55,21 +62,26 @@ public sealed class Appointment : Entity
         if (Status != AppointmentStatus.Scheduled) return;
         Status = AppointmentStatus.Completed;
         UpdatedAt = DateTimeOffset.UtcNow;
+        Raise(new AppointmentCompleted(Id));
         }
 
     public void Approve()
         {
         if (Status is AppointmentStatus.Rejected or AppointmentStatus.Cancelled or AppointmentStatus.Completed)
             throw new InvalidOperationException("Cannot approve in current state.");
+        Status = AppointmentStatus.Confirmed;
         UpdatedAt = DateTimeOffset.UtcNow;
+        Raise(new AppointmentApproved(Id));
         }
 
     public void Reject(string? reason = null)
         {
-        if (Status == AppointmentStatus.Completed) throw new InvalidOperationException("Cannot reject a completed appointment.");
+        if (Status == AppointmentStatus.Completed)
+            throw new InvalidOperationException("Cannot reject a completed appointment.");
         Status = AppointmentStatus.Rejected;
         UpdatedAt = DateTimeOffset.UtcNow;
         AddNote(string.IsNullOrWhiteSpace(reason) ? "Rejected." : $"Rejected: {reason}");
+        Raise(new AppointmentRejected(Id, reason));
         }
 
     public void AddNote(string note)

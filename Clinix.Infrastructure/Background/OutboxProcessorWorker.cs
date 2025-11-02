@@ -135,9 +135,9 @@ public sealed class OutboxProcessorWorker : BackgroundService
         }
 
     private async Task ProcessEventAsync(
-        Clinix.Domain.Entities.OutboxMessage msg,
-        NotificationHandlers handlers,
-        CancellationToken ct)
+    Clinix.Domain.Entities.OutboxMessage msg,
+    NotificationHandlers handlers,
+    CancellationToken ct)
         {
         switch (msg.Type)
             {
@@ -159,6 +159,25 @@ public sealed class OutboxProcessorWorker : BackgroundService
                     await handlers.HandleAppointmentRescheduledAsync(rescheduled, ct);
                 break;
 
+            // ✅ NEW CASES
+            case nameof(AppointmentCompleted):
+                var completed = JsonSerializer.Deserialize<AppointmentCompleted>(msg.PayloadJson);
+                if (completed != null)
+                    await handlers.HandleAppointmentCompletedAsync(completed, ct);
+                break;
+
+            case nameof(AppointmentApproved):
+                var approved = JsonSerializer.Deserialize<AppointmentApproved>(msg.PayloadJson);
+                if (approved != null)
+                    await handlers.HandleAppointmentApprovedAsync(approved, ct);
+                break;
+
+            case nameof(AppointmentRejected):
+                var rejected = JsonSerializer.Deserialize<AppointmentRejected>(msg.PayloadJson);
+                if (rejected != null)
+                    await handlers.HandleAppointmentRejectedAsync(rejected, ct);
+                break;
+
             case nameof(FollowUpCreated):
                 var followUpCreated = JsonSerializer.Deserialize<FollowUpCreated>(msg.PayloadJson);
                 if (followUpCreated != null)
@@ -170,4 +189,5 @@ public sealed class OutboxProcessorWorker : BackgroundService
                 break;
             }
         }
+
     }

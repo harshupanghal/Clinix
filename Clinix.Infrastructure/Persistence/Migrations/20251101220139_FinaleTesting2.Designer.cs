@@ -4,6 +4,7 @@ using Clinix.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Clinix.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(ClinixDbContext))]
-    partial class ClinixDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251101220139_FinaleTesting2")]
+    partial class FinaleTesting2
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -377,11 +380,6 @@ namespace Clinix.Infrastructure.Persistence.Migrations
 
                     b.Property<DateTimeOffset>("DueBy")
                         .HasColumnType("datetimeoffset");
-
-                    b.Property<bool>("InitialNotificationSent")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bit")
-                        .HasDefaultValue(false);
 
                     b.Property<DateTimeOffset?>("LastRemindedAt")
                         .HasColumnType("datetimeoffset");

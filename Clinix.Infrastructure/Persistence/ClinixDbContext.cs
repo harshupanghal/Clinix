@@ -158,6 +158,7 @@ public class ClinixDbContext : DbContext
             b.Property(f => f.LastRemindedAt).HasColumnType("datetimeoffset");
             b.Property(f => f.Status).IsRequired();
             b.Property(f => f.CreatedAt).IsRequired();
+            b.Property(f => f.InitialNotificationSent).HasDefaultValue(false);
             b.HasIndex(f => f.AppointmentId);
             b.HasIndex(f => new { f.Status, f.DueBy });
         });

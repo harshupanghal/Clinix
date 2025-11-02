@@ -66,7 +66,7 @@ public sealed class RealNotificationSender : INotificationSender
                 {
                 Subject = subject,
                 Body = body,
-                IsBodyHtml = false
+                IsBodyHtml = true
                 };
 
             await client.SendMailAsync(msg, ct);

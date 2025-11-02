@@ -39,6 +39,7 @@ public static class DataSeeder
         public static readonly List<UserSeedData> Doctors = new()
         {
             new("Dr. Ramesh Gupta", "ramesh.gupta@hms.local", "9100000001"),
+            new("Dr. Himanshu Jhajaria", "harshu7850@gmail.com", "8168421641"),
             new("Dr. Priya Nair", "priya.nair@hms.local", "9100000002"),
             new("Dr. Arjun Verma", "arjun.verma@hms.local", "9100000003"),
             new("Dr. Anjali Reddy", "anjali.reddy@hms.local", "9100000004"),
@@ -52,7 +53,7 @@ public static class DataSeeder
             new("Dr. Karan Desai", "karan.desai@hms.local", "9100000012"),
             new("Dr. Ritu Bansal", "ritu.bansal@hms.local", "9100000013"),
             new("Dr. Anil Shetty", "anil.shetty@hms.local", "9100000014"),
-            new("Dr. Pooja Kapoor", "pooja.kapoor@hms.local", "9100000015")
+            //new("Dr. Pooja Kapoor", "pooja.kapoor@hms.local", "9100000015")
         };
 
         /// <summary>
@@ -62,9 +63,10 @@ public static class DataSeeder
         {
             new("Ravi Mehta", "ravi.mehta@hms.local", "9200000001"),
             new("Neha Sharma", "neha.sharma@hms.local", "9200000002"),
-            new("Suresh Kumar", "suresh.kumar@hms.local", "9200000003"),
-            new("Anjali Desai", "anjali.desai@hms.local", "9200000004"),
-            new("Karan Singh", "karan.singh@hms.local", "9200000005")
+            new("Harsh Panghal","panghalharsh02@gmail.com","9729837834")
+            //new("Suresh Kumar", "suresh.kumar@hms.local", "9200000003"),
+            //new("Anjali Desai", "anjali.desai@hms.local", "9200000004"),
+            //new("Karan Singh", "karan.singh@hms.local", "9200000005")
         };
 
         /// <summary>
@@ -106,8 +108,8 @@ public static class DataSeeder
             new("Male", new DateTime(1985, 5, 15), "B+", "Sunita Mehta", "9400000001", "MRN1000"),
             new("Female", new DateTime(1992, 8, 22), "O+", "Raj Sharma", "9400000002", "MRN1001"),
             new("Male", new DateTime(1978, 3, 10), "A-", "Manish Kumar", "9400000003", "MRN1002"),
-            new("Female", new DateTime(1995, 11, 5), "AB+", "Vikram Desai", "9400000004", "MRN1003"),
-            new("Male", new DateTime(1988, 7, 30), "O-", "Priya Singh", "9400000005", "MRN1004")
+            //new("Female", new DateTime(1995, 11, 5), "AB+", "Vikram Desai", "9400000004", "MRN1003"),
+            //new("Male", new DateTime(1988, 7, 30), "O-", "Priya Singh", "9400000005", "MRN1004")
         };
 
         /// <summary>
@@ -227,79 +229,58 @@ public static class DataSeeder
             await uow.BeginTransactionAsync(ct);
             try
                 {
-                // ==================================================================
+                
                 // STEP 1: Seed Admin User
-                // ==================================================================
                 await SeedAdminUser(userRepo, passwordHasher, logger, ct);
                 await uow.CommitAsync(ct);
                 await uow.BeginTransactionAsync(ct);
 
-                // ==================================================================
                 // STEP 2: Seed Providers (15 independent entities)
-                // ==================================================================
                 var providers = await SeedProviders(providerRepo, logger, ct);
                 await uow.CommitAsync(ct);
                 await uow.BeginTransactionAsync(ct);
 
-                // ==================================================================
                 // STEP 3: Seed Doctor Users (15 users)
-                // ==================================================================
                 var doctorUsers = await SeedDoctorUsers(userRepo, passwordHasher, logger, ct);
                 await uow.CommitAsync(ct);
                 await uow.BeginTransactionAsync(ct);
 
-                // ==================================================================
                 // STEP 4: Seed Doctor Profiles (link UserId + ProviderId)
-                // ==================================================================
                 var doctors = await SeedDoctorProfiles(doctorRepo, doctorUsers, providers, logger, ct);
                 await uow.CommitAsync(ct);
                 await uow.BeginTransactionAsync(ct);
 
-                // ==================================================================
                 // STEP 5: Seed Doctor Schedules (using Doctor.DoctorId)
-                // ==================================================================
                 await SeedDoctorSchedules(scheduleRepo, doctors, logger, ct);
                 await uow.CommitAsync(ct);
                 await uow.BeginTransactionAsync(ct);
 
-                // ==================================================================
-                // STEP 6: Seed Patient Users (5 users)
-                // ==================================================================
+                // STEP 6: Seed Patient Users (3 users)
                 var patientUsers = await SeedPatientUsers(userRepo, passwordHasher, logger, ct);
                 await uow.CommitAsync(ct);
                 await uow.BeginTransactionAsync(ct);
 
-                // ==================================================================
                 // STEP 7: Seed Patient Profiles
-                // ==================================================================
                 var patients = await SeedPatientProfiles(patientRepo, patientUsers, logger, ct);
                 await uow.CommitAsync(ct);
                 await uow.BeginTransactionAsync(ct);
 
-                // ==================================================================
                 // STEP 8: Seed Appointments (using Patient.PatientId + Provider.Id)
-                // ==================================================================
                 await SeedAppointments(appointmentRepo, patients, providers, logger, ct);
                 await uow.CommitAsync(ct);
                 await uow.BeginTransactionAsync(ct);
 
-                // ==================================================================
                 // STEP 9: Seed Staff Users (2 users)
-                // ==================================================================
                 var staffUsers = await SeedStaffUsers(userRepo, passwordHasher, logger, ct);
                 await uow.CommitAsync(ct);
                 await uow.BeginTransactionAsync(ct);
 
-                // ==================================================================
                 // STEP 10: Seed Staff Profiles (UserId only - PK/FK)
-                // ==================================================================
                 await SeedStaffProfiles(staffRepo, staffUsers, logger, ct);
                 await uow.CommitAsync(ct);
                 await uow.BeginTransactionAsync(ct);
 
-                // ==================================================================
                 // STEP 11: Seed Inventory (8 items)
-                // ==================================================================
                 await SeedInventory(inventoryRepo, logger, ct);
 
                 seedStatus.IsCompleted = true;
@@ -308,7 +289,7 @@ public static class DataSeeder
 
                 await uow.CommitAsync(ct);
 
-                logger.LogInformation("✅ Seed '{SeedName}' v{Version} completed successfully.", SEED_NAME, SEED_VERSION);
+                logger.LogInformation("Seed '{SeedName}' v{Version} completed successfully.", SEED_NAME, SEED_VERSION);
                 LogSeedSummary(logger);
                 }
             catch (Exception ex)
@@ -316,7 +297,7 @@ public static class DataSeeder
                 await uow.RollbackAsync(ct);
                 seedStatus.ErrorMessage = ex.Message.Length > 1000 ? ex.Message[..1000] : ex.Message;
                 await seedStatusRepo.UpdateAsync(seedStatus, ct);
-                logger.LogError(ex, "❌ Seed failed: {Error}", ex.Message);
+                logger.LogError(ex, "Seed failed: {Error}", ex.Message);
                 throw;
                 }
             }
@@ -339,7 +320,7 @@ public static class DataSeeder
         logger.LogInformation("Seeding Admin: {Email}", SeedData.AdminEmail);
         var admin = new User
             {
-            FullName = "System Administrator",
+            FullName = "Admin Kumar",
             Email = SeedData.AdminEmail,
             Phone = "9876543210",
             Role = "Admin",

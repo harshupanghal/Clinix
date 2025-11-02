@@ -9,7 +9,6 @@ using Clinix.Domain.Interfaces;
 using Clinix.Infrastructure.Background;
 using Clinix.Infrastructure.Contacts;
 using Clinix.Infrastructure.Data;
-using Clinix.Infrastructure.Events;
 using Clinix.Infrastructure.Messaging;
 using Clinix.Infrastructure.Notifications;
 using Clinix.Infrastructure.Persistence;
@@ -23,7 +22,6 @@ using FluentValidation.AspNetCore;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Components.Server;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
 using MudBlazor.Services;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -41,14 +39,15 @@ builder.Services.AddSignalR();
 var connectionString = builder.Configuration.GetConnectionString("ClinixConnection")
                        ?? "Server=(localdb)\\mssqllocaldb;Database=ClxDb;Trusted_Connection=True;MultipleActiveResultSets=true;";
 
-builder.Services.AddScoped<DomainEventDispatcher>();
+//builder.Services.AddScoped<DomainEventDispatcher>();
 
 builder.Services.AddDbContext<ClinixDbContext>((sp, options) =>
 {
     options.UseSqlServer(connectionString);
 
-    var interceptor = new DomainEventSaveChangesInterceptor(sp);
-    options.AddInterceptors(interceptor);
+    //var interceptor = new DomainEventSaveChangesInterceptor(sp);
+    //options.AddInterceptors(interceptor);
+    options.AddInterceptors(new DomainEventSaveChangesInterceptor());
 });
 
 builder.Services.AddScoped<ISeedStatusRepository, SeedStatusRepository>();
@@ -168,19 +167,19 @@ using (var scope = app.Services.CreateScope())
 
     try
         {
-        seedLogger.LogInformation("🌱 Starting database seeding...");
+        seedLogger.LogInformation(" Starting database seeding...");
         await DataSeeder.SeedAsync(scope.ServiceProvider);
-        seedLogger.LogInformation("✅ Database seeding completed!");
+        seedLogger.LogInformation(" Database seeding completed!");
         }
     catch (Exception ex)
         {
-        seedLogger.LogError(ex, "❌ Seeding failed: {Message}", ex.Message);
+        seedLogger.LogError(ex, " Seeding failed: {Message}", ex.Message);
         // Don't throw - let app start even if seeding fails
         }
     }
 
 var workerLogger = app.Services.GetRequiredService<ILogger<Program>>();
-workerLogger.LogInformation("🚀 Starting background workers...");
+workerLogger.LogInformation(" Starting background workers...");
 
 // Start OutboxProcessorWorker
 _ = Task.Run(async () =>
@@ -189,11 +188,11 @@ _ = Task.Run(async () =>
         {
         var worker = app.Services.GetRequiredService<OutboxProcessorWorker>();
         await worker.StartAsync(CancellationToken.None);
-        workerLogger.LogInformation("✅ OutboxProcessorWorker started");
+        workerLogger.LogInformation(" OutboxProcessorWorker started");
         }
     catch (Exception ex)
         {
-        workerLogger.LogError(ex, "❌ Failed to start OutboxProcessorWorker");
+        workerLogger.LogError(ex, " Failed to start OutboxProcessorWorker");
         }
 });
 
@@ -204,11 +203,11 @@ _ = Task.Run(async () =>
         {
         var worker = app.Services.GetRequiredService<FollowUpReminderWorker>();
         await worker.StartAsync(CancellationToken.None);
-        workerLogger.LogInformation("✅ FollowUpReminderWorker started");
+        workerLogger.LogInformation(" FollowUpReminderWorker started");
         }
     catch (Exception ex)
         {
-        workerLogger.LogError(ex, "❌ Failed to start FollowUpReminderWorker");
+        workerLogger.LogError(ex, " Failed to start FollowUpReminderWorker");
         }
 });
 
@@ -237,6 +236,6 @@ app.MapControllers();
 app.MapRazorComponents<App>()
    .AddInteractiveServerRenderMode();
 
-workerLogger.LogInformation("🎉 Clinix HMS started successfully!");
+workerLogger.LogInformation("Clinix HMS started successfully!");
 app.Run();
 

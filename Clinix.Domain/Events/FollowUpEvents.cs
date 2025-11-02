@@ -2,17 +2,27 @@
 
 using Clinix.Domain.Abstractions;
 
+
 public sealed class FollowUpCreated : IDomainEvent
     {
     public long FollowUpId { get; }
     public long AppointmentId { get; }
     public DateTimeOffset OccurredOn { get; } = DateTimeOffset.UtcNow;
-    public FollowUpCreated(long id, long apptId) { FollowUpId = id; AppointmentId = apptId; }
+
+    // ✅ Fixed: 'id', 'apptId' → 'followUpId', 'appointmentId'
+    public FollowUpCreated(long followUpId, long appointmentId)
+        {
+        FollowUpId = followUpId;
+        AppointmentId = appointmentId;
+        }
     }
 
 public sealed class FollowUpCompleted : IDomainEvent
     {
     public long FollowUpId { get; }
     public DateTimeOffset OccurredOn { get; } = DateTimeOffset.UtcNow;
-    public FollowUpCompleted(long id) { FollowUpId = id; }
+
+    // ✅ Fixed: 'id' → 'followUpId'
+    public FollowUpCompleted(long followUpId)
+        => FollowUpId = followUpId;
     }

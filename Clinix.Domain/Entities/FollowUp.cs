@@ -15,6 +15,9 @@ public sealed class FollowUp : Entity
     public DateTimeOffset? UpdatedAt { get; private set; }
     public DateTimeOffset? LastRemindedAt { get; private set; }
 
+    // ✅ NEW: Track if initial notification was sent
+    public bool InitialNotificationSent { get; private set; } = false;
+
     private FollowUp() { }
 
     private FollowUp(long appointmentId, DateTimeOffset dueBy, string? reason)
@@ -23,11 +26,25 @@ public sealed class FollowUp : Entity
         DueBy = dueBy;
         Reason = reason;
         Status = FollowUpStatus.Pending;
-        Raise(new FollowUpCreated(Id, appointmentId));
+        // ✅ Don't raise event here - will be raised after save
         }
 
     public static FollowUp Create(long appointmentId, DateTimeOffset dueBy, string? reason = null)
         => new FollowUp(appointmentId, dueBy, reason);
+
+    // ✅ Method to raise event after save
+    public void RaiseCreatedEvent()
+        {
+        if (Id == 0) throw new InvalidOperationException("Cannot raise created event before follow-up is saved");
+        Raise(new FollowUpCreated(Id, AppointmentId));
+        }
+
+    // ✅ Mark as notified to prevent duplicate initial notifications
+    public void MarkInitialNotificationSent()
+        {
+        InitialNotificationSent = true;
+        UpdatedAt = DateTimeOffset.UtcNow;
+        }
 
     public void Reschedule(DateTimeOffset newDueBy)
         {
