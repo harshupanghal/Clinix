@@ -1,5 +1,6 @@
 ﻿namespace Clinix.Domain.Entities;
 using Clinix.Domain.Abstractions;
+using Clinix.Domain.Entities.ApplicationUsers;
 using Clinix.Domain.Enums;
 using Clinix.Domain.Events;
 using Clinix.Domain.ValueObjects;
@@ -8,6 +9,9 @@ public sealed class Appointment : Entity
     {
     public long PatientId { get; private set; }
     public long ProviderId { get; private set; }
+
+    public Patient? Patient { get; private set; }
+    public Provider? Provider { get; private set; }
     public AppointmentType Type { get; private set; }
     public AppointmentStatus Status { get; private set; }
     public DateRange When { get; private set; }

@@ -8,20 +8,15 @@ namespace Clinix.Infrastructure.Notifications;
 /// </summary>
 public static class NotificationTemplates
     {
-    // Professional color scheme
-    private const string PrimaryColor = "#2563eb";      // Professional blue
-    private const string SuccessColor = "#059669";      // Green for confirmations
-    private const string WarningColor = "#dc2626";      // Red for cancellations  
-    private const string InfoColor = "#0891b2";         // Teal for updates
-    private const string AlertColor = "#f59e0b";        // Amber for reminders
+    private const string PrimaryColor = "#2563eb";      
+    private const string SuccessColor = "#059669";      
+    private const string WarningColor = "#dc2626";      
+    private const string InfoColor = "#0891b2";         
+    private const string AlertColor = "#f59e0b";        
     private const string TextColor = "#1f2937";
     private const string LightTextColor = "#6b7280";
     private const string BackgroundColor = "#f9fafb";
     private const string BorderColor = "#e5e7eb";
-
-    // ========================================
-    // BASE EMAIL TEMPLATE
-    // ========================================
 
     private static string WrapEmailTemplate(string headerColor, string badge, string title, string content)
         {
@@ -87,9 +82,6 @@ public static class NotificationTemplates
 </html>";
         }
 
-    // ========================================
-    // APPOINTMENT SCHEDULED
-    // ========================================
 
     public static (string Subject, string HtmlBody) AppointmentScheduled_Patient(
         string patientName, string doctorName, DateTimeOffset start, DateTimeOffset end)
@@ -133,7 +125,7 @@ public static class NotificationTemplates
                                 </td>
                                 <td valign=""top"">
                                     <p style=""margin: 0; color: {LightTextColor}; font-size: 13px; font-weight: 500;"">Healthcare Provider</p>
-                                    <p style=""margin: 4px 0 0 0; color: {TextColor}; font-size: 16px; font-weight: 600;"">Dr. {doctorName}</p>
+                                    <p style=""margin: 4px 0 0 0; color: {TextColor}; font-size: 16px; font-weight: 600;"">{doctorName}</p>
                                 </td>
                             </tr>
                         </table>
@@ -183,7 +175,7 @@ public static class NotificationTemplates
         var subject = $"New Appointment: {patientName} – {start:MMM dd, hh:mm tt}";
 
         var content = $@"
-            <p style=""margin: 0 0 30px 0; color: {TextColor}; font-size: 16px; line-height: 1.6;"">Dear <strong>Dr. {doctorName}</strong>,</p>
+            <p style=""margin: 0 0 30px 0; color: {TextColor}; font-size: 16px; line-height: 1.6;"">Dear <strong>{doctorName}</strong>,</p>
             
             <p style=""margin: 0 0 30px 0; color: {TextColor}; font-size: 16px; line-height: 1.6;"">A new appointment has been scheduled with you.</p>
 
@@ -231,11 +223,7 @@ public static class NotificationTemplates
 
         return (subject, WrapEmailTemplate(InfoColor, "📅 NEW", "New Appointment Scheduled", content));
         }
-
-    // ========================================
-    // APPOINTMENT RESCHEDULED
-    // ========================================
-
+    
     public static (string Subject, string HtmlBody) AppointmentRescheduled_Patient(
         string patientName, string doctorName, DateTimeOffset oldStart, DateTimeOffset newStart, DateTimeOffset newEnd)
         {
@@ -281,7 +269,7 @@ public static class NotificationTemplates
                 <tr>
                     <td style=""padding: 20px;"">
                         <p style=""margin: 0; color: {LightTextColor}; font-size: 13px;"">Healthcare Provider</p>
-                        <p style=""margin: 4px 0 0 0; color: {TextColor}; font-size: 16px; font-weight: 600;"">Dr. {doctorName}</p>
+                        <p style=""margin: 4px 0 0 0; color: {TextColor}; font-size: 16px; font-weight: 600;"">{doctorName}</p>
                     </td>
                 </tr>
             </table>
@@ -309,7 +297,7 @@ public static class NotificationTemplates
         var subject = $"Appointment Rescheduled: {patientName}";
 
         var content = $@"
-            <p style=""margin: 0 0 30px 0; color: {TextColor}; font-size: 16px; line-height: 1.6;"">Dear <strong>Dr. {doctorName}</strong>,</p>
+            <p style=""margin: 0 0 30px 0; color: {TextColor}; font-size: 16px; line-height: 1.6;"">Dear <strong>{doctorName}</strong>,</p>
             
             <p style=""margin: 0 0 30px 0; color: {TextColor}; font-size: 16px; line-height: 1.6;"">An appointment with <strong>{patientName}</strong> has been rescheduled.</p>
 
@@ -359,7 +347,7 @@ public static class NotificationTemplates
                         <p style=""margin: 0 0 4px 0; color: {LightTextColor}; font-size: 13px;"">Original Appointment</p>
                         <p style=""margin: 0; color: {TextColor}; font-size: 16px; font-weight: 600;"">{start:dddd, MMMM dd, yyyy}</p>
                         <p style=""margin: 4px 0 0 0; color: {TextColor}; font-size: 15px;"">{start:hh:mm tt}</p>
-                        <p style=""margin: 12px 0 0 0; color: {LightTextColor}; font-size: 13px;"">Doctor: <strong style=""color: {TextColor};"">Dr. {doctorName}</strong></p>
+                        <p style=""margin: 12px 0 0 0; color: {LightTextColor}; font-size: 13px;"">Doctor: <strong style=""color: {TextColor};"">{doctorName}</strong></p>
                     </td>
                 </tr>
             </table>
@@ -391,7 +379,7 @@ public static class NotificationTemplates
         var subject = $"Appointment Cancelled: {patientName}";
 
         var content = $@"
-            <p style=""margin: 0 0 30px 0; color: {TextColor}; font-size: 16px; line-height: 1.6;"">Dear <strong>Dr. {doctorName}</strong>,</p>
+            <p style=""margin: 0 0 30px 0; color: {TextColor}; font-size: 16px; line-height: 1.6;"">Dear <strong>{doctorName}</strong>,</p>
             
             <p style=""margin: 0 0 30px 0; color: {TextColor}; font-size: 16px; line-height: 1.6;"">An appointment with <strong>{patientName}</strong> has been cancelled.</p>
 
@@ -428,7 +416,7 @@ public static class NotificationTemplates
                     <td style=""padding: 20px;"">
                         <h3 style=""margin: 0 0 16px 0; color: {TextColor}; font-size: 15px; font-weight: 600;"">Visit Summary</h3>
                         <p style=""margin: 0; color: {LightTextColor}; font-size: 13px;"">Doctor</p>
-                        <p style=""margin: 4px 0 12px 0; color: {TextColor}; font-size: 15px; font-weight: 600;"">Dr. {doctorName}</p>
+                        <p style=""margin: 4px 0 12px 0; color: {TextColor}; font-size: 15px; font-weight: 600;"">{doctorName}</p>
                         <p style=""margin: 0; color: {LightTextColor}; font-size: 13px;"">Date</p>
                         <p style=""margin: 4px 0 0 0; color: {TextColor}; font-size: 15px;"">{completedAt:dddd, MMMM dd, yyyy} at {completedAt:hh:mm tt}</p>
                     </td>
@@ -473,7 +461,7 @@ public static class NotificationTemplates
         var subject = $"Appointment Completed: {patientName}";
 
         var content = $@"
-            <p style=""margin: 0 0 30px 0; color: {TextColor}; font-size: 16px; line-height: 1.6;"">Dear <strong>Dr. {doctorName}</strong>,</p>
+            <p style=""margin: 0 0 30px 0; color: {TextColor}; font-size: 16px; line-height: 1.6;"">Dear <strong>{doctorName}</strong>,</p>
             
             <p style=""margin: 0 0 30px 0; color: {TextColor}; font-size: 16px; line-height: 1.6;"">The appointment with <strong>{patientName}</strong> has been marked as completed.</p>
 
@@ -509,7 +497,7 @@ public static class NotificationTemplates
         var content = $@"
             <p style=""margin: 0 0 30px 0; color: {TextColor}; font-size: 16px; line-height: 1.6;"">Dear <strong>{patientName}</strong>,</p>
             
-            <p style=""margin: 0 0 30px 0; color: {TextColor}; font-size: 16px; line-height: 1.6;"">Great news! Your appointment request has been approved by <strong>Dr. {doctorName}</strong>.</p>
+            <p style=""margin: 0 0 30px 0; color: {TextColor}; font-size: 16px; line-height: 1.6;"">Great news! Your appointment request has been approved by <strong>{doctorName}</strong>.</p>
 
             <table width=""100%"" cellpadding=""0"" cellspacing=""0"" border=""0"" style=""background-color: #d1fae5; border-radius: 6px; border: 1px solid {SuccessColor};"">
                 <tr>
@@ -517,7 +505,7 @@ public static class NotificationTemplates
                         <p style=""margin: 0 0 16px 0; color: {SuccessColor}; font-size: 14px; font-weight: 600;"">✓ CONFIRMED APPOINTMENT</p>
                         <p style=""margin: 0; color: {TextColor}; font-size: 17px; font-weight: 600;"">{start:dddd, MMMM dd, yyyy}</p>
                         <p style=""margin: 4px 0 0 0; color: {TextColor}; font-size: 16px;"">{start:hh:mm tt} – {end:hh:mm tt}</p>
-                        <p style=""margin: 12px 0 0 0; color: {TextColor}; font-size: 15px;"">Dr. {doctorName}</p>
+                        <p style=""margin: 12px 0 0 0; color: {TextColor}; font-size: 15px;"">{doctorName}</p>
                     </td>
                 </tr>
             </table>
@@ -547,7 +535,7 @@ public static class NotificationTemplates
         var subject = $"Appointment Approved: {patientName}";
 
         var content = $@"
-            <p style=""margin: 0 0 30px 0; color: {TextColor}; font-size: 16px; line-height: 1.6;"">Dear <strong>Dr. {doctorName}</strong>,</p>
+            <p style=""margin: 0 0 30px 0; color: {TextColor}; font-size: 16px; line-height: 1.6;"">Dear <strong>{doctorName}</strong>,</p>
             
             <p style=""margin: 0 0 30px 0; color: {TextColor}; font-size: 16px; line-height: 1.6;"">You have approved an appointment request from <strong>{patientName}</strong>.</p>
 
@@ -588,7 +576,7 @@ public static class NotificationTemplates
         var content = $@"
             <p style=""margin: 0 0 30px 0; color: {TextColor}; font-size: 16px; line-height: 1.6;"">Dear <strong>{patientName}</strong>,</p>
             
-            <p style=""margin: 0 0 30px 0; color: {TextColor}; font-size: 16px; line-height: 1.6;"">Unfortunately, your requested appointment time with <strong>Dr. {doctorName}</strong> is not available.</p>
+            <p style=""margin: 0 0 30px 0; color: {TextColor}; font-size: 16px; line-height: 1.6;"">Unfortunately, your requested appointment time with <strong>{doctorName}</strong> is not available.</p>
 
             <table width=""100%"" cellpadding=""0"" cellspacing=""0"" border=""0"" style=""background-color: {BackgroundColor}; border-radius: 6px; border: 1px solid {BorderColor};"">
                 <tr>
@@ -644,13 +632,13 @@ public static class NotificationTemplates
         var content = $@"
             <p style=""margin: 0 0 30px 0; color: {TextColor}; font-size: 16px; line-height: 1.6;"">Dear <strong>{patientName}</strong>,</p>
             
-            <p style=""margin: 0 0 30px 0; color: {TextColor}; font-size: 16px; line-height: 1.6;"">Based on your recent visit, <strong>Dr. {doctorName}</strong> has recommended a follow-up appointment.</p>
+            <p style=""margin: 0 0 30px 0; color: {TextColor}; font-size: 16px; line-height: 1.6;"">Based on your recent visit, <strong>{doctorName}</strong> has recommended a follow-up appointment.</p>
 
             <table width=""100%"" cellpadding=""0"" cellspacing=""0"" border=""0"" style=""background-color: {BackgroundColor}; border-radius: 6px; border: 1px solid {BorderColor};"">
                 <tr>
                     <td style=""padding: 20px;"">
                         <p style=""margin: 0 0 4px 0; color: {LightTextColor}; font-size: 13px;"">Recommended By</p>
-                        <p style=""margin: 0 0 16px 0; color: {TextColor}; font-size: 16px; font-weight: 600;"">Dr. {doctorName}</p>
+                        <p style=""margin: 0 0 16px 0; color: {TextColor}; font-size: 16px; font-weight: 600;"">{doctorName}</p>
                         <p style=""margin: 0 0 4px 0; color: {LightTextColor}; font-size: 13px;"">Schedule By</p>
                         <p style=""margin: 0; color: {TextColor}; font-size: 16px; font-weight: 600;"">{dueBy:dddd, MMMM dd, yyyy}</p>
                     </td>
@@ -694,7 +682,7 @@ public static class NotificationTemplates
         var content = $@"
             <p style=""margin: 0 0 30px 0; color: {TextColor}; font-size: 16px; line-height: 1.6;"">Dear <strong>{patientName}</strong>,</p>
             
-            <p style=""margin: 0 0 30px 0; color: {TextColor}; font-size: 16px; line-height: 1.6;"">This is a friendly reminder about your pending follow-up appointment with <strong>Dr. {doctorName}</strong>.</p>
+            <p style=""margin: 0 0 30px 0; color: {TextColor}; font-size: 16px; line-height: 1.6;"">This is a friendly reminder about your pending follow-up appointment with <strong>{doctorName}</strong>.</p>
 
             <table width=""100%"" cellpadding=""0"" cellspacing=""0"" border=""0"" style=""background-color: #fef3c7; border-radius: 6px; border: 1px solid {AlertColor};"">
                 <tr>
@@ -730,13 +718,13 @@ public static class NotificationTemplates
     // ========================================
 
     public static string AppointmentScheduled_SMS_Patient(string patientName, string doctorName, DateTimeOffset start)
-        => $"Clinix: Appointment confirmed with Dr. {doctorName} on {start:MMM dd} at {start:hh:mm tt}. Arrive 15 min early. Manage: clinixhms.com";
+        => $"Clinix: Appointment confirmed with {doctorName} on {start:MMM dd} at {start:hh:mm tt}. Arrive 15 min early. Manage: clinixhms.com";
 
     public static string AppointmentScheduled_SMS_Doctor(string doctorName, string patientName, DateTimeOffset start)
         => $"Clinix: New appointment - {patientName} scheduled for {start:MMM dd} at {start:hh:mm tt}. View: clinixhms.com/doctor";
 
     public static string AppointmentRescheduled_SMS_Patient(string patientName, string doctorName, DateTimeOffset newStart)
-        => $"Clinix: Your appointment with Dr. {doctorName} moved to {newStart:MMM dd} at {newStart:hh:mm tt}. Questions? Call 1-800-CLINIX-CARE";
+        => $"Clinix: Your appointment with {doctorName} moved to {newStart:MMM dd} at {newStart:hh:mm tt}. Questions? Call 1-800-CLINIX-CARE";
 
     public static string AppointmentRescheduled_SMS_Doctor(string patientName, DateTimeOffset newStart)
         => $"Clinix: Appointment with {patientName} rescheduled to {newStart:MMM dd} at {newStart:hh:mm tt}.";
@@ -748,20 +736,20 @@ public static class NotificationTemplates
         => $"Clinix: Appointment with {patientName} on {start:MMM dd} at {start:hh:mm tt} cancelled. Time slot now available.";
 
     public static string AppointmentCompleted_SMS_Patient(string patientName, string doctorName)
-        => $"Clinix: Visit with Dr. {doctorName} completed. Check your portal for results: clinixhms.com/patient";
+        => $"Clinix: Visit with {doctorName} completed. Check your portal for results: clinixhms.com/patient";
 
     public static string AppointmentCompleted_SMS_Doctor(string patientName)
         => $"Clinix: Appointment with {patientName} marked completed. Update visit notes if needed.";
 
     public static string AppointmentApproved_SMS_Patient(string patientName, string doctorName, DateTimeOffset start)
-        => $"Clinix: Great news! Dr. {doctorName} approved your appointment for {start:MMM dd} at {start:hh:mm tt}. Arrive 15 min early.";
+        => $"Clinix: Great news! {doctorName} approved your appointment for {start:MMM dd} at {start:hh:mm tt}. Arrive 15 min early.";
 
     public static string AppointmentRejected_SMS_Patient(string patientName, string doctorName, DateTimeOffset requestedStart)
-        => $"Clinix: Appointment with Dr. {doctorName} for {requestedStart:MMM dd} at {requestedStart:hh:mm tt} not available. Choose alternative: clinixhms.com";
+        => $"Clinix: Appointment with {doctorName} for {requestedStart:MMM dd} at {requestedStart:hh:mm tt} not available. Choose alternative: clinixhms.com";
 
     public static string FollowUpReminder_SMS(string patientName, string doctorName, DateTimeOffset dueBy)
-        => $"Clinix Reminder: Schedule your follow-up with Dr. {doctorName} by {dueBy:MMM dd}. Book: clinixhms.com or call 1-800-CLINIX-CARE";
+        => $"Clinix Reminder: Schedule your follow-up with {doctorName} by {dueBy:MMM dd}. Book: clinixhms.com or call 1-800-CLINIX-CARE";
 
     public static string AppointmentReminder_SMS(string patientName, string doctorName, DateTimeOffset start)
-        => $"Clinix: Your appointment with Dr. {doctorName} is tomorrow at {start:hh:mm tt}. Arrive 15 min early. Reschedule: clinixhms.com";
+        => $"Clinix: Your appointment with {doctorName} is tomorrow at {start:hh:mm tt}. Arrive 15 min early. Reschedule: clinixhms.com";
     }

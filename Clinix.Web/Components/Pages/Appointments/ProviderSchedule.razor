@@ -133,11 +133,12 @@
                                     </svg>
                                     Type
                                 </th>
+                                <!-- ✅ UPDATED: Show Patient Name instead of ID -->
                                 <th>
                                     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
                                         <path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm2-3a2 2 0 1 1-4 0 2 2 0 0 1 4 0zm4 8c0 1-1 1-1 1H3s-1 0-1-1 1-4 6-4 6 3 6 4zm-1-.004c-.001-.246-.154-.986-.832-1.664C11.516 10.68 10.289 10 8 10c-2.29 0-3.516.68-4.168 1.332-.678.678-.83 1.418-.832 1.664h10z"/>
                                     </svg>
-                                    Patient
+                                    Patient Name
                                 </th>
                                 <th>
                                     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
@@ -166,8 +167,9 @@
                                 <td>
                                     <span class="type-badge">@a.Type</span>
                                 </td>
+                                <!-- ✅ UPDATED: Show Patient Name instead of ID -->
                                 <td>
-                                    <span class="patient-id">Patient #@a.PatientId</span>
+                                    <span class="patient-name">@a.PatientName</span>
                                 </td>
                                 <td>
                                     <span class="badge badge-@GetStatusColor(a.Status)">@a.Status</span>
@@ -303,7 +305,189 @@
     }
 </div>
 
-<style>
+
+
+@code {
+    [Parameter] public long? ProviderId { get; set; }
+
+    public DateTime FromDate { get; set; } = DateTime.Now.Date;
+    public DateTime ToDate { get; set; } = DateTime.Now.Date.AddDays(1);
+
+    private List<AppointmentSummaryDto>? Items;
+    private string? Error;
+    private string? Success;
+    private string? _authError;
+
+    private bool DelayOpen;
+    private long DelayFor;
+    private int DelayMinutes = 30;
+
+    private bool _authorized;
+    private bool _isAdminView;
+    private CurrentUserInfo _userInfo = new(false, "", "", "");
+    private long _providerId;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _userInfo = await CurrentUser.GetCurrentUserAsync();
+        
+        if (!_userInfo.IsAuthenticated)
+        {
+            Navigation.NavigateTo("/login");
+            return;
+        }
+
+        if (ProviderId.HasValue)
+        {
+            _isAdminView = true;
+            
+            if (_userInfo.Role != "Admin")
+            {
+                _authorized = false;
+                _authError = "Only administrators can view other providers' schedules.";
+                return;
+            }
+            
+            _providerId = ProviderId.Value;
+            _authorized = true;
+        }
+        else
+        {
+            _isAdminView = false;
+            
+            if (_userInfo.Role != "Doctor")
+            {
+                _authorized = false;
+                _authError = "Please log in as a doctor to view your schedule.";
+                return;
+            }
+            
+            if (long.TryParse(_userInfo.ProviderId, out var providerId))
+            {
+                _providerId = providerId;
+                _authorized = true;
+            }
+            else
+            {
+                _authorized = false;
+                _authError = "Provider ID not found. Please contact support.";
+                return;
+            }
+        }
+
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        try
+        {
+            var fromDto = new DateTimeOffset(FromDate, DateTimeOffset.Now.Offset);
+            var toDto = new DateTimeOffset(ToDate, DateTimeOffset.Now.Offset);
+            Items = await AppointmentService.GetByProviderAsync(_providerId, fromDto, toDto);
+            Error = null;
+        }
+        catch (Exception ex)
+        {
+            Error = $"Failed to load appointments: {ex.Message}";
+            Items = new List<AppointmentSummaryDto>();
+        }
+    }
+
+    private async Task TodayAsync() 
+    { 
+        FromDate = DateTime.Now.Date; 
+        ToDate = FromDate.AddDays(1);
+        await LoadAsync();
+    }
+
+    private async Task TomorrowAsync() 
+    { 
+        FromDate = DateTime.Now.Date.AddDays(1); 
+        ToDate = FromDate.AddDays(1);
+        await LoadAsync();
+    }
+
+    private async Task Next7Async() 
+    { 
+        FromDate = DateTime.Now.Date; 
+        ToDate = FromDate.AddDays(7);
+        await LoadAsync();
+    }
+
+    private async Task ApproveAsync(long id)
+    {
+        try 
+        { 
+            await DoctorActions.ApproveAsync(id); 
+            Success = "Appointment approved successfully.";
+            await LoadAsync();
+            StateHasChanged();
+            await Task.Delay(3000);
+            Success = null;
+        } 
+        catch (Exception ex) { Error = ex.Message; }
+    }
+
+    private async Task RejectAsync(long id)
+    {
+        try 
+        { 
+            await DoctorActions.RejectAsync(id, "Rejected by doctor"); 
+            Success = "Appointment rejected.";
+            await LoadAsync();
+            StateHasChanged();
+            await Task.Delay(3000);
+            Success = null;
+        } 
+        catch (Exception ex) { Error = ex.Message; }
+    }
+
+    private void OpenDelay(long id) 
+    { 
+        DelayFor = id; 
+        DelayOpen = true; 
+    }
+
+    private void CloseDelay() 
+    { 
+        DelayOpen = false; 
+    }
+
+    private async Task ApplyDelayAsync()
+    {
+        try
+        {
+            await DoctorActions.DelayCascadeAsync(DelayFor, TimeSpan.FromMinutes(DelayMinutes));
+            DelayOpen = false;
+            Success = $"Appointment delayed by {DelayMinutes} minutes. Subsequent appointments adjusted.";
+            await LoadAsync();
+            StateHasChanged();
+            await Task.Delay(3000);
+            Success = null;
+        }
+        catch (Exception ex) 
+        { 
+            DelayOpen = false;
+            Error = ex.Message; 
+        }
+    }
+
+    private string GetStatusColor(AppointmentStatus status) => status switch
+    {
+        AppointmentStatus.Pending => "warning",
+        AppointmentStatus.Confirmed => "info",
+        AppointmentStatus.Scheduled => "primary",
+        AppointmentStatus.Completed => "success",
+        AppointmentStatus.Cancelled => "danger",
+        AppointmentStatus.Rescheduled => "secondary",
+        AppointmentStatus.NoShow => "dark",
+        AppointmentStatus.Rejected => "danger",
+        _ => "secondary"
+    };
+}
+
+    <style>
    
     .provider-schedule-page {
         padding: var(--clx-spacing-lg);
@@ -668,183 +852,3 @@
         }
     }
 </style>
-
-@code {
-    [Parameter] public long? ProviderId { get; set; }
-
-    public DateTime FromDate { get; set; } = DateTime.Now.Date;
-    public DateTime ToDate { get; set; } = DateTime.Now.Date.AddDays(1);
-
-    private List<AppointmentSummaryDto>? Items;
-    private string? Error;
-    private string? Success;
-    private string? _authError;
-
-    private bool DelayOpen;
-    private long DelayFor;
-    private int DelayMinutes = 30;
-
-    private bool _authorized;
-    private bool _isAdminView;
-    private CurrentUserInfo _userInfo = new(false, "", "", "");
-    private long _providerId;
-
-    protected override async Task OnInitializedAsync()
-    {
-        _userInfo = await CurrentUser.GetCurrentUserAsync();
-        
-        if (!_userInfo.IsAuthenticated)
-        {
-            Navigation.NavigateTo("/login");
-            return;
-        }
-
-        if (ProviderId.HasValue)
-        {
-            _isAdminView = true;
-            
-            if (_userInfo.Role != "Admin")
-            {
-                _authorized = false;
-                _authError = "Only administrators can view other providers' schedules.";
-                return;
-            }
-            
-            _providerId = ProviderId.Value;
-            _authorized = true;
-        }
-        else
-        {
-            _isAdminView = false;
-            
-            if (_userInfo.Role != "Doctor")
-            {
-                _authorized = false;
-                _authError = "Please log in as a doctor to view your schedule.";
-                return;
-            }
-            
-            if (long.TryParse(_userInfo.ProviderId, out var providerId))
-            {
-                _providerId = providerId;
-                _authorized = true;
-            }
-            else
-            {
-                _authorized = false;
-                _authError = "Provider ID not found. Please contact support.";
-                return;
-            }
-        }
-
-        await LoadAsync();
-    }
-
-    private async Task LoadAsync()
-    {
-        try
-        {
-            var fromDto = new DateTimeOffset(FromDate, DateTimeOffset.Now.Offset);
-            var toDto = new DateTimeOffset(ToDate, DateTimeOffset.Now.Offset);
-            Items = await AppointmentService.GetByProviderAsync(_providerId, fromDto, toDto);
-            Error = null;
-        }
-        catch (Exception ex)
-        {
-            Error = $"Failed to load appointments: {ex.Message}";
-            Items = new List<AppointmentSummaryDto>();
-        }
-    }
-
-    private async Task TodayAsync() 
-    { 
-        FromDate = DateTime.Now.Date; 
-        ToDate = FromDate.AddDays(1);
-        await LoadAsync();
-    }
-
-    private async Task TomorrowAsync() 
-    { 
-        FromDate = DateTime.Now.Date.AddDays(1); 
-        ToDate = FromDate.AddDays(1);
-        await LoadAsync();
-    }
-
-    private async Task Next7Async() 
-    { 
-        FromDate = DateTime.Now.Date; 
-        ToDate = FromDate.AddDays(7);
-        await LoadAsync();
-    }
-
-    private async Task ApproveAsync(long id)
-    {
-        try 
-        { 
-            await DoctorActions.ApproveAsync(id); 
-            Success = "Appointment approved successfully.";
-            await LoadAsync();
-            StateHasChanged();
-            await Task.Delay(3000);
-            Success = null;
-        } 
-        catch (Exception ex) { Error = ex.Message; }
-    }
-
-    private async Task RejectAsync(long id)
-    {
-        try 
-        { 
-            await DoctorActions.RejectAsync(id, "Rejected by doctor"); 
-            Success = "Appointment rejected.";
-            await LoadAsync();
-            StateHasChanged();
-            await Task.Delay(3000);
-            Success = null;
-        } 
-        catch (Exception ex) { Error = ex.Message; }
-    }
-
-    private void OpenDelay(long id) 
-    { 
-        DelayFor = id; 
-        DelayOpen = true; 
-    }
-
-    private void CloseDelay() 
-    { 
-        DelayOpen = false; 
-    }
-
-    private async Task ApplyDelayAsync()
-    {
-        try
-        {
-            await DoctorActions.DelayCascadeAsync(DelayFor, TimeSpan.FromMinutes(DelayMinutes));
-            DelayOpen = false;
-            Success = $"Appointment delayed by {DelayMinutes} minutes. Subsequent appointments adjusted.";
-            await LoadAsync();
-            StateHasChanged();
-            await Task.Delay(3000);
-            Success = null;
-        }
-        catch (Exception ex) 
-        { 
-            DelayOpen = false;
-            Error = ex.Message; 
-        }
-    }
-
-    private string GetStatusColor(AppointmentStatus status) => status switch
-    {
-        AppointmentStatus.Pending => "warning",
-        AppointmentStatus.Confirmed => "info",
-        AppointmentStatus.Scheduled => "primary",
-        AppointmentStatus.Completed => "success",
-        AppointmentStatus.Cancelled => "danger",
-        AppointmentStatus.Rescheduled => "secondary",
-        AppointmentStatus.NoShow => "dark",
-        AppointmentStatus.Rejected => "danger",
-        _ => "secondary"
-    };
-}

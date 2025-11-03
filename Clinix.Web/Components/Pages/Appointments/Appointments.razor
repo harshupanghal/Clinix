@@ -1,5 +1,4 @@
 ﻿@page "/appointments/{Id:long}"
-@* @page "/appointments" *@
 @using Clinix.Application.DTOs
 @using Clinix.Application.Interfaces
 @using Clinix.Domain.Enums
@@ -24,24 +23,24 @@
             </h1>
             <p class="page-subtitle">View and manage appointment information</p>
         </div>
-        @if (_userInfo.Role == "Patient"){
-
-        <button class="btn btn-secondary" @onclick="@(() => Navigation.NavigateTo("/appointments/patient"))">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-                <path fill-rule="evenodd" d="M15 8a.5.5 0 0 0-.5-.5H2.707l3.147-3.146a.5.5 0 1 0-.708-.708l-4 4a.5.5 0 0 0 0 .708l4 4a.5.5 0 0 0 .708-.708L2.707 8.5H14.5A.5.5 0 0 0 15 8z"/>
-            </svg>
-            Back to Appointments
-        </button>
+        @if (_userInfo.Role == "Patient")
+        {
+            <button class="btn btn-secondary" @onclick="@(() => Navigation.NavigateTo("/appointments/patient"))">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                    <path fill-rule="evenodd" d="M15 8a.5.5 0 0 0-.5-.5H2.707l3.147-3.146a.5.5 0 1 0-.708-.708l-4 4a.5.5 0 0 0 0 .708l4 4a.5.5 0 0 0 .708-.708L2.707 8.5H14.5A.5.5 0 0 0 15 8z"/>
+                </svg>
+                Back to Appointments
+            </button>
         }
 
-        @if (_userInfo.Role == "Doctor"){
-
-        <button class="btn btn-secondary" @onclick="@(() => Navigation.NavigateTo("/appointments/provider"))">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-                <path fill-rule="evenodd" d="M15 8a.5.5 0 0 0-.5-.5H2.707l3.147-3.146a.5.5 0 1 0-.708-.708l-4 4a.5.5 0 0 0 0 .708l4 4a.5.5 0 0 0 .708-.708L2.707 8.5H14.5A.5.5 0 0 0 15 8z"/>
-            </svg>
-            Back to Appointments
-        </button>
+        @if (_userInfo.Role == "Doctor")
+        {
+            <button class="btn btn-secondary" @onclick="@(() => Navigation.NavigateTo("/appointments/provider"))">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                    <path fill-rule="evenodd" d="M15 8a.5.5 0 0 0-.5-.5H2.707l3.147-3.146a.5.5 0 1 0-.708-.708l-4 4a.5.5 0 0 0 0 .708l4 4a.5.5 0 0 0 .708-.708L2.707 8.5H14.5A.5.5 0 0 0 15 8z"/>
+                </svg>
+                Back to Appointments
+            </button>
         }
     </div>
 
@@ -78,25 +77,27 @@
             </div>
             <div class="card-body">
                 <div class="info-grid">
+                    
+                    <!-- ✅ NEW: Show Patient Name instead of ID -->
                     <div class="info-item">
                         <span class="info-label">
                             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
                                 <path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm2-3a2 2 0 1 1-4 0 2 2 0 0 1 4 0zm4 8c0 1-1 1-1 1H3s-1 0-1-1 1-4 6-4 6 3 6 4zm-1-.004c-.001-.246-.154-.986-.832-1.664C11.516 10.68 10.289 10 8 10c-2.29 0-3.516.68-4.168 1.332-.678.678-.83 1.418-.832 1.664h10z"/>
                             </svg>
-                            Patient ID
+                            Patient Name
                         </span>
-                        <span class="info-value">@Item.PatientId</span>
+                        <span class="info-value">@Item.PatientName</span>
                     </div>
 
+                    <!-- ✅ NEW: Show Doctor Name instead of Provider ID -->
                     <div class="info-item">
                         <span class="info-label">
                             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
-                                <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
-                                <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z"/>
+                                <path d="M8 1a5 5 0 0 0-5 5v1h1a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V6a6 6 0 1 1 12 0v6a2.5 2.5 0 0 1-2.5 2.5H9.366a1 1 0 0 1-.866.5h-1a1 1 0 1 1 0-2h1a1 1 0 0 1 .866.5H11.5A1.5 1.5 0 0 0 13 12h-1a1 1 0 0 1-1-1V8a1 1 0 0 1 1-1h1V6a5 5 0 0 0-5-5z"/>
                             </svg>
-                            Provider ID
+                            Doctor Name
                         </span>
-                        <span class="info-value">@Item.ProviderId</span>
+                        <span class="info-value">@Item.DoctorName</span>
                     </div>
 
                     <div class="info-item">
@@ -126,9 +127,22 @@
                             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
                                 <path d="M1 2.5A1.5 1.5 0 0 1 2.5 1h3A1.5 1.5 0 0 1 7 2.5v3A1.5 1.5 0 0 1 5.5 7h-3A1.5 1.5 0 0 1 1 5.5v-3zm8 0A1.5 1.5 0 0 1 10.5 1h3A1.5 1.5 0 0 1 15 2.5v3A1.5 1.5 0 0 1 13.5 7h-3A1.5 1.5 0 0 1 9 5.5v-3z"/>
                             </svg>
-                            Type
+                            Appointment Type
                         </span>
                         <span class="info-value">@Item.Type</span>
+                    </div>
+
+                    <div class="info-item">
+                        <span class="info-label">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
+                                <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+                                <path d="M7.002 11a1 1 0 1 1 2 0 1 1 0 0 1-2 0zM7.1 4.995a.905.905 0 1 1 1.8 0l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 4.995z"/>
+                            </svg>
+                            Status
+                        </span>
+                        <span class="info-value">
+                            <span class="badge badge-@GetStatusColor(Item.Status)">@Item.Status</span>
+                        </span>
                     </div>
 
                     <div class="info-item info-item-full">
@@ -408,6 +422,202 @@
     }
 </div>
 
+@code {
+    [Parameter] public long Id { get; set; }
+
+    private class RescheduleFormModel 
+    { 
+        public DateTime Start = DateTime.Now.AddHours(1);
+        public DateTime End = DateTime.Now.AddHours(2);
+    }
+    
+    private class CancelFormModel { public string? Reason; }
+    
+    private class FollowUpFormModel 
+    { 
+        public DateTime Due = DateTime.Now.AddDays(1);
+        public string? Reason; 
+    }
+
+    private AppointmentDto? Item;
+    private List<FollowUpDto>? Fus;
+    private bool showReschedule, showCancel;
+    private bool _authorized;
+    private bool _canModify;
+
+    private CurrentUserInfo _userInfo = new(false, "", "", "");
+
+    private RescheduleFormModel RescheduleForm = new();
+    private CancelFormModel CancelForm = new();
+    private FollowUpFormModel FollowUpForm = new();
+
+    private string? Error;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _userInfo = await CurrentUser.GetCurrentUserAsync();
+        
+        if (!_userInfo.IsAuthenticated)
+        {
+            Navigation.NavigateTo("/login");
+            return;
+        }
+
+        await ReloadAsync();
+    }
+
+    private async Task ReloadAsync()
+    {
+        Item = await AppointmentService.GetByIdAsync(Id);
+        
+        if (Item is null)
+        {
+            Error = "Appointment not found.";
+            return;
+        }
+
+        if (_userInfo.Role == "Patient")
+        {
+            var patientId = long.TryParse(_userInfo.PatientId, out var pid) ? pid : 0L;
+            _authorized = Item.PatientId == patientId;
+            _canModify = _authorized;
+        }
+        else if (_userInfo.Role == "Doctor")
+        {
+            var providerId = long.TryParse(_userInfo.ProviderId, out var pvid) ? pvid : 0L;
+            _authorized = Item.ProviderId == providerId;
+            _canModify = _authorized;
+        }
+        else if (_userInfo.Role == "Admin")
+        {
+            _authorized = true;
+            _canModify = false;
+        }
+        else
+        {
+            _authorized = false;
+            _canModify = false;
+        }
+
+        if (_authorized && Item is not null)
+        {
+            RescheduleForm.Start = Item.Start.LocalDateTime;
+            RescheduleForm.End = Item.End.LocalDateTime;
+            FollowUpForm.Due = DateTime.Now.AddDays(1);
+            
+            if (_userInfo.Role == "Doctor")
+            {
+                Fus = await FollowUpService.GetByAppointmentAsync(Item.Id);
+            }
+        }
+    }
+
+    private void ToggleReschedule() => showReschedule = !showReschedule;
+    private void ToggleCancel() => showCancel = !showCancel;
+
+    private async Task DoRescheduleAsync()
+    {
+        try
+        {
+            var req = new RescheduleAppointmentRequest(
+                Id, 
+                new DateTimeOffset(RescheduleForm.Start, DateTimeOffset.Now.Offset), 
+                new DateTimeOffset(RescheduleForm.End, DateTimeOffset.Now.Offset)
+            );
+            await AppointmentService.RescheduleAsync(req);
+            await ReloadAsync();
+            showReschedule = false;
+            Error = null;
+        }
+        catch (Exception ex) { Error = ex.Message; }
+    }
+
+    private async Task DoCancelAsync()
+    {
+        try
+        {
+            var req = new CancelAppointmentRequest(Id, CancelForm.Reason);
+            await AppointmentService.CancelAsync(req);
+            await ReloadAsync();
+            showCancel = false;
+            Error = null;
+        }
+        catch (Exception ex) { Error = ex.Message; }
+    }
+
+    private async Task CompleteAsync()
+    {
+        try 
+        { 
+            await AppointmentService.CompleteAsync(new CompleteAppointmentRequest(Id)); 
+            await ReloadAsync();
+            Error = null;
+        } 
+        catch (Exception ex) { Error = ex.Message; }
+    }
+
+    private async Task CreateFollowUpAsync()
+    {
+        try
+        {
+            var req = new CreateFollowUpRequest(
+                Id, 
+                new DateTimeOffset(FollowUpForm.Due, DateTimeOffset.Now.Offset), 
+                FollowUpForm.Reason
+            );
+            await FollowUpService.CreateAsync(req);
+            await ReloadAsync();
+            FollowUpForm.Due = DateTime.Now.AddDays(1);
+            FollowUpForm.Reason = null;
+            Error = null;
+        }
+        catch (Exception ex) { Error = ex.Message; }
+    }
+
+    private async Task CompleteFollowUpAsync(long id)
+    {
+        try 
+        { 
+            await FollowUpService.CompleteAsync(new CompleteFollowUpRequest(id, null)); 
+            await ReloadAsync();
+            Error = null;
+        } 
+        catch (Exception ex) { Error = ex.Message; }
+    }
+
+    private async Task CancelFollowUpAsync(long id)
+    {
+        try 
+        { 
+            await FollowUpService.CancelAsync(new CancelFollowUpRequest(id, null)); 
+            await ReloadAsync();
+            Error = null;
+        } 
+        catch (Exception ex) { Error = ex.Message; }
+    }
+
+    private string GetStatusColor(AppointmentStatus status) => status switch
+    {
+        AppointmentStatus.Pending => "warning",
+        AppointmentStatus.Confirmed => "info",
+        AppointmentStatus.Scheduled => "primary",
+        AppointmentStatus.Completed => "success",
+        AppointmentStatus.Cancelled => "danger",
+        AppointmentStatus.Rescheduled => "secondary",
+        AppointmentStatus.NoShow => "dark",
+        AppointmentStatus.Rejected => "danger",
+        _ => "secondary"
+    };
+
+    private string GetFollowUpStatusColor(FollowUpStatus status) => status switch
+    {
+        FollowUpStatus.Pending => "warning",
+        FollowUpStatus.Completed => "success",
+        FollowUpStatus.Cancelled => "danger",
+        _ => "secondary"
+    };
+}
+
 <style>
     
     .appointment-details-page {
@@ -669,200 +879,5 @@
             padding: var(--clx-spacing-xs);
         }
     }
+    
 </style>
-
-@code {
-    [Parameter] public long Id { get; set; }
-
-    private class RescheduleFormModel 
-    { 
-        public DateTime Start = DateTime.Now.AddHours(1);
-        public DateTime End = DateTime.Now.AddHours(2);
-    }
-    
-    private class CancelFormModel { public string? Reason; }
-    
-    private class FollowUpFormModel 
-    { 
-        public DateTime Due = DateTime.Now.AddDays(1);
-        public string? Reason; 
-    }
-
-    private AppointmentDto? Item;
-    private List<FollowUpDto>? Fus;
-    private bool showReschedule, showCancel;
-    private bool _authorized;
-    private bool _canModify;
-
-    private CurrentUserInfo _userInfo = new(false, "", "", "");
-
-    private RescheduleFormModel RescheduleForm = new();
-    private CancelFormModel CancelForm = new();
-    private FollowUpFormModel FollowUpForm = new();
-
-    private string? Error;
-
-    protected override async Task OnInitializedAsync()
-    {
-        _userInfo = await CurrentUser.GetCurrentUserAsync();
-        
-        if (!_userInfo.IsAuthenticated)
-        {
-            Navigation.NavigateTo("/login");
-            return;
-        }
-
-        await ReloadAsync();
-    }
-
-    private async Task ReloadAsync()
-    {
-        Item = await AppointmentService.GetByIdAsync(Id);
-        
-        if (Item is null)
-        {
-            Error = "Appointment not found.";
-            return;
-        }
-
-        if (_userInfo.Role == "Patient")
-        {
-            var patientId = long.TryParse(_userInfo.PatientId, out var pid) ? pid : 0L;
-            _authorized = Item.PatientId == patientId;
-            _canModify = _authorized;
-        }
-        else if (_userInfo.Role == "Doctor")
-        {
-            var providerId = long.TryParse(_userInfo.ProviderId, out var pvid) ? pvid : 0L;
-            _authorized = Item.ProviderId == providerId;
-            _canModify = _authorized;
-        }
-        else if (_userInfo.Role == "Admin")
-        {
-            _authorized = true;
-            _canModify = false;
-        }
-        else
-        {
-            _authorized = false;
-            _canModify = false;
-        }
-
-        if (_authorized && Item is not null)
-        {
-            RescheduleForm.Start = Item.Start.LocalDateTime;
-            RescheduleForm.End = Item.End.LocalDateTime;
-            FollowUpForm.Due = DateTime.Now.AddDays(1);
-            
-            if (_userInfo.Role == "Doctor")
-            {
-                Fus = await FollowUpService.GetByAppointmentAsync(Item.Id);
-            }
-        }
-    }
-
-    private void ToggleReschedule() => showReschedule = !showReschedule;
-    private void ToggleCancel() => showCancel = !showCancel;
-
-    private async Task DoRescheduleAsync()
-    {
-        try
-        {
-            var req = new RescheduleAppointmentRequest(
-                Id, 
-                new DateTimeOffset(RescheduleForm.Start, DateTimeOffset.Now.Offset), 
-                new DateTimeOffset(RescheduleForm.End, DateTimeOffset.Now.Offset)
-            );
-            await AppointmentService.RescheduleAsync(req);
-            await ReloadAsync();
-            showReschedule = false;
-            Error = null;
-        }
-        catch (Exception ex) { Error = ex.Message; }
-    }
-
-    private async Task DoCancelAsync()
-    {
-        try
-        {
-            var req = new CancelAppointmentRequest(Id, CancelForm.Reason);
-            await AppointmentService.CancelAsync(req);
-            await ReloadAsync();
-            showCancel = false;
-            Error = null;
-        }
-        catch (Exception ex) { Error = ex.Message; }
-    }
-
-    private async Task CompleteAsync()
-    {
-        try 
-        { 
-            await AppointmentService.CompleteAsync(new CompleteAppointmentRequest(Id)); 
-            await ReloadAsync();
-            Error = null;
-        } 
-        catch (Exception ex) { Error = ex.Message; }
-    }
-
-    private async Task CreateFollowUpAsync()
-    {
-        try
-        {
-            var req = new CreateFollowUpRequest(
-                Id, 
-                new DateTimeOffset(FollowUpForm.Due, DateTimeOffset.Now.Offset), 
-                FollowUpForm.Reason
-            );
-            await FollowUpService.CreateAsync(req);
-            await ReloadAsync();
-            FollowUpForm.Due = DateTime.Now.AddDays(1);
-            FollowUpForm.Reason = null;
-            Error = null;
-        }
-        catch (Exception ex) { Error = ex.Message; }
-    }
-
-    private async Task CompleteFollowUpAsync(long id)
-    {
-        try 
-        { 
-            await FollowUpService.CompleteAsync(new CompleteFollowUpRequest(id, null)); 
-            await ReloadAsync();
-            Error = null;
-        } 
-        catch (Exception ex) { Error = ex.Message; }
-    }
-
-    private async Task CancelFollowUpAsync(long id)
-    {
-        try 
-        { 
-            await FollowUpService.CancelAsync(new CancelFollowUpRequest(id, null)); 
-            await ReloadAsync();
-            Error = null;
-        } 
-        catch (Exception ex) { Error = ex.Message; }
-    }
-
-    private string GetStatusColor(AppointmentStatus status) => status switch
-    {
-        AppointmentStatus.Pending => "warning",
-        AppointmentStatus.Confirmed => "info",
-        AppointmentStatus.Scheduled => "primary",
-        AppointmentStatus.Completed => "success",
-        AppointmentStatus.Cancelled => "danger",
-        AppointmentStatus.Rescheduled => "secondary",
-        AppointmentStatus.NoShow => "dark",
-        AppointmentStatus.Rejected => "danger",
-        _ => "secondary"
-    };
-
-    private string GetFollowUpStatusColor(FollowUpStatus status) => status switch
-    {
-        FollowUpStatus.Pending => "warning",
-        FollowUpStatus.Completed => "success",
-        FollowUpStatus.Cancelled => "danger",
-        _ => "secondary"
-    };
-}

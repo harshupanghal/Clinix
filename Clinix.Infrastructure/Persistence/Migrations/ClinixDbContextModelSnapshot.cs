@@ -333,6 +333,9 @@ namespace Clinix.Infrastructure.Persistence.Migrations
                     b.Property<long>("PatientId")
                         .HasColumnType("bigint");
 
+                    b.Property<long?>("PatientId1")
+                        .HasColumnType("bigint");
+
                     b.Property<long>("ProviderId")
                         .HasColumnType("bigint");
 
@@ -350,6 +353,8 @@ namespace Clinix.Infrastructure.Persistence.Migrations
                     b.HasIndex("DoctorId");
 
                     b.HasIndex("PatientId");
+
+                    b.HasIndex("PatientId1");
 
                     b.HasIndex("ProviderId");
 
@@ -698,10 +703,20 @@ namespace Clinix.Infrastructure.Persistence.Migrations
                         .WithMany("Appointments")
                         .HasForeignKey("DoctorId");
 
+                    b.HasOne("Clinix.Domain.Entities.ApplicationUsers.Patient", "Patient")
+                        .WithMany()
+                        .HasForeignKey("PatientId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
                     b.HasOne("Clinix.Domain.Entities.ApplicationUsers.Patient", null)
                         .WithMany("Appointments")
-                        .HasForeignKey("PatientId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .HasForeignKey("PatientId1");
+
+                    b.HasOne("Clinix.Domain.Entities.Provider", "Provider")
+                        .WithMany()
+                        .HasForeignKey("ProviderId")
+                        .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
 
                     b.OwnsOne("Clinix.Domain.ValueObjects.DateRange", "When", b1 =>
@@ -724,6 +739,10 @@ namespace Clinix.Infrastructure.Persistence.Migrations
                             b1.WithOwner()
                                 .HasForeignKey("AppointmentId");
                         });
+
+                    b.Navigation("Patient");
+
+                    b.Navigation("Provider");
 
                     b.Navigation("When")
                         .IsRequired();

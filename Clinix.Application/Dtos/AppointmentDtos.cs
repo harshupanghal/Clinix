@@ -3,10 +3,10 @@
 using System.ComponentModel.DataAnnotations;
 using Clinix.Domain.Enums;
 
-public record AppointmentDto(long Id, long PatientId, long ProviderId, AppointmentType Type, AppointmentStatus Status,
+public record AppointmentDto(long Id, long PatientId, string PatientName,long ProviderId, string DoctorName, AppointmentType Type, AppointmentStatus Status,
     DateTimeOffset Start, DateTimeOffset End, string? Notes, DateTimeOffset CreatedAt, DateTimeOffset? UpdatedAt);
 
-public record AppointmentSummaryDto(long Id, long PatientId, long ProviderId, AppointmentType Type, AppointmentStatus Status,
+public record AppointmentSummaryDto(long Id, long PatientId, string PatientName,long ProviderId, string DoctorName, AppointmentType Type, AppointmentStatus Status,
     DateTimeOffset Start, DateTimeOffset End);
 
 public record ScheduleAppointmentRequest(

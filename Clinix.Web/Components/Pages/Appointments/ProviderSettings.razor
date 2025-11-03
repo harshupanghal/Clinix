@@ -21,6 +21,13 @@
                 @(_isAdminView ? "Provider Working Hours" : "My Working Hours")
             </h1>
             <p class="page-subtitle">@(_isAdminView ? "Configure provider availability and schedule" : "Set your daily working hours and availability")</p>
+            <!-- ✅ NEW: Show provider name if admin viewing another provider -->
+            @if (_isAdminView && Model is not null)
+            {
+                <p class="page-provider-info">
+                    <strong>Provider:</strong> @Model.Name
+                </p>
+            }
         </div>
         @if (!_isAdminView)
         {
@@ -78,7 +85,8 @@
                     <div class="form-group">
                         <label class="form-label">
                             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
-                                <path d="M7.646 4.854a.5.5 0 0 0 .708 0l1.5-1.5a.5.5 0 0 0-.708-.708l-.646.647V1.5a.5.5 0 0 0-1 0v1.793l-.646-.647a.5.5 0 1 0-.708.708l1.5 1.5zm-5.303-.51a.5.5 0 0 0-.707 0L.146 5.834a.5.5 0 1 0 .708.707l1.5-1.5a.5.5 0 0 0 0-.708zm11.314 0a.5.5 0 0 1 .707 0l1.5 1.5a.5.5 0 0 1-.707.708l-1.5-1.5a.5.5 0 0 1 0-.708zM8 7a3.5 3.5 0 1 1 4.95 4.95l-2.05 2.05a.5.5 0 0 1-.707 0l-.707-.707 1.414-1.414-.707-.707-1.414 1.414-.707-.707 1.414-1.414-.707-.707-1.414 1.414A3.5 3.5 0 0 1 8 7zm-2.21.007a4.5 4.5 0 1 0 2.102 8.657L5.853 13.626a.5.5 0 0 1 .708-.708l2.039 2.039a4.5 4.5 0 0 0 .657-8.658z"/>
+                                <path d="M7.646 4.854a.5.5 0 0 0 .708 0l1.5-1.5a.5.5 0 0 0-.708-.708l-.646.647V1.5a.5.5 0 0 0-1 0v1.793l-.646-.647a.5.5 0 1 0-.708.708l1.5 1.5zm-5.303-.51a.5.5 0 0 0-.707 0L.146 5.834a.5.5 0 1 0 .708.707l1.5-1.5a.5.5 0 0 0 0-.708zm11.314 0a.5.5 0 0 1 .707 0l1.5 1.5a.5.5 0 0 1-.707.708l-1.5-1.5a.5.5 0 0 1 0-.708z"/>
+                                <path d="M8 7a3.5 3.5 0 1 1 4.95 4.95l-2.05 2.05a.5.5 0 0 1-.707 0l-.707-.707 1.414-1.414-.707-.707-1.414 1.414-.707-.707 1.414-1.414-.707-.707-1.414 1.414A3.5 3.5 0 0 1 8 7zm-2.21.007a4.5 4.5 0 1 0 2.102 8.657L5.853 13.626a.5.5 0 0 1 .708-.708l2.039 2.039a4.5 4.5 0 0 0 .657-8.658z"/>
                             </svg>
                             Start Time
                         </label>
@@ -197,7 +205,156 @@
     }
 </div>
 
-<style>
+
+@code {
+    [Parameter] public long? ProviderId { get; set; }
+
+    private ProviderDto? Model;
+    private DateTime StartTime = DateTime.Today.AddHours(9);
+    private DateTime EndTime = DateTime.Today.AddHours(17);
+    private string? Success;
+    private string? Error;
+    private string? _authError;
+
+    private bool _authorized;
+    private bool _isAdminView;
+    private bool _saving;
+    private CurrentUserInfo _userInfo = new(false, "", "", "");
+    private long _providerId;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _userInfo = await CurrentUser.GetCurrentUserAsync();
+        
+        if (!_userInfo.IsAuthenticated)
+        {
+            Navigation.NavigateTo("/login");
+            return;
+        }
+
+        if (ProviderId.HasValue)
+        {
+            _isAdminView = true;
+            
+            if (_userInfo.Role != "Admin")
+            {
+                _authorized = false;
+                _authError = "Only administrators can edit other providers' working hours.";
+                return;
+            }
+            
+            _providerId = ProviderId.Value;
+            _authorized = true;
+        }
+        else
+        {
+            _isAdminView = false;
+            
+            if (_userInfo.Role != "Doctor")
+            {
+                _authorized = false;
+                _authError = "Please log in as a doctor to manage your working hours.";
+                return;
+            }
+            
+            if (long.TryParse(_userInfo.ProviderId, out var providerId))
+            {
+                _providerId = providerId;
+                _authorized = true;
+            }
+            else
+            {
+                _authorized = false;
+                _authError = "Provider ID not found. Please contact support.";
+                return;
+            }
+        }
+
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        try
+        {
+            Model = await ProviderService.GetByIdAsync(_providerId);
+            
+            if (Model is not null)
+            {
+                StartTime = DateTime.Today.Add(Model.WorkStart.TimeOfDay);
+                EndTime = DateTime.Today.Add(Model.WorkEnd.TimeOfDay);
+            }
+            else
+            {
+                Error = "Provider not found.";
+            }
+        }
+        catch (Exception ex)
+        {
+            Error = $"Failed to load working hours: {ex.Message}";
+        }
+    }
+
+    private async Task SaveAsync()
+    {
+        if (Model is null) return;
+
+        if (EndTime <= StartTime)
+        {
+            Error = "End time must be after start time.";
+            return;
+        }
+
+        if ((EndTime - StartTime).TotalHours > 16)
+        {
+            Error = "Working hours cannot exceed 16 hours per day.";
+            return;
+        }
+
+        _saving = true;
+        Error = null;
+        Success = null;
+
+        try
+        {
+            var request = new UpdateProviderWorkingHoursRequest(_providerId, StartTime, EndTime);
+            var success = await ProviderService.UpdateWorkingHoursAsync(request);
+            
+            if (success)
+            {
+                Success = "Working hours saved successfully.";
+                await LoadAsync();
+            }
+            else
+            {
+                Error = "Failed to save working hours. Please try again.";
+            }
+        }
+        catch (Exception ex)
+        {
+            Error = $"Error saving working hours: {ex.Message}";
+        }
+        finally
+        {
+            _saving = false;
+        }
+    }
+
+    private async Task ResetAsync()
+    {
+        if (Model is not null)
+        {
+            StartTime = DateTime.Today.Add(Model.WorkStart.TimeOfDay);
+            EndTime = DateTime.Today.Add(Model.WorkEnd.TimeOfDay);
+            Success = null;
+            Error = null;
+        }
+        await Task.CompletedTask;
+    }
+}
+
+
+        <style>
     .provider-settings-page {
         padding: var(--clx-spacing-lg);
         max-width: 900px;
@@ -442,150 +599,3 @@
         }
     }
 </style>
-
-@code {
-    [Parameter] public long? ProviderId { get; set; }
-
-    private ProviderDto? Model;
-    private DateTime StartTime = DateTime.Today.AddHours(9);
-    private DateTime EndTime = DateTime.Today.AddHours(17);
-    private string? Success;
-    private string? Error;
-    private string? _authError;
-
-    private bool _authorized;
-    private bool _isAdminView;
-    private bool _saving;
-    private CurrentUserInfo _userInfo = new(false, "", "", "");
-    private long _providerId;
-
-    protected override async Task OnInitializedAsync()
-    {
-        _userInfo = await CurrentUser.GetCurrentUserAsync();
-        
-        if (!_userInfo.IsAuthenticated)
-        {
-            Navigation.NavigateTo("/login");
-            return;
-        }
-
-        if (ProviderId.HasValue)
-        {
-            _isAdminView = true;
-            
-            if (_userInfo.Role != "Admin")
-            {
-                _authorized = false;
-                _authError = "Only administrators can edit other providers' working hours.";
-                return;
-            }
-            
-            _providerId = ProviderId.Value;
-            _authorized = true;
-        }
-        else
-        {
-            _isAdminView = false;
-            
-            if (_userInfo.Role != "Doctor")
-            {
-                _authorized = false;
-                _authError = "Please log in as a doctor to manage your working hours.";
-                return;
-            }
-            
-            if (long.TryParse(_userInfo.ProviderId, out var providerId))
-            {
-                _providerId = providerId;
-                _authorized = true;
-            }
-            else
-            {
-                _authorized = false;
-                _authError = "Provider ID not found. Please contact support.";
-                return;
-            }
-        }
-
-        await LoadAsync();
-    }
-
-    private async Task LoadAsync()
-    {
-        try
-        {
-            Model = await ProviderService.GetByIdAsync(_providerId);
-            
-            if (Model is not null)
-            {
-                StartTime = DateTime.Today.Add(Model.WorkStart.TimeOfDay);
-                EndTime = DateTime.Today.Add(Model.WorkEnd.TimeOfDay);
-            }
-            else
-            {
-                Error = "Provider not found.";
-            }
-        }
-        catch (Exception ex)
-        {
-            Error = $"Failed to load working hours: {ex.Message}";
-        }
-    }
-
-    private async Task SaveAsync()
-    {
-        if (Model is null) return;
-
-        if (EndTime <= StartTime)
-        {
-            Error = "End time must be after start time.";
-            return;
-        }
-
-        if ((EndTime - StartTime).TotalHours > 16)
-        {
-            Error = "Working hours cannot exceed 16 hours per day.";
-            return;
-        }
-
-        _saving = true;
-        Error = null;
-        Success = null;
-
-        try
-        {
-            var request = new UpdateProviderWorkingHoursRequest(_providerId, StartTime, EndTime);
-            var success = await ProviderService.UpdateWorkingHoursAsync(request);
-            
-            if (success)
-            {
-                Success = "Working hours saved successfully.";
-                await LoadAsync();
-            }
-            else
-            {
-                Error = "Failed to save working hours. Please try again.";
-            }
-        }
-        catch (Exception ex)
-        {
-            Error = $"Error saving working hours: {ex.Message}";
-        }
-        finally
-        {
-            _saving = false;
-        }
-    }
-
-    private async Task ResetAsync()
-    {
-        if (Model is not null)
-        {
-            StartTime = DateTime.Today.Add(Model.WorkStart.TimeOfDay);
-            EndTime = DateTime.Today.Add(Model.WorkEnd.TimeOfDay);
-            Success = null;
-            Error = null;
-        }
-        await Task.CompletedTask;
-    }
-}

@@ -31,17 +31,7 @@
         </a>
     </div>
 
-    @* @if (!_authorized)
-    {
-        <div class="alert alert-danger">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
-                <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
-                <path d="M7.002 11a1 1 0 1 1 2 0 1 1 0 0 1-2 0zM7.1 4.995a.905.905 0 1 1 1.8 0l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 4.995z"/>
-            </svg>
-            <strong>Access Denied</strong> - You are not authorized to view this page. Please log in as a patient. @(_userRole)
-        </div>
-    } *@
-     @if (Items is null)
+    @if (Items is null)
     {
         <div class="loading-container">
             <div class="spinner-border text-primary" role="status"></div>
@@ -130,9 +120,9 @@
                                 </th>
                                 <th>
                                     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
-                                        <path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm2-3a2 2 0 1 1-4 0 2 2 0 0 1 4 0zm4 8c0 1-1 1-1 1H3s-1 0-1-1 1-4 6-4 6 3 6 4zm-1-.004c-.001-.246-.154-.986-.832-1.664C11.516 10.68 10.289 10 8 10c-2.29 0-3.516.68-4.168 1.332-.678.678-.83 1.418-.832 1.664h10z"/>
+                                        <path d="M8 1a5 5 0 0 0-5 5v1h1a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V6a6 6 0 1 1 12 0v6a2.5 2.5 0 0 1-2.5 2.5H9.366a1 1 0 0 1-.866.5h-1a1 1 0 1 1 0-2h1a1 1 0 0 1 .866.5H11.5A1.5 1.5 0 0 0 13 12h-1a1 1 0 0 1-1-1V8a1 1 0 0 1 1-1h1V6a5 5 0 0 0-5-5z"/>
                                     </svg>
-                                    Doctor
+                                    Doctor Name
                                 </th>
                                 <th>
                                     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
@@ -160,8 +150,9 @@
                                 <td>
                                     <span class="type-badge">@a.Type</span>
                                 </td>
+                                <!-- ✅ UPDATED: Show Doctor Name instead of Provider ID -->
                                 <td>
-                                    <span class="provider-id">Doctor #@a.ProviderId</span>
+                                    <span class="doctor-name"> @a.DoctorName</span>
                                 </td>
                                 <td>
                                     <span class="badge badge-@GetStatusColor(a.Status)">@a.Status</span>
@@ -187,7 +178,72 @@
     }
 </div>
 
-<style>
+
+@code {
+    private List<AppointmentSummaryDto>? Items;
+    private List<AppointmentSummaryDto> FilteredItems => Items?.Where(FilterPredicate).ToList() ?? new();
+    
+    private CurrentUserInfo _userInfo = new(false, "", "", "");
+    private long _patientId;
+    private string _filterStatus = "All";
+
+    protected override async Task OnInitializedAsync()
+    {
+        _userInfo = await CurrentUser.GetCurrentUserAsync();
+        
+        if (!_userInfo.IsAuthenticated)
+        {
+            Navigation.NavigateTo("/login");
+            return;
+        }
+
+        if (long.TryParse(_userInfo.PatientId, out var patientId))
+        {
+            _patientId = patientId;
+            await LoadAppointmentsAsync();
+        }
+    }
+
+    private async Task LoadAppointmentsAsync()
+    {
+        try
+        {
+            Items = await AppointmentService.GetByPatientAsync(_patientId);
+        }
+        catch (Exception)
+        {
+            Items = new List<AppointmentSummaryDto>();
+        }
+    }
+
+    private void FilterByStatus(string status)
+    {
+        _filterStatus = status;
+    }
+
+    private bool FilterPredicate(AppointmentSummaryDto a) => _filterStatus switch
+    {
+        "Upcoming" => a.Status == AppointmentStatus.Pending || a.Status == AppointmentStatus.Scheduled,
+        "Completed" => a.Status == AppointmentStatus.Completed,
+        "Cancelled" => a.Status == AppointmentStatus.Cancelled,
+        _ => true
+    };
+
+    private string GetStatusColor(AppointmentStatus status) => status switch
+    {
+        AppointmentStatus.Pending => "warning",
+        AppointmentStatus.Confirmed => "info",
+        AppointmentStatus.Scheduled => "primary",
+        AppointmentStatus.Completed => "success",
+        AppointmentStatus.Cancelled => "danger",
+        AppointmentStatus.Rescheduled => "secondary",
+        AppointmentStatus.NoShow => "dark",
+        AppointmentStatus.Rejected => "danger",
+        _ => "secondary"
+    };
+}
+
+    <style>
    
     .patient-appointments-page {
         padding: var(--clx-spacing-lg);
@@ -466,87 +522,3 @@
         }
     }
 </style>
-
-@code {
-    private List<AppointmentSummaryDto>? Items;
-    private List<AppointmentSummaryDto> FilteredItems => Items?.Where(FilterPredicate).ToList() ?? new();
-    
-    private bool _authorized;
-    private CurrentUserInfo _userInfo = new(false, "", "", "");
-    private long _patientId;
-    private string _filterStatus = "All";
-     private string _userRole = string.Empty;  
-    private string _userName = string.Empty; 
-
-    protected override async Task OnInitializedAsync()
-    {
-        _userInfo = await CurrentUser.GetCurrentUserAsync();
-        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
-        var user = authState.User;
-           
-        _userRole = user.FindFirst(c => c.Type == System.Security.Claims.ClaimTypes.Role)?.Value ?? "Unknown";
-        _userName = user.Identity?.Name ?? "Unknown User";
-        
-        if (!_userInfo.IsAuthenticated)
-        {
-            Navigation.NavigateTo("/login");
-            return;
-        }
-
-        // if (_userInfo.Role != "Patient")
-        // {
-        //     _authorized = false;
-        //     return;
-        // }
-
-        // _authorized = true;
-        
-        if (long.TryParse(_userInfo.PatientId, out var patientId))
-        {
-            _patientId = patientId;
-            await LoadAppointmentsAsync();
-        }
-        // else
-        // {
-        //     _authorized = false;
-        // }
-    }
-
-    private async Task LoadAppointmentsAsync()
-    {
-        try
-        {
-            Items = await AppointmentService.GetByPatientAsync(_patientId);
-        }
-        catch (Exception)
-        {
-            Items = new List<AppointmentSummaryDto>();
-        }
-    }
-
-    private void FilterByStatus(string status)
-    {
-        _filterStatus = status;
-    }
-
-    private bool FilterPredicate(AppointmentSummaryDto a) => _filterStatus switch
-    {
-        "Upcoming" => a.Status == AppointmentStatus.Pending || a.Status == AppointmentStatus.Scheduled,
-        "Completed" => a.Status == AppointmentStatus.Completed,
-        "Cancelled" => a.Status == AppointmentStatus.Cancelled,
-        _ => true
-    };
-
-    private string GetStatusColor(AppointmentStatus status) => status switch
-    {
-        AppointmentStatus.Pending => "warning",
-        AppointmentStatus.Confirmed => "info",
-        AppointmentStatus.Scheduled => "primary",
-        AppointmentStatus.Completed => "success",
-        AppointmentStatus.Cancelled => "danger",
-        AppointmentStatus.Rescheduled => "secondary",
-        AppointmentStatus.NoShow => "dark",
-        AppointmentStatus.Rejected => "danger",
-        _ => "secondary"
-    };
-}

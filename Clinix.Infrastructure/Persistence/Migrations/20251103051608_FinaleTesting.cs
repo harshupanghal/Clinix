@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace Clinix.Infrastructure.Persistence.Migrations
 {
     /// <inheritdoc />
-    public partial class Testing : Migration
+    public partial class FinaleTesting : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -292,7 +292,8 @@ namespace Clinix.Infrastructure.Persistence.Migrations
                     Notes = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     CreatedAt = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false),
                     UpdatedAt = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true),
-                    DoctorId = table.Column<long>(type: "bigint", nullable: true)
+                    DoctorId = table.Column<long>(type: "bigint", nullable: true),
+                    PatientId1 = table.Column<long>(type: "bigint", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -306,8 +307,17 @@ namespace Clinix.Infrastructure.Persistence.Migrations
                         name: "FK_Appointments_Patients_PatientId",
                         column: x => x.PatientId,
                         principalTable: "Patients",
-                        principalColumn: "PatientId",
-                        onDelete: ReferentialAction.Cascade);
+                        principalColumn: "PatientId");
+                    table.ForeignKey(
+                        name: "FK_Appointments_Patients_PatientId1",
+                        column: x => x.PatientId1,
+                        principalTable: "Patients",
+                        principalColumn: "PatientId");
+                    table.ForeignKey(
+                        name: "FK_Appointments_Providers_ProviderId",
+                        column: x => x.ProviderId,
+                        principalTable: "Providers",
+                        principalColumn: "Id");
                 });
 
             migrationBuilder.CreateTable(
@@ -324,7 +334,8 @@ namespace Clinix.Infrastructure.Persistence.Migrations
                     CreatedAt = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false),
                     CompletedAt = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true),
                     UpdatedAt = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true),
-                    LastRemindedAt = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true)
+                    LastRemindedAt = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true),
+                    InitialNotificationSent = table.Column<bool>(type: "bit", nullable: false, defaultValue: false)
                 },
                 constraints: table =>
                 {
@@ -346,6 +357,11 @@ namespace Clinix.Infrastructure.Persistence.Migrations
                 name: "IX_Appointments_PatientId",
                 table: "Appointments",
                 column: "PatientId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Appointments_PatientId1",
+                table: "Appointments",
+                column: "PatientId1");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Appointments_ProviderId",
@@ -443,9 +459,6 @@ namespace Clinix.Infrastructure.Persistence.Migrations
                 name: "OutboxMessages");
 
             migrationBuilder.DropTable(
-                name: "Providers");
-
-            migrationBuilder.DropTable(
                 name: "SeedStatuses");
 
             migrationBuilder.DropTable(
@@ -465,6 +478,9 @@ namespace Clinix.Infrastructure.Persistence.Migrations
 
             migrationBuilder.DropTable(
                 name: "Patients");
+
+            migrationBuilder.DropTable(
+                name: "Providers");
 
             migrationBuilder.DropTable(
                 name: "Users");

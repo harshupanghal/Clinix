@@ -124,7 +124,8 @@ public class ClinixDbContext : DbContext
             b.HasIndex(p => p.Specialty);
         });
 
-        // Appointment
+        // Appointment      
+        // Appointment (FIXED: Use NO ACTION instead of CASCADE)
         modelBuilder.Entity<Appointment>(b =>
         {
             b.ToTable("Appointments");
@@ -134,19 +135,35 @@ public class ClinixDbContext : DbContext
             b.Property(a => a.Type).IsRequired();
             b.Property(a => a.Status).IsRequired();
             b.Property(a => a.CreatedAt).IsRequired();
+
             b.OwnsOne(a => a.When, when =>
             {
                 when.Property(p => p.Start).HasColumnName("Start").HasColumnType("datetimeoffset");
                 when.Property(p => p.End).HasColumnName("End").HasColumnType("datetimeoffset");
             });
+
+            // ✅ FIXED: Changed from CASCADE to NO ACTION
+            b.HasOne(a => a.Patient)
+                .WithMany()
+                .HasForeignKey(a => a.PatientId)
+                .OnDelete(DeleteBehavior.NoAction);  // ✅ Changed from Restrict/Cascade
+
+            // ✅ FIXED: Changed from CASCADE to NO ACTION
+            b.HasOne(a => a.Provider)
+                .WithMany()
+                .HasForeignKey(a => a.ProviderId)
+                .OnDelete(DeleteBehavior.NoAction);  // ✅ Changed from Restrict/Cascade
+
             b.HasMany(a => a.FollowUps)
-             .WithOne()
-             .HasForeignKey(f => f.AppointmentId)
-             .OnDelete(DeleteBehavior.Cascade);
+                .WithOne()
+                .HasForeignKey(f => f.AppointmentId)
+                .OnDelete(DeleteBehavior.Cascade);  // This is fine - only one path
+
             b.HasIndex(a => a.ProviderId);
             b.HasIndex(a => a.PatientId);
             b.HasIndex(a => new { a.ProviderId, a.Status });
         });
+
 
         // FollowUp
         modelBuilder.Entity<FollowUp>(b =>
